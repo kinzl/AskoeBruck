@@ -1,0 +1,45 @@
+@page
+@using TennisBruck.Services
+@model TennisBruck.Pages.Members
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+<div>
+    <form method="post">
+        <table>
+            <thead>
+            <tr>
+            <th>Id</th>
+            <th>Vorname</th>
+            <th>Nachname</th>
+            </thead>
+            <tbody>
+            @foreach (var player in Model.Players)
+            {
+                <tr>
+                    <td>@player.Id</td>
+                    <td>@player.Firstname</td>
+                    <td>@player.Lastname</td>
+                    @if (Model.PlayerService.GetPlayer(null)!.IsAdmin)
+                    {
+                        <td>
+                            <button name="playerId" value="@player.Id" type="submit" asp-page-handler="DeleteUser">Löschen</button>
+                        </td>
+                    }
+                </tr>
+            }
+            </tbody>
+        </table>
+    </form>
+</div>
+</body>
+</html>
