@@ -5,7 +5,7 @@ namespace TennisBruck.Services;
 public class PlayerService
 {
     private Player? _player;
-    private TennisContext? _db;
+    private TennisContext _db;
 
     public PlayerService(IServiceProvider serviceProvider)
     {

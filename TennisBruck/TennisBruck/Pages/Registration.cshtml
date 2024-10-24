@@ -28,11 +28,12 @@
                 <input placeholder="Benutzername" id="username" type="text" name="username" required>
             </div>
             <div class="input-group">
-                <input placeholder="E-Mail" type="email" name="emailOrPhone" required>
+                <input placeholder="E-Mail oder Telefonnummber" type="email" name="emailOrPhone" required>
             </div>
             <div class="input-group">
                 <input placeholder="Passwort" type="password" name="password" required>
             </div>
+            <div id="errorMessage">@Model.ErrorText</div>
             <br>
             <button asp-page-handler="Register" type="submit">Registrieren</button>
         </form>

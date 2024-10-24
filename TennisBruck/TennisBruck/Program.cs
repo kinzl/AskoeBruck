@@ -55,7 +55,7 @@ builder.Services.AddDbContext<TennisContext>(options => options.UseSqlite(connec
 //     .UseMySql(connectionStringMariaDb,
 //         ServerVersion.Create(new Version(11, 3), ServerType.MariaDb)));
 builder.Services.AddLogging();
-builder.Services.AddHostedService<StartupBackgroundService>();
+// builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<SmsService>();
 builder.Services.AddSingleton<PasswordEncryption>();

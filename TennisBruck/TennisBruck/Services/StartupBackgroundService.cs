@@ -35,8 +35,7 @@ public class StartupBackgroundService : BackgroundService
             Firstname = "Alice",
             Lastname = "Smith",
             PasswordHash = _pe.HashPassword("1234"),
-            Email = "asmi@gmail.com",
-            Phone = "12345678",
+            EmailOrPhone = "asmi@gmail.com",
             Username = "asmith",
             IsAdmin = false
         });
@@ -46,8 +45,7 @@ public class StartupBackgroundService : BackgroundService
             Firstname = "Emil",
             Lastname = "Kinzl",
             PasswordHash = _pe.HashPassword("1234"),
-            Email = "ekin@gmail.com",
-            Phone = "12345678",
+            EmailOrPhone = "ekin@gmail.com",
             Username = "kinzle",
             IsAdmin = true
         });

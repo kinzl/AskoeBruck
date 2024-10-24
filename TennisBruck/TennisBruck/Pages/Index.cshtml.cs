@@ -29,8 +29,7 @@ public class IndexModel : PageModel
 
     public IActionResult OnPostLogin(LoginDto body)
     {
-        _logger.LogInformation("OnPostLogout");
-        _logger.LogInformation("Id {Name} Signed in", HttpContext.User.Identities.ToList().First().Name);
+        _logger.LogInformation("OnPostLogin");
         return RedirectToPage(nameof(Login));
     }
 

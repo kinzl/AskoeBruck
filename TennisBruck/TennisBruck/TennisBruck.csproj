@@ -41,6 +41,8 @@
       <Content Update="wwwroot\image\neutralTennisCourt.png">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
+      <Content Include="Dto\LoginDto.cs" />
+      <Content Include="Dto\RegistrationDto.cs" />
     </ItemGroup>
 
     <ItemGroup>
@@ -73,11 +75,6 @@
       <Content Update="appsettings.json">
         <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Compile Include="wwwroot\Dto\LoginDto.cs" />
-      <Compile Include="wwwroot\Dto\RegistrationDto.cs" />
     </ItemGroup>
 
     <ItemGroup>

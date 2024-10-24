@@ -22,28 +22,26 @@ public class EmailService
             Text = "Ihr Code lautet: " + verificationCode
         };
 
-        using (var client = new SmtpClient())
+        var client = new SmtpClient();
+        try
         {
-            try
-            {
-                // Connect to the SMTP server
-                await client.ConnectAsync(_smtpServer, _smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
+            // Connect to the SMTP server
+            await client.ConnectAsync(_smtpServer, _smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
 
-                // Authenticate
-                await client.AuthenticateAsync(_smtpUser, _smtpPass);
+            // Authenticate
+            await client.AuthenticateAsync(_smtpUser, _smtpPass);
 
-                // Send the email
-                await client.SendAsync(message);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to send email: {ex.Message}");
-            }
-            finally
-            {
-                // Disconnect from the SMTP server
-                await client.DisconnectAsync(true);
-            }
+            // Send the email
+            await client.SendAsync(message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to send email: {ex.Message}");
+        }
+        finally
+        {
+            // Disconnect from the SMTP server
+            await client.DisconnectAsync(true);
         }
     }
 }
