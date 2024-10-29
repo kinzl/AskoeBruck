@@ -25,20 +25,20 @@
                     <th>Vorname</th>
                     <th>Nachname</th>
                     @* Add column for delete button if admin *@
-                    @if (Model.PlayerService.GetPlayer(null)!.IsAdmin)
+                    @if (Model.LoggedInPlayer.IsAdmin)
                     {
                         <th>Action</th>
                     }
                 </tr>
                 </thead>
                 <tbody>
-                @foreach (var player in Model.Players)
+                @foreach (var player in Model.AllPlayers)
                 {
                     <tr>
                         <td>@player.Id</td>
                         <td>@player.Firstname</td>
                         <td>@player.Lastname</td>
-                        @if (Model.PlayerService.GetPlayer(null)!.IsAdmin)
+                        @if (Model.LoggedInPlayer.IsAdmin)
                         {
                             <td>
                                 <button name="playerId" value="@player.Id" type="submit" asp-page-handler="DeleteUser">Löschen</button>

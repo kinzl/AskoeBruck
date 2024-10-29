@@ -9,4 +9,5 @@ public partial class Player
     public String PasswordHash { get; set; }
     public String Username { get; set; }
     public bool IsAdmin { get; set; }
+    public bool IsPlayingGrieskirchen { get; set; }
 }

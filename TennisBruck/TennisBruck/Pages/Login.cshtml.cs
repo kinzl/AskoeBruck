@@ -12,21 +12,16 @@ namespace TennisBruck.Pages;
 
 public class Login : PageModel
 {
-    EmailService _emailService;
     public string? ErrorText { get; set; }
     private TennisContext _db;
     private PasswordEncryption _pe;
-    private PlayerService _playerService;
     private readonly ILogger<IndexModel> _logger;
 
-    public Login(TennisContext db, PasswordEncryption pe, ILogger<IndexModel> logger, PlayerService playerService,
-        EmailService emailService)
+    public Login(TennisContext db, PasswordEncryption pe, ILogger<IndexModel> logger)
     {
         _db = db;
         _pe = pe;
         _logger = logger;
-        _playerService = playerService;
-        _emailService = emailService;
     }
 
 
@@ -56,7 +51,6 @@ public class Login : PageModel
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                     new ClaimsPrincipal(claimsIdentity), authProperties);
 
-                _playerService.SetPlayer(user);
                 return new RedirectToPageResult(nameof(Index));
             }
 

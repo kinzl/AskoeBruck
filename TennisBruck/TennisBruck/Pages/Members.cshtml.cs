@@ -8,22 +8,24 @@ namespace TennisBruck.Pages;
 public class Members : PageModel
 {
     private TennisContext _db;
-    public PlayerService PlayerService { get; set; }
+    private PlayerService _playerService { get; set; }
     private readonly ILogger<IndexModel> _logger;
-    public List<Player> Players { get; set; }
+    public Player LoggedInPlayer { get; set; }
+    public List<Player> AllPlayers { get; set; }
 
     public Members(TennisContext db, ILogger<IndexModel> logger, PlayerService playerService)
     {
         _db = db;
         _logger = logger;
-        PlayerService = playerService;
+        _playerService = playerService;
     }
 
     public RedirectToPageResult? OnGet()
     {
         if (HttpContext.User.Identities.ToList().First().Name == null) return new RedirectToPageResult(nameof(Login));
+        LoggedInPlayer = _playerService.GetPlayer(HttpContext.User.Identities.ToList().First().Name)!;
         _logger.LogInformation("Id {Name} Signed in", HttpContext.User.Identities.ToList().First().Name);
-        Players = _db.Players.ToList();
+        AllPlayers = _db.Players.ToList();
         return null;
     }
 

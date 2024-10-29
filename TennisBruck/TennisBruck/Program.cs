@@ -58,8 +58,8 @@ builder.Services.AddLogging();
 builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<SmsService>();
+builder.Services.AddScoped<PlayerService>();
 builder.Services.AddSingleton<PasswordEncryption>();
-builder.Services.AddSingleton<PlayerService>();
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
