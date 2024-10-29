@@ -1,0 +1,167 @@
+/* Page background */
+body {
+    background: url('../image/neutralTennisCourt.png') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* General container settings */
+.container {
+    background: rgba(0, 0, 0, 0.75);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+    max-width: 800px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-height: 90vh;
+    overflow-y: hidden;
+}
+
+/* Heading */
+h1 {
+    color: #03a9f4;
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+/* Status label styling */
+.status-label {
+    display: inline-block;
+    padding: 6px;
+    font-size: 16px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.label-playing {
+    background-color: #4caf50;
+}
+
+.label-not-playing {
+    background-color: #f44336;
+}
+
+/* Switch styling */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+    margin-bottom: 10px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #03a9f4;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* Compact form styling */
+form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+form label, form input[type="date"], form button {
+    margin: 0 5px;
+}
+
+form input[type="date"] {
+    padding: 6px;
+    font-size: 14px;
+    background-color: #333;
+    color: #e0e0e0;
+    border-radius: 5px;
+    border: none;
+}
+
+form button {
+    padding: 8px 16px;
+    font-size: 14px;
+    background: #03a9f4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+form button:hover {
+    background-color: #0288d1;
+}
+
+/* Table styling */
+.table-wrapper {
+    max-height: 70vh;
+    overflow-y: auto;
+    width: 100%;
+    margin-top: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid #03a9f4;
+    text-align: center;
+}
+
+th {
+    background-color: #03a9f4;
+    color: white;
+    padding: 8px;
+}
+
+td {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+    padding: 8px;
+}
+
+tr:nth-child(even) td {
+    background-color: rgba(255, 255, 255, 0.05);
+}

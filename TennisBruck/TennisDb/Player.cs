@@ -10,4 +10,5 @@ public partial class Player
     public String Username { get; set; }
     public bool IsAdmin { get; set; }
     public bool IsPlayingGrieskirchen { get; set; }
+    public List<PlayerCourtGrieskirchen> PlayerCourtGrieskirchen { get; set; }
 }

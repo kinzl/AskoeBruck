@@ -6,14 +6,58 @@
 }
 
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 <head>
-    <title></title>
+    <title>Hallenplatz Grieskirchen</title>
+    <link rel="stylesheet" href="css/courtGrieskirchen.css">
 </head>
 <body>
-<div>
+<div class="container">
+    <h1>Hallenplatz Grieskirchen</h1>
+    <form method="post" asp-page-handler="ChangePlayingState">
+        <label class="status-label @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "label-playing" : "label-not-playing")">
+            @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "Sie spielen aktuell in Grieskirchen mit." : "Sie spielen aktuell nicht in Grieskirchen mit.")
+        </label>
+        <label class="switch">
+            <input type="checkbox" @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "checked" : "") onclick="this.form.submit()">
+            <span class="slider round"></span>
+        </label>
+    </form>
 
+    @if (Model.LoggedInPlayer.IsAdmin)
+    {
+        <form method="post" asp-page-handler="GeneratePlan">
+            <label class="status-label" for="startDate">Start Datum</label>
+            <input id="startDate" type="date" name="startDate" placeholder="StartDate" value="2024-10-11" required/>
+            <label class="status-label" for="endDate">End Datum</label>
+            <input id="endDate" type="date" name="endDate" placeholder="EndDate" value="2025-04-18" required/>
+            <button>Generiere Plan</button>
+        </form>
+    }
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+            <th>Datum</th>
+            <th>Spieler 1</th>
+            <th>Spieler 2</th>
+            <th>Spieler 3</th>
+            <th>Spieler 4</th>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.Courts)
+            {
+                <tr>
+                    <td>@item.MatchDay.ToString("dd.MM.yy")</td>
+                    <td>@item.PlayerCourtGrieskirchens[0].Player</td>
+                    <td>@item.PlayerCourtGrieskirchens[1].Player</td>
+                    <td>@item.PlayerCourtGrieskirchens[2].Player</td>
+                    <td>@item.PlayerCourtGrieskirchens[3].Player</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
 </div>
 </body>
 </html>

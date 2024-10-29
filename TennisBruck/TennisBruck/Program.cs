@@ -45,7 +45,7 @@ string dataDirectory = Path.GetDirectoryName(location)!;
 Console.WriteLine("Path: " + dataDirectory);
 string? connectionString =
     connectionStringMariaDb?.Replace("|DataDirectory|", dataDirectory + Path.DirectorySeparatorChar);
-Console.WriteLine($"******** ConnectionString: {connectionStringMariaDb}");
+Console.WriteLine($"******** ConnectionString: {connectionString}");
 Console.ForegroundColor = ConsoleColor.Yellow;
 Console.WriteLine($"******** Don't forget to comment out NorthwindContext.OnConfiguring !");
 Console.ResetColor();
@@ -59,6 +59,7 @@ builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<PlayerService>();
+builder.Services.AddScoped<PlanService>();
 builder.Services.AddSingleton<PasswordEncryption>();
 
 builder.Services.AddDistributedMemoryCache();
