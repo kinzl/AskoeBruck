@@ -13,17 +13,15 @@ public class PlanService
 
     public void GeneratePlanGrieskirchen(DateTime startDate, DateTime endDate)
     {
-        // Remove all existing courts
+        // Clear existing data
         _db.Court.RemoveRange(_db.Court);
         _db.PlayerCourtGrieskirchen.RemoveRange(_db.PlayerCourtGrieskirchen);
+
         // Retrieve players who are marked as playing in Grieskirchen
         var players = _db.Players.Where(x => x.IsPlayingGrieskirchen).ToList();
         if (players.Count < 4) return;
 
-        // DateTime startDate = new DateTime(2024, 10, 11);
-        // DateTime endDate = new DateTime(2025, 4, 18);
-
-        // Initialize match days (every Friday within the range)
+        // Generate match days for every Friday within the date range
         var matchDays = new List<DateTime>();
         for (var date = startDate; date <= endDate; date = date.AddDays(7))
         {
@@ -33,34 +31,21 @@ public class PlanService
             }
         }
 
-        // Number of matches each player should ideally play
-        int matchesPerPlayer = matchDays.Count * 4 / players.Count;
-        int extraMatches = (matchDays.Count * 4) % players.Count; // Handle uneven distribution
+        // Dictionary to track the number of matches each player has participated in
+        var playerMatchCounts = players.ToDictionary(player => player, player => 0);
 
-        // Track the count of matches each player has been assigned
-        var playerMatches = players.ToDictionary(p => p, p => 0);
+        var random = new Random();
 
-        int playerIndex = 0;
         foreach (var matchDay in matchDays)
         {
-            var currentPlayers = new List<Player>();
+            // Randomly shuffle players at each iteration for diversity
+            players = players.OrderBy(x => random.Next()).ToList();
 
-            // Select 4 players for this match day
-            while (currentPlayers.Count < 4)
-            {
-                var player = players[playerIndex];
-
-                // Check if player has reached their target number of matches
-                if (playerMatches[player] < matchesPerPlayer ||
-                    (extraMatches > 0 && playerMatches[player] == matchesPerPlayer))
-                {
-                    currentPlayers.Add(player);
-                    playerMatches[player]++;
-                    if (playerMatches[player] == matchesPerPlayer + 1) extraMatches--;
-                }
-
-                playerIndex = (playerIndex + 1) % players.Count;
-            }
+            // Select the four players with the fewest matches so far
+            var selectedPlayers = players
+                .OrderBy(p => playerMatchCounts[p])
+                .Take(4)
+                .ToList();
 
             // Create a new Court entry for each match day
             var court = new Court
@@ -69,14 +54,17 @@ public class PlanService
                 PlayerCourtGrieskirchens = new List<PlayerCourtGrieskirchen>()
             };
 
-            // Add each player to Courts for this court
-            foreach (var player in currentPlayers)
+            // Add each selected player to the court
+            foreach (var player in selectedPlayers)
             {
                 court.PlayerCourtGrieskirchens.Add(new PlayerCourtGrieskirchen
                 {
                     Player = player,
                     Court = court
                 });
+
+                // Increment the match count for each selected player
+                playerMatchCounts[player]++;
             }
 
             // Add the court entry with players to the database
@@ -84,6 +72,6 @@ public class PlanService
         }
 
         _db.SaveChanges();
-        Console.WriteLine("Plan generated successfully.");
+        Console.WriteLine("Balanced plan generated successfully.");
     }
 }
