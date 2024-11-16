@@ -16,15 +16,25 @@ public class PlayerService
     public Player? GetPlayer(string? sessionName)
     {
         if (_player != null) return _player;
-        if (sessionName != null) _player = _db.Players.Single(x => x.Id == int.Parse(sessionName));
-        else _player = null;
+        if (sessionName != null)
+        {
+            try
+            {
+                _player = _db.Players.Single(x => x.Id == int.Parse(sessionName));
+                return _player;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
+                return _player = null;
+            }
+        }
 
-        return _player;
+        return _player = null;
     }
 
     public void SetPlayer(Player? player)
     {
         _player = player;
     }
-    
 }

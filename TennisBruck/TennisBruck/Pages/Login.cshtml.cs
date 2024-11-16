@@ -13,15 +13,19 @@ namespace TennisBruck.Pages;
 public class Login : PageModel
 {
     public string? ErrorText { get; set; }
+    public string? ForgotPasswordErrorText { get; set; }
+
     private TennisContext _db;
     private PasswordEncryption _pe;
     private readonly ILogger<IndexModel> _logger;
+    private readonly EmailService _emailService;
 
-    public Login(TennisContext db, PasswordEncryption pe, ILogger<IndexModel> logger)
+    public Login(TennisContext db, PasswordEncryption pe, ILogger<IndexModel> logger, EmailService emailService)
     {
         _db = db;
         _pe = pe;
         _logger = logger;
+        _emailService = emailService;
     }
 
 
@@ -61,5 +65,32 @@ public class Login : PageModel
             _logger.LogError(e.Message);
             return new RedirectToPageResult(nameof(Login), new { ErrorText = "Passwort oder Benutzername ist falsch" });
         }
+    }
+
+    public async Task<IActionResult> OnPostForgotPasswordAsync(string emailOrPhone)
+    {
+        _logger.LogInformation("OnPostForgotPassword triggered");
+
+        var player = _db.Players.FirstOrDefault(x => x.EmailOrPhone == emailOrPhone);
+
+        if (player == null)
+        {
+            ModelState.AddModelError(string.Empty, "Benutzer wurde nicht gefunden.");
+            return Page();
+        }
+
+        // Generate a verification code (you can also use tokens)
+        var code = new Random().Next(100000, 999999).ToString();
+        player.PasswordResetToken = code;
+        player.TokenExpiry = DateTime.UtcNow.AddMinutes(10);
+        await _db.SaveChangesAsync();
+
+        // Send the code via email or SMS
+        await _emailService.SendVerificationCodeAsync(player.EmailOrPhone, "Passwort zurücksetzen", code);
+
+        // Save emailOrPhone to session for verification
+        HttpContext.Session.SetString("ResetEmailOrPhone", emailOrPhone);
+
+        return new RedirectToPageResult(nameof(Verification));
     }
 }

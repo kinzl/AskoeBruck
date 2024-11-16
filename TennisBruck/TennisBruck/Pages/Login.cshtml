@@ -12,27 +12,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tennis Login</title>
     <link rel="stylesheet" href="css/login.css">
+    <script src="js/toggleVisibility.js"></script>
 </head>
 <body>
 <div class="login-container">
-    <div class="login-box">
+    <div id="login-section" class="login-box">
         <h2>Login</h2>
         <form method="post" asp-page-handler="Login">
             <div class="input-group">
-                <input placeholder="Benutzername" id="username" type="text" name="username" required>
+                <input id="username" type="text" name="username" required>
+                <label for="username">Benutzername</label>
             </div>
             <div class="input-group">
-                <input placeholder="Passwort" type="password" name="password" required>
+                <input id="password" type="password" name="password" required>
+                <label for="password">Passwort</label>
             </div>
             <div id="errorMessage">@Model.ErrorText</div>
             <button type="submit">Login</button>
         </form>
         <div class="register-link">
-            <!-- Register button placed outside the form with better spacing -->
-            <p>
-                <button type="button" class="register-button" onclick="location.href='@Url.Page(nameof(Registration))'">Registrieren</button>
-            </p>
+            <button type="button" class="register-button" onclick="location.href='@Url.Page(nameof(Registration))'">
+                Registrieren
+            </button>
         </div>
+        <a href="javascript:void(0)" onclick="toggleForgotPassword()" class="toggle-link">Passwort vergessen?</a>
+    </div>
+    <div id="forgotPassword" class="login-box" style="display: none;">
+        <h2>Passwort vergessen</h2>
+        <form method="post" asp-page-handler="ForgotPassword">
+            <div class="input-group">
+                <input id="emailOrPhone" name="emailOrPhone" required>
+                <label for="emailOrPhone">Email oder Telefonnummer</label>
+            </div>
+            <div id="errorMessageForgotPassword">@Model.ForgotPasswordErrorText</div>
+            <button type="submit">Passwort zurücksetzen</button>
+        </form>
+        <a href="javascript:void(0)" onclick="toggleForgotPassword()" class="toggle-link">Einloggen</a>
     </div>
 </div>
 </body>

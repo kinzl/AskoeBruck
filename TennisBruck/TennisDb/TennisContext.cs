@@ -16,4 +16,5 @@ public class TennisContext : DbContext
     public DbSet<Player> Players { get; set; }
     public DbSet<PlayerCourtGrieskirchen> PlayerCourtGrieskirchen { get; set; }
     public DbSet<Court> Court { get; set; }
+    public DbSet<RegistrationVerification> RegistrationVerifications { get; set; }
 }

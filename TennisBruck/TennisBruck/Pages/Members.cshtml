@@ -12,6 +12,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Members</title>
     <link rel="stylesheet" href="css/members.css">
+    <script src="js/toggleVisibility.js"></script>
 </head>
 <body>
 <div class="members-container">
@@ -24,10 +25,12 @@
                     <th>Id</th>
                     <th>Vorname</th>
                     <th>Nachname</th>
-                    @* Add column for delete button if admin *@
                     @if (Model.LoggedInPlayer.IsAdmin)
                     {
-                        <th>Action</th>
+                        <th>Benutzername</th>
+                        <th>Email oder Nummer</th>
+                        <th>Admin</th>
+                        <th>Löschen</th>
                     }
                 </tr>
                 </thead>
@@ -40,8 +43,11 @@
                         <td>@player.Lastname</td>
                         @if (Model.LoggedInPlayer.IsAdmin)
                         {
+                            <td>@player.Username</td>
+                            <td>@player.EmailOrPhone</td>
+                            <td>@player.IsAdmin</td>
                             <td>
-                                <button name="playerId" value="@player.Id" type="submit" asp-page-handler="DeleteUser">Löschen</button>
+                                <button class="action-button delete" name="playerId" value="@player.Id" type="submit" asp-page-handler="DeleteUser">Löschen</button>
                             </td>
                         }
                     </tr>
@@ -50,6 +56,34 @@
             </table>
         </form>
     </div>
+    @if (Model.LoggedInPlayer.IsAdmin)
+    {
+        <div class="actions">
+            <button id="createUserButton" class="action-button create" onclick="toggleCreateUser()">Erstelle Benutzer</button>
+        </div>
+        <div id="createUser" class="expandable-section" style="display: none;">
+            <form method="post">
+                <div class="form-group">
+                    <label for="firstnameInput">Vorname</label>
+                    <input id="firstnameInput" name="firstname" class="form-input" required/>
+                </div>
+                <div class="form-group">
+                    <label for="lastnameInput">Nachname</label>
+                    <input id="lastnameInput" name="lastname" class="form-input" required/>
+                </div>
+                <div class="form-group">
+                    <label for="usernameInput">Benutzername</label>
+                    <input id="usernameInput" name="username" class="form-input" required/>
+                </div>
+                <div class="form-group">
+                    <label for="emailOrPhoneInput">Email oder Telefonnummer</label>
+                    <input id="emailOrPhoneInput" name="emailOrPhone" class="form-input" required/>
+                </div>
+                <button type="submit" class="action-button submit" asp-page-handler="CreateUser">Erstellen</button>
+            </form>
+        </div>
+        <label class="info-label">@Model.InfoBox</label>
+    }
 </div>
 </body>
 </html>

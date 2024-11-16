@@ -49,12 +49,9 @@
                     <a href="#members">Mitglieder</a>
                 </li>
             }
-            <li>
-                <a href="#coaching">Coaching</a>
-            </li>
-            <li>
-                <a href="#events">Events</a>
-            </li>
+            @* <li> *@
+            @*     <a href="#punch">Punsch</a> *@
+            @* </li> *@
         </ul>
     </nav>
     <!--#endregion -->
@@ -90,20 +87,7 @@
     </section>
     <!--#endregion -->
 
-    <!--#region Members  -->
-    @if (Model.Player != null)
-    {
-        <form method="post" asp-page-handler="ShowMembers">
-            <section id="members" class="category">
-                <h2>Mitglieder</h2>
-                <p>Hier sehen Sie alle Mitglieder</p>
-                <button type="submit">Mitglieder ansehen</button>
-            </section>
-        </form>
-    }
-    <!--#endregion -->
-
-    <!--#region Members  -->
+    <!--#region Court Grieskirchen  -->
     @if (Model.Player != null)
     {
         <form method="post" asp-page-handler="CourtPlanGrieskirchen">
@@ -116,17 +100,31 @@
     }
     <!--#endregion -->
 
-    <section id="coaching" class="category">
-        <h2>Coaching</h2>
-        <p>Learn from the best with our expert coaching sessions.</p>
-        <button>Learn More</button>
-    </section>
-
-    <section id="events" class="category">
-        <h2>Events</h2>
-        <p>Check out upcoming tennis events at our club.</p>
-        <button>View Events</button>
-    </section>
+    @* <!--#region Punch  --> *@
+    @* @if (Model.Player != null) *@
+    @* { *@
+    @*     <form method="post" asp-page-handler="Punch"> *@
+    @*         <section id="punch" class="category"> *@
+    @*             <h2>Punschstand</h2> *@
+    @*             <p>Hier können Sie sich für den Punschstand eintragen</p> *@
+    @*             <button type="submit">Zur Eintragung</button> *@
+    @*         </section> *@
+    @*     </form> *@
+    @* } *@
+    @* <!--#endregion --> *@
+    
+    <!--#region Members  -->
+    @if (Model.Player != null)
+    {
+        <form method="post" asp-page-handler="ShowMembers">
+            <section id="members" class="category">
+                <h2>Mitglieder</h2>
+                <p>Hier sehen Sie alle Mitglieder</p>
+                <button type="submit">Mitglieder ansehen</button>
+            </section>
+        </form>
+    }
+    <!--#endregion -->
 
     <footer>
         <p>&copy; 2024 Tennis Club. All Rights Reserved.</p>

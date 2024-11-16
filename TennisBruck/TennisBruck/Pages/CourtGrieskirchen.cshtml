@@ -10,6 +10,7 @@
 <head>
     <title>Hallenplatz Grieskirchen</title>
     <link rel="stylesheet" href="css/courtGrieskirchen.css">
+    <script src="js/courtGrieskirchen.js"></script>
 </head>
 <body>
 <div class="container">
@@ -38,21 +39,28 @@
     <div class="table-wrapper">
         <table>
             <thead>
-            <th>Datum</th>
-            <th>Spieler 1</th>
-            <th>Spieler 2</th>
-            <th>Spieler 3</th>
-            <th>Spieler 4</th>
+            <tr>
+                <th>Datum</th>
+                <th>Spieler 1</th>
+                <th>Spieler 2</th>
+                <th>Spieler 3</th>
+                <th>Spieler 4</th>
+            </tr>
             </thead>
             <tbody>
             @foreach (var item in Model.Courts)
             {
                 <tr>
                     <td>@item.MatchDay.ToString("dd.MM.yy")</td>
-                    <td>@item.PlayerCourtGrieskirchens[0].Player</td>
-                    <td>@item.PlayerCourtGrieskirchens[1].Player</td>
-                    <td>@item.PlayerCourtGrieskirchens[2].Player</td>
-                    <td>@item.PlayerCourtGrieskirchens[3].Player</td>
+                    @foreach (var playerCourtGrieskirchen in item.PlayerCourtGrieskirchens)
+                    {
+                        <td id="player-@playerCourtGrieskirchen.Player.Id"
+                            class="draggable-player" draggable="true"
+                            data-player-id="@playerCourtGrieskirchen.Player.Id"
+                            data-court-id="@item.Id">
+                            @playerCourtGrieskirchen.Player
+                        </td>
+                    }
                 </tr>
             }
             </tbody>

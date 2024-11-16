@@ -31,6 +31,7 @@ public class Registration : PageModel
 
     public async Task<IActionResult> OnPostRegisterAsync(RegistrationDto body)
     {
+        // Check for existing users
         if (_db.Players.Any(x => x.EmailOrPhone == body.EmailOrPhone))
             return new RedirectToPageResult(nameof(Registration),
                 new { errorText = "Email oder Telefonnummer existiert bereits" });
@@ -38,22 +39,31 @@ public class Registration : PageModel
             return new RedirectToPageResult(nameof(Registration),
                 new { errorText = "Benutzername existiert bereits" });
 
+        // Generate a verification code
         var code = GenerateVerificationCode();
         _logger.LogInformation(code);
 
-        // Store the code in session
-        //Gson not compatible with .NET 9
-        HttpContext.Session.SetString("VerificationCode", code);
-        HttpContext.Session.SetString("Firstname", body.Firstname);
-        HttpContext.Session.SetString("Lastname", body.Lastname);
-        HttpContext.Session.SetString("EmailOrPhone", body.EmailOrPhone);
-        HttpContext.Session.SetString("Username", body.Username);
-        HttpContext.Session.SetString("PasswordHash", _pe.HashPassword(body.Password));
+        // Insert the data into the verification table
+        var verificationEntry = new RegistrationVerification
+        {
+            Firstname = body.Firstname,
+            Lastname = body.Lastname,
+            EmailOrPhone = body.EmailOrPhone,
+            Username = body.Username,
+            PasswordHash = _pe.HashPassword(body.Password),
+            VerificationCode = code,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(10) // Set expiration time
+        };
+        _db.RegistrationVerifications.Add(verificationEntry);
+        await _db.SaveChangesAsync();
 
-        await _emailService.SendEmailAsync(body.EmailOrPhone, "Your Verification Code", code);
+        // Send the verification code
+        await _emailService.SendVerificationCodeAsync(body.EmailOrPhone, "Your Verification Code", code);
 
         return new RedirectToPageResult(nameof(Verification));
     }
+
 
     public string GenerateVerificationCode()
     {

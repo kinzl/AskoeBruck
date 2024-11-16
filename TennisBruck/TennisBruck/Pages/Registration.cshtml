@@ -4,37 +4,43 @@
 @{
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration</title>
+    <title>Registrierung</title>
     <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
 <div class="register-container">
-    <div class="login-box">
+    <div class="register-box">
         <h2>Registrieren</h2>
         <form method="post">
+            <!-- Vorname Input -->
             <div class="input-group">
                 <input placeholder="Vorname" id="firstname" type="text" name="firstname" required>
             </div>
+            <!-- Nachname Input -->
             <div class="input-group">
                 <input placeholder="Nachname" id="lastname" type="text" name="lastname" required>
             </div>
+            <!-- Benutzername Input -->
             <div class="input-group">
                 <input placeholder="Benutzername" id="username" type="text" name="username" required>
             </div>
+            <!-- Email/Phone Input -->
             <div class="input-group">
-                <input placeholder="E-Mail oder Telefonnummber" type="email" name="emailOrPhone" required>
+                <input placeholder="E-Mail oder Telefonnummer" type="text" name="emailOrPhone" required>
             </div>
+            <!-- Passwort Input -->
             <div class="input-group">
                 <input placeholder="Passwort" type="password" name="password" required>
             </div>
-            <div id="errorMessage">@Model.ErrorText</div>
+            <!-- Error Message -->
+            <div id="errorMessage" class="error-message">@Model.ErrorText</div>
             <br>
+            <!-- Submit Button -->
             <button asp-page-handler="Register" type="submit">Registrieren</button>
         </form>
     </div>

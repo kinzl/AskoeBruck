@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -37,13 +38,62 @@ public class CourtGrieskirchen : PageModel
         return Page();
     }
 
-    public IActionResult OnPostChangePlayingState()
+    public async Task<IActionResult> OnPostSwapPlayers([FromBody] JsonElement data)
     {
-        var player = _db.Players.Single(x => x.Id == int.Parse(HttpContext.User.Identities.ToList().First().Name!));
-        player.IsPlayingGrieskirchen = !player.IsPlayingGrieskirchen;
-        _db.SaveChanges();
+        if (!data.TryGetProperty("player1Id", out var player1IdProp) ||
+            !data.TryGetProperty("player2Id", out var player2IdProp) ||
+            !data.TryGetProperty("court1Id", out var court1IdProp) ||
+            !data.TryGetProperty("court2Id", out var court2IdProp))
+        {
+            return BadRequest("Invalid data.");
+        }
 
-        return new RedirectToPageResult(nameof(CourtGrieskirchen));
+        if (!int.TryParse(player1IdProp.GetString(), out int player1Id) ||
+            !int.TryParse(player2IdProp.GetString(), out int player2Id) ||
+            !int.TryParse(court1IdProp.GetString(), out int court1Id) ||
+            !int.TryParse(court2IdProp.GetString(), out int court2Id))
+        {
+            return BadRequest("Invalid data format.");
+        }
+
+        // Find the first court and player association
+        var playerCourt1 = await _db.PlayerCourtGrieskirchen
+            .Include(pc => pc.Player)
+            .Include(pc => pc.Court)
+            .FirstOrDefaultAsync(pc => pc.Player.Id == player1Id && pc.Court.Id == court1Id);
+
+        // Find the second court and player association
+        var playerCourt2 = await _db.PlayerCourtGrieskirchen
+            .Include(pc => pc.Player)
+            .Include(pc => pc.Court)
+            .FirstOrDefaultAsync(pc => pc.Player.Id == player2Id && pc.Court.Id == court2Id);
+
+        if (playerCourt1 == null || playerCourt2 == null)
+        {
+            return BadRequest("One or both players not found in specified courts.");
+        }
+
+        // Remove both entries from the database
+        _db.PlayerCourtGrieskirchen.Remove(playerCourt1);
+        _db.PlayerCourtGrieskirchen.Remove(playerCourt2);
+        await _db.SaveChangesAsync();
+
+        // Re-add entries with swapped court and player assignments
+        _db.PlayerCourtGrieskirchen.Add(new PlayerCourtGrieskirchen
+        {
+            Player = _db.Players.Single(x => x.Id == player2Id),
+            Court = _db.Court.Single(x => x.Id == court1Id)
+        });
+
+        _db.PlayerCourtGrieskirchen.Add(new PlayerCourtGrieskirchen
+        {
+            Player = _db.Players.Single(x => x.Id == player1Id),
+            Court = _db.Court.Single(x => x.Id == court2Id)
+        });
+
+        await _db.SaveChangesAsync();
+        OnGet();
+        return new JsonResult(new { success = true });
     }
 
     public IActionResult OnPostGeneratePlan(DateTime startDate, DateTime endDate)

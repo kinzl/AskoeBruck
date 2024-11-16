@@ -10,7 +10,7 @@ public class EmailService
     private readonly string _smtpUser = Environment.GetEnvironmentVariable("Email")!; // Your Gmail address
     private readonly string _smtpPass = Environment.GetEnvironmentVariable("Password")!; // Your Gmail password
 
-    public async Task SendEmailAsync(string toEmail, string subject, string verificationCode)
+    public async Task SendVerificationCodeAsync(string toEmail, string subject, string verificationCode)
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("ASKÖ Bruck", _smtpUser));
