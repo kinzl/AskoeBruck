@@ -13,7 +13,6 @@ namespace TennisBruck.Pages;
 public class Login : PageModel
 {
     public string? ErrorText { get; set; }
-    public string? ForgotPasswordErrorText { get; set; }
 
     private TennisContext _db;
     private PasswordEncryption _pe;
@@ -39,19 +38,33 @@ public class Login : PageModel
         _logger.LogInformation("OnPostLogin");
         try
         {
-            Player user = _db.Players.Single(x => x.Username == body.Username);
+            // Retrieve the user from the database
+            var user = _db.Players.SingleOrDefault(x => x.Username == body.Username);
+            if (user == null)
+            {
+                return new RedirectToPageResult(nameof(Login),
+                    new { ErrorText = "Passwort oder Benutzername ist falsch" });
+            }
+
+            // Verify the password
             if (_pe.VerifyPassword(body.Password, user.PasswordHash))
             {
-                var claims = new List<Claim>()
+                // Define user claims
+                var claims = new List<Claim>
                 {
-                    new(ClaimTypes.Name, user.Id.ToString())
-                };
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var authProperties = new AuthenticationProperties()
-                {
-                    IsPersistent = false
+                    new(ClaimTypes.NameIdentifier, user.Id.ToString()), // Use NameIdentifier for ID
+                    new(ClaimTypes.Name, user.Username), // Store username
+                    new(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User") // Store role (Admin/User)
                 };
 
+                // Create claims identity and authentication properties
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true // Set true if you want to persist login across sessions
+                };
+
+                // Sign in the user
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                     new ClaimsPrincipal(claimsIdentity), authProperties);
 
@@ -67,28 +80,37 @@ public class Login : PageModel
         }
     }
 
+
     public async Task<IActionResult> OnPostForgotPasswordAsync(string emailOrPhone)
     {
-        _logger.LogInformation("OnPostForgotPassword triggered");
-
         var player = _db.Players.FirstOrDefault(x => x.EmailOrPhone == emailOrPhone);
 
         if (player == null)
         {
-            ModelState.AddModelError(string.Empty, "Benutzer wurde nicht gefunden.");
-            return Page();
+            return new RedirectToPageResult(nameof(Login),
+                new { ErrorText = "Email oder Telefonnummer existiert nicht" });
         }
 
-        // Generate a verification code (you can also use tokens)
+        // Generate a verification code
         var code = new Random().Next(100000, 999999).ToString();
         player.PasswordResetToken = code;
         player.TokenExpiry = DateTime.UtcNow.AddMinutes(10);
         await _db.SaveChangesAsync();
 
-        // Send the code via email or SMS
+        //ToDo: Nullpointer because firstname is not nullable
+        // Add entry to verification table
+        var verification = new RegistrationVerification
+        {
+            EmailOrPhone = emailOrPhone,
+            VerificationCode = code,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+            Purpose = EnvironmentalVariables.PasswordResetPurpose,
+        };
+        _db.RegistrationVerifications.Add(verification);
+        await _db.SaveChangesAsync();
+
         await _emailService.SendVerificationCodeAsync(player.EmailOrPhone, "Passwort zurücksetzen", code);
 
-        // Save emailOrPhone to session for verification
         HttpContext.Session.SetString("ResetEmailOrPhone", emailOrPhone);
 
         return new RedirectToPageResult(nameof(Verification));

@@ -58,7 +58,7 @@ builder.Services.AddLogging();
 builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<SmsService>();
-builder.Services.AddScoped<PlayerService>();
+builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<PlanService>();
 builder.Services.AddSingleton<PasswordEncryption>();
 
@@ -71,6 +71,14 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
 });
 builder.Services.AddHttpLogging();
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromHours(1);
+});
 
 #endregion
 

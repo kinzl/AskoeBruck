@@ -12,4 +12,5 @@ public class RegistrationVerification
     public DateTime ExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsVerified { get; set; }
+    public string Purpose { get; set; } // "Registration" or "PasswordReset"
 }

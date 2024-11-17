@@ -52,6 +52,7 @@ public class Registration : PageModel
             Username = body.Username,
             PasswordHash = _pe.HashPassword(body.Password),
             VerificationCode = code,
+            Purpose = EnvironmentalVariables.RegistrationPurpose,
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = DateTime.UtcNow.AddMinutes(10) // Set expiration time
         };

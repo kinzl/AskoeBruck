@@ -10,21 +10,21 @@ namespace TennisBruck.Pages;
 
 public class IndexModel : PageModel
 {
-    private PlayerService _playerService;
+    private CurrentUserService _currentUserService;
     private TennisContext _db;
     private readonly ILogger<IndexModel> _logger;
     [BindProperty(SupportsGet = true)] public Player? Player { get; set; }
 
-    public IndexModel(ILogger<IndexModel> logger, TennisContext db, PlayerService playerService)
+    public IndexModel(ILogger<IndexModel> logger, TennisContext db, CurrentUserService currentUserService)
     {
         _logger = logger;
         _db = db;
-        _playerService = playerService;
+        _currentUserService = currentUserService;
     }
 
     public void OnGet()
     {
-        Player = _playerService.GetPlayer(HttpContext.User.Identities.ToList().First().Name);
+        Player = _currentUserService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name);
     }
 
     public IActionResult OnPostLogin(LoginDto body)
@@ -37,7 +37,7 @@ public class IndexModel : PageModel
     {
         _logger.LogInformation("OnPostLogout");
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        _playerService.SetPlayer(null);
+        // _currentUserService.SetPlayer(null);
         return new RedirectToPageResult(nameof(Index));
     }
 

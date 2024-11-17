@@ -9,17 +9,17 @@ namespace TennisBruck.Pages;
 
 public class CourtGrieskirchen : PageModel
 {
-    private readonly PlayerService _playerService;
+    private readonly CurrentUserService _currentUserService;
     private TennisContext _db;
     private PlanService _planService;
     private ILogger<CourtGrieskirchen> _logger;
     public Player LoggedInPlayer { get; set; }
     public List<Court> Courts { get; set; }
 
-    public CourtGrieskirchen(PlayerService playerService, TennisContext db, PlanService planService,
+    public CourtGrieskirchen(CurrentUserService currentUserService, TennisContext db, PlanService planService,
         ILogger<CourtGrieskirchen> logger)
     {
-        _playerService = playerService;
+        _currentUserService = currentUserService;
         _db = db;
         _planService = planService;
         _logger = logger;
@@ -28,7 +28,7 @@ public class CourtGrieskirchen : PageModel
     public IActionResult OnGet()
     {
         if (HttpContext.User.Identities.ToList().First().Name == null) return new RedirectToPageResult(nameof(Login));
-        LoggedInPlayer = _playerService.GetPlayer(HttpContext.User.Identities.ToList().First().Name)!;
+        LoggedInPlayer = _currentUserService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
         Courts = _db.Court
             .Include(x => x.PlayerCourtGrieskirchens)
             .ThenInclude(x => x.Player)

@@ -8,12 +8,12 @@ namespace TennisBruck.Pages;
 public class Punch : PageModel
 {
     private readonly TennisContext _db;
-    private readonly PlayerService _playerService;
+    private readonly CurrentUserService _currentUserService;
 
-    public Punch(TennisContext db, PlayerService playerService)
+    public Punch(TennisContext db, CurrentUserService currentUserService)
     {
         _db = db;
-        _playerService = playerService;
+        _currentUserService = currentUserService;
         MatchDays = new List<DateTime>();
         WorkingDates = new List<DateTime>();
     }
@@ -46,7 +46,7 @@ public class Punch : PageModel
 
     // public IActionResult OnPostToggleWork(DateTime matchDay)
     // {
-    //     var playerId = _playerService.GetCurrentPlayerId(User);
+    //     var playerId = _currentUserService.GetCurrentPlayerId(User);
     //     var assignment = _db.WorkAssignments.FirstOrDefault(x => x.PlayerId == playerId && x.WorkDate == matchDay);
     //
     //     if (assignment != null)
@@ -74,7 +74,7 @@ public class Punch : PageModel
     // {
     //     // Load match days and current assignments from the database
     //     MatchDays = _db.Court.Select(c => c.MatchDay).ToList();
-    //     var playerId = _playerService.GetCurrentPlayerId(User);
+    //     var playerId = _currentUserService.GetCurrentPlayerId(User);
     //     WorkingDates = _db.WorkAssignments.Where(x => x.PlayerId == playerId)
     //         .Select(x => x.WorkDate)
     //         .ToList();
