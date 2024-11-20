@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -101,6 +102,15 @@ public class CourtGrieskirchen : PageModel
         _logger.LogInformation("Starting plan generation");
         _planService.GeneratePlanGrieskirchen(startDate, endDate);
         _logger.LogInformation("Plan generation complete");
+        return new RedirectToPageResult(nameof(CourtGrieskirchen));
+    }
+
+    public IActionResult OnPostChangePlayingState()
+    {
+        var player = _db.Players.Single(x => x.Id == int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value));
+        player.IsPlayingGrieskirchen = !player.IsPlayingGrieskirchen;
+        _db.SaveChanges();
+
         return new RedirectToPageResult(nameof(CourtGrieskirchen));
     }
 }

@@ -12,7 +12,7 @@ namespace TennisBruck.Pages;
 
 public class Login : PageModel
 {
-    public string? ErrorText { get; set; }
+    public string? Message { get; set; }
 
     private TennisContext _db;
     private PasswordEncryption _pe;
@@ -28,9 +28,9 @@ public class Login : PageModel
     }
 
 
-    public void OnGet(string? errorText)
+    public void OnGet(string? message)
     {
-        ErrorText = errorText;
+        Message = message;
     }
 
     public async Task<IActionResult> OnPostLogin(LoginDto body)
@@ -43,7 +43,7 @@ public class Login : PageModel
             if (user == null)
             {
                 return new RedirectToPageResult(nameof(Login),
-                    new { ErrorText = "Passwort oder Benutzername ist falsch" });
+                    new { message = "Passwort oder Benutzername ist falsch" });
             }
 
             // Verify the password
@@ -71,12 +71,12 @@ public class Login : PageModel
                 return new RedirectToPageResult(nameof(Index));
             }
 
-            return new RedirectToPageResult(nameof(Login), new { ErrorText = "Passwort oder Benutzername ist falsch" });
+            return new RedirectToPageResult(nameof(Login), new { message = "Passwort oder Benutzername ist falsch" });
         }
         catch (Exception e)
         {
             _logger.LogError(e.Message);
-            return new RedirectToPageResult(nameof(Login), new { ErrorText = "Passwort oder Benutzername ist falsch" });
+            return new RedirectToPageResult(nameof(Login), new { message = "Passwort oder Benutzername ist falsch" });
         }
     }
 
@@ -93,11 +93,11 @@ public class Login : PageModel
 
         // Generate a verification code
         var code = new Random().Next(100000, 999999).ToString();
+        _logger.LogInformation(code);
         player.PasswordResetToken = code;
         player.TokenExpiry = DateTime.UtcNow.AddMinutes(10);
         await _db.SaveChangesAsync();
 
-        //ToDo: Nullpointer because firstname is not nullable
         // Add entry to verification table
         var verification = new RegistrationVerification
         {

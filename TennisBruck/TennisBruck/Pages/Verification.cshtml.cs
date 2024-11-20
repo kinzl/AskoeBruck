@@ -23,15 +23,15 @@ public class Verification : PageModel
         ErrorText = errorText;
     }
 
-    public async Task<IActionResult> OnPostVerifyAsync(string inputCode)
+    public async Task<IActionResult> OnPostVerifyAsync(string code)
     {
         // Query the database for the verification entry
         var verification = _db.RegistrationVerifications
-            .FirstOrDefault(x => x.VerificationCode == inputCode && x.ExpiresAt > DateTime.UtcNow);
+            .FirstOrDefault(x => x.VerificationCode == code && x.ExpiresAt > DateTime.UtcNow);
 
         if (verification == null)
         {
-            return new RedirectToPageResult(nameof(Login), new { errorText = "Ungültiger oder abgelaufener Code." });
+            return new RedirectToPageResult(nameof(Login), new { message = "Ungültiger oder abgelaufener Code." });
         }
 
         // Check the purpose of the verification entry
@@ -39,7 +39,7 @@ public class Verification : PageModel
         {
             // Redirect to Reset Password page
             HttpContext.Session.SetString("VerifiedEmailOrPhone", verification.EmailOrPhone);
-            return new RedirectToPageResult(nameof(ResetPassword));
+            return new RedirectToPageResult(nameof(ResetPassword), new { token = code });
         }
 
         if (verification.Purpose == EnvironmentalVariables.RegistrationPurpose)

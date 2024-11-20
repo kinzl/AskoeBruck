@@ -80,9 +80,9 @@ h2 {
     color: #03a9f4;
 }
 
-#errorMessage,
+#message,
 #errorMessageForgotPassword {
-    color: #ff6347;
+    color: white;
     font-size: 14px;
     margin-bottom: 15px;
 }
