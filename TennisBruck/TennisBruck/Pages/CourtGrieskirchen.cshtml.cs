@@ -15,7 +15,7 @@ public class CourtGrieskirchen : PageModel
     private PlanService _planService;
     private ILogger<CourtGrieskirchen> _logger;
     public Player LoggedInPlayer { get; set; }
-    public List<Court> Courts { get; set; }
+    [BindProperty] public List<Court> Courts { get; set; }
 
     public CourtGrieskirchen(CurrentUserService currentUserService, TennisContext db, PlanService planService,
         ILogger<CourtGrieskirchen> logger)
@@ -93,8 +93,7 @@ public class CourtGrieskirchen : PageModel
         });
 
         await _db.SaveChangesAsync();
-        OnGet();
-        return new JsonResult(new { success = true });
+        return new OkResult();
     }
 
     public IActionResult OnPostGeneratePlan(DateTime startDate, DateTime endDate)

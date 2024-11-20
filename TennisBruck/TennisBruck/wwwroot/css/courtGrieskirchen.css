@@ -12,15 +12,9 @@ body {
 .draggable-player {
     padding: 10px;
     cursor: move;
-    background-color: #f3f3f3;
-    border: 1px solid #ddd;
     border-radius: 4px;
     text-align: center;
     transition: background-color 0.2s ease;
-}
-
-.draggable-player:hover {
-    background-color: #e6e6e6;
 }
 
 

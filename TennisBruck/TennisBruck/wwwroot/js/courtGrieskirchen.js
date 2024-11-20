@@ -1,85 +1,66 @@
 document.addEventListener("DOMContentLoaded", () => {
-    let draggedPlayerId = null;
-    let draggedCourtId = null;
-    let draggedCell = null;
+    const draggablePlayers = document.querySelectorAll(".draggable-player");
+    const table = document.querySelector(".table-wrapper table");
 
-    // Set draggable attribute and add event listeners for each player cell
-    document.querySelectorAll(".draggable-player").forEach(cell => {
-        cell.draggable = true;
+    let draggedPlayer = null;
 
-        // Drag start event
-        cell.addEventListener("dragstart", event => {
-            draggedCell = event.target; // Store reference to the dragged cell
-            draggedPlayerId = draggedCell.dataset.playerId;
-            draggedCourtId = draggedCell.dataset.courtId;
-
-            // Store the text in the dataTransfer object to allow it to be accessed during drop
-            event.dataTransfer.setData("playerId", draggedPlayerId);
-            event.dataTransfer.setData("courtId", draggedCourtId);
-            event.dataTransfer.setData("playerText", draggedCell.innerText);
-            console.log("Drag started:", draggedPlayerId, draggedCourtId);
+    draggablePlayers.forEach(player => {
+        // Allow dragging
+        player.addEventListener("dragstart", event => {
+            draggedPlayer = player;
+            event.dataTransfer.setData("text/plain", player.dataset.playerId);
         });
 
-        // Drag over event (allow drop on any target cell)
-        cell.addEventListener("dragover", event => {
-            event.preventDefault(); // Allow drop
+        player.addEventListener("dragend", () => {
+            draggedPlayer = null;
         });
+    });
 
-        // Drop event
-        cell.addEventListener("drop", async event => {
-            event.preventDefault();
-            const targetCell = event.target;
-            const targetPlayerId = targetCell.dataset.playerId;
-            const targetCourtId = targetCell.dataset.courtId;
+    table.addEventListener("dragover", event => {
+        // Allow dropping
+        event.preventDefault();
+    });
 
-            console.log("Dropped on:", targetPlayerId, targetCourtId);
+    table.addEventListener("drop", async event => {
+        event.preventDefault();
 
-            // Check if drop target is different (to avoid unnecessary swap)
-            if (draggedPlayerId !== targetPlayerId || draggedCourtId !== targetCourtId) {
-                // Send swap request to backend
-                try {
-                    const response = await fetch("/CourtGrieskirchen?handler=SwapPlayers", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "RequestVerificationToken": document.querySelector("input[name='__RequestVerificationToken']").value
-                        },
-                        body: JSON.stringify({
-                            player1Id: draggedPlayerId,
-                            court1Id: draggedCourtId,
-                            player2Id: targetPlayerId,
-                            court2Id: targetCourtId
-                        })
-                    });
+        const target = event.target;
+        if (target.classList.contains("draggable-player") && draggedPlayer) {
+            const player1Id = draggedPlayer.dataset.playerId;
+            const court1Id = draggedPlayer.dataset.courtId;
 
-                    if (response.ok) {
-                        // Swap the player names and data attributes
-                        const draggedText = event.dataTransfer.getData("playerText");
-                        const targetText = targetCell.innerText;
+            const player2Id = target.dataset.playerId;
+            const court2Id = target.dataset.courtId;
 
-                        // Swap the player names (innerText)
-                        targetCell.innerText = draggedText;
-                        draggedCell.innerText = targetText;
+            // Visual feedback for swapping
+            const tempContent = draggedPlayer.innerHTML;
+            draggedPlayer.innerHTML = target.innerHTML;
+            target.innerHTML = tempContent;
 
-                        // Swap the player IDs and court IDs (data attributes)
-                        targetCell.dataset.playerId = draggedPlayerId;
-                        targetCell.dataset.courtId = draggedCourtId;
+            try {
+                // Send swap request to the server
+                const response = await fetch("/TennisBruck/CourtGrieskirchen?handler=SwapPlayers", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        player1Id,
+                        player2Id,
+                        court1Id,
+                        court2Id,
+                    }),
+                });
 
-                        draggedCell.dataset.playerId = targetPlayerId;
-                        draggedCell.dataset.courtId = targetCourtId;
-
-                    } else {
-                        alert("Failed to swap players.");
-                    }
-                } catch (error) {
-                    console.error("Error:", error);
+                if (!response.ok) {
+                    throw new Error("Failed to swap players");
                 }
+            } catch (error) {
+                console.error(error);
+                // Revert visual change on failure
+                target.innerHTML = draggedPlayer.innerHTML;
+                draggedPlayer.innerHTML = tempContent;
             }
-
-            // Clear dragged data
-            draggedPlayerId = null;
-            draggedCourtId = null;
-            draggedCell = null;
-        });
+        }
     });
 });
