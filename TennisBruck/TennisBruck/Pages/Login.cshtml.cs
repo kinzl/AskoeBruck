@@ -39,7 +39,8 @@ public class Login : PageModel
         try
         {
             // Retrieve the user from the database
-            var user = _db.Players.SingleOrDefault(x => x.Username == body.Username);
+            var user = _db.Players.SingleOrDefault(x => x.Username == body.Username) ??
+                       _db.Players.SingleOrDefault(x => x.EmailOrPhone == body.Username);
             if (user == null)
             {
                 return new RedirectToPageResult(nameof(Login),
@@ -47,31 +48,29 @@ public class Login : PageModel
             }
 
             // Verify the password
-            if (_pe.VerifyPassword(body.Password, user.PasswordHash))
+            if (!_pe.VerifyPassword(body.Password, user.PasswordHash))
+                return new RedirectToPageResult(nameof(Login),
+                    new { message = "Passwort oder Benutzername ist falsch" });
+            // Define user claims
+            var claims = new List<Claim>
             {
-                // Define user claims
-                var claims = new List<Claim>
-                {
-                    new(ClaimTypes.NameIdentifier, user.Id.ToString()), // Use NameIdentifier for ID
-                    new(ClaimTypes.Name, user.Username), // Store username
-                    new(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User") // Store role (Admin/User)
-                };
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()), // Use NameIdentifier for ID
+                new(ClaimTypes.Name, user.Username), // Store username
+                new(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User") // Store role (Admin/User)
+            };
 
-                // Create claims identity and authentication properties
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var authProperties = new AuthenticationProperties
-                {
-                    IsPersistent = true // Set true if you want to persist login across sessions
-                };
+            // Create claims identity and authentication properties
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true // Set true if you want to persist login across sessions
+            };
 
-                // Sign in the user
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity), authProperties);
+            // Sign in the user
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity), authProperties);
 
-                return new RedirectToPageResult(nameof(Index));
-            }
-
-            return new RedirectToPageResult(nameof(Login), new { message = "Passwort oder Benutzername ist falsch" });
+            return new RedirectToPageResult(nameof(Index));
         }
         catch (Exception e)
         {

@@ -65,7 +65,7 @@ builder.Services.AddSingleton<PasswordEncryption>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromHours(10);
+    options.IdleTimeout = TimeSpan.FromSeconds(3);
     options.Cookie.Name = "TennisBruck.Session";
     options.Cookie.IsEssential = true;
     options.Cookie.HttpOnly = true;
@@ -77,7 +77,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.ExpireTimeSpan = TimeSpan.FromHours(1);
+    options.ExpireTimeSpan = TimeSpan.FromSeconds(3);
 });
 
 #endregion

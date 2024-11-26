@@ -52,10 +52,16 @@ public class IndexModel : PageModel
         _logger.LogInformation("OnPostCourtPlanGrieskirchen");
         return new RedirectToPageResult(nameof(CourtGrieskirchen));
     }
-    
+
     public IActionResult OnPostPunch()
     {
         _logger.LogInformation("OnPostPunch");
         return new RedirectToPageResult(nameof(Punch));
+    }
+
+    public IActionResult OnPostShowSettings()
+    {
+        _logger.LogInformation("OnPostShowSettings");
+        return new RedirectToPageResult(nameof(Settings));
     }
 }

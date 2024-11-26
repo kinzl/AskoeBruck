@@ -112,7 +112,7 @@
     @*     </form> *@
     @* } *@
     @* <!--#endregion --> *@
-    
+
     <!--#region Members  -->
     @if (Model.Player != null)
     {
@@ -121,6 +121,19 @@
                 <h2>Mitglieder</h2>
                 <p>Hier sehen Sie alle Mitglieder</p>
                 <button type="submit">Mitglieder ansehen</button>
+            </section>
+        </form>
+    }
+    <!--#endregion -->
+
+    <!--#region Settings  -->
+    @if (Model.Player != null)
+    {
+        <form method="post" asp-page-handler="ShowSettings">
+            <section id="members" class="category">
+                <h2>Einstellungen</h2>
+                <p>Hier sehen Sie Ihre persönlichen Einstellungen</p>
+                <button type="submit">Einstellungen</button>
             </section>
         </form>
     }
