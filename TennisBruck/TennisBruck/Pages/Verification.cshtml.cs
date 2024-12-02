@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TennisBruck.Extensions;
+using TennisBruck.Services;
 using TennisDb;
 
 namespace TennisBruck.Pages;
@@ -11,27 +12,38 @@ namespace TennisBruck.Pages;
 public class Verification : PageModel
 {
     private TennisContext _db;
-    public string? ErrorText { get; set; }
+    public string? InfoText { get; set; }
+    private SmsService _smsService;
+    [BindProperty] public string EmailOrPhone { get; set; }
 
-    public Verification(TennisContext db)
+    public Verification(TennisContext db, SmsService smsService)
     {
         _db = db;
+        _smsService = smsService;
     }
 
-    public void OnGet(string? errorText)
+    public void OnGet(string? infoText)
     {
-        ErrorText = errorText;
+        InfoText = infoText;
     }
 
     public async Task<IActionResult> OnPostVerifyAsync(string code)
     {
         // Query the database for the verification entry
         var verification = _db.RegistrationVerifications
-            .FirstOrDefault(x => x.VerificationCode == code && x.ExpiresAt > DateTime.UtcNow);
+            .FirstOrDefault(x =>
+                x.VerificationCode == code && x.ExpiresAt > DateTime.UtcNow && x.EmailOrPhone == EmailOrPhone);
 
         if (verification == null)
         {
-            return new RedirectToPageResult(nameof(Login), new { message = "Ungültiger oder abgelaufener Code." });
+            var result = _smsService.VerifyCode(EmailOrPhone, code);
+            if (result is not OkResult)
+            {
+                return new RedirectToPageResult(nameof(Login), new { message = "Ungültiger oder abgelaufener Code." });
+            }
+
+            verification = _db.RegistrationVerifications
+                .FirstOrDefault(x => x.EmailOrPhone == EmailOrPhone);
         }
 
         // Check the purpose of the verification entry

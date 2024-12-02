@@ -1,26 +1,53 @@
+using Microsoft.AspNetCore.Mvc;
 using Twilio;
-using Twilio.Rest.Api.V2010.Account;
-using Twilio.Types;
+using Twilio.Rest.Verify.V2.Service;
 
-public class SmsService
+namespace TennisBruck.Services
 {
-    private readonly string _accountSid = "your_account_sid"; // Twilio Account SID
-    private readonly string _authToken = "your_auth_token";   // Twilio Auth Token
-    private readonly string _twilioPhoneNumber = "your_twilio_phone_number"; // Your Twilio Phone Number
-
-    public SmsService()
+    public class SmsService
     {
-        TwilioClient.Init(_accountSid, _authToken);
-    }
+        private readonly string _accountSid = Environment.GetEnvironmentVariable("TwilioAccountSid")!;
+        private readonly string _authToken = Environment.GetEnvironmentVariable("TwilioAuthToken")!;
+        private readonly string _twilioPhoneNumber = Environment.GetEnvironmentVariable("TwilioPhoneNumber")!;
+        private readonly string _verifyServiceSid = Environment.GetEnvironmentVariable("TwilioPathServiceId")!;
 
-    public void SendSms(string toPhoneNumber, string messageBody)
-    {
-        var message = MessageResource.Create(
-            body: messageBody,
-            from: new PhoneNumber(_twilioPhoneNumber),
-            to: new PhoneNumber(toPhoneNumber)
-        );
+        public SmsService()
+        {
+            TwilioClient.Init(_accountSid, _authToken);
+        }
 
-        Console.WriteLine($"Message sent to {toPhoneNumber} with SID: {message.Sid}");
+        // Send the verification code
+        public ActionResult SendSms(string toPhoneNumber)
+        {
+            var verification = VerificationResource.Create(
+                to: toPhoneNumber,
+                channel: "sms",
+                pathServiceSid: _verifyServiceSid
+            );
+
+            Console.WriteLine($"Verification SID: {verification.Sid}");
+            return new OkResult();
+        }
+
+        // Verify the code entered by the user
+        public ActionResult VerifyCode(string toPhoneNumber, string code)
+        {
+            var verificationCheck = VerificationCheckResource.Create(
+                to: toPhoneNumber,
+                code: code,
+                pathServiceSid: _verifyServiceSid
+            );
+
+            if (verificationCheck.Status == "approved")
+            {
+                Console.WriteLine("Verification successful!");
+                return new OkResult(); // Return success response
+            }
+            else
+            {
+                Console.WriteLine("Verification failed.");
+                return new BadRequestObjectResult("Invalid verification code."); // Return error response
+            }
+        }
     }
 }

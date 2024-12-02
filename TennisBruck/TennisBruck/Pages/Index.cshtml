@@ -25,36 +25,36 @@
         }
     </header>
 
-    <!--#region navbar  -->
-    <nav>
-        <ul>
-            @if (Model.Player == null)
-            {
-                <li>
-                    <a href="#login">Login</a>
-                </li>
-            }
-            else
-            {
-                <li>
-                    <a href="#logout">Logout</a>
-                </li>
-            }
-            <li>
-                <a href="#court-reservation">Platz Reservierung</a>
-            </li>
-            @if (Model.Player != null)
-            {
-                <li>
-                    <a href="#members">Mitglieder</a>
-                </li>
-            }
-            @* <li> *@
-            @*     <a href="#punch">Punsch</a> *@
-            @* </li> *@
-        </ul>
-    </nav>
-    <!--#endregion -->
+    @* <!--#region navbar  --> *@
+    @* <nav> *@
+    @*     <ul> *@
+    @*         @if (Model.Player == null) *@
+    @*         { *@
+    @*             <li> *@
+    @*                 <a href="#login">Login</a> *@
+    @*             </li> *@
+    @*         } *@
+    @*         else *@
+    @*         { *@
+    @*             <li> *@
+    @*                 <a href="#logout">Logout</a> *@
+    @*             </li> *@
+    @*         } *@
+    @*         <li> *@
+    @*             <a href="#court-reservation">Platz Reservierung</a> *@
+    @*         </li> *@
+    @*         @if (Model.Player != null) *@
+    @*         { *@
+    @*             <li> *@
+    @*                 <a href="#members">Mitglieder</a> *@
+    @*             </li> *@
+    @*         } *@
+    @*         $1$ <li> #1# *@
+    @*         $1$     <a href="#punch">Punsch</a> #1# *@
+    @*         $1$ </li> #1# *@
+    @*     </ul> *@
+    @* </nav> *@
+    @* <!--#endregion  --> *@
 
     <!--#region Login/Logout  -->
     @if (Model.Player == null)

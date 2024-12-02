@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TennisBruck.Extensions;
@@ -13,15 +14,17 @@ public class Registration : PageModel
     private readonly ILogger<Registration> _logger;
     private TennisContext _db;
     private PasswordEncryption _pe;
+    private SmsService _smsService;
     public string? ErrorText { get; set; }
 
     public Registration(EmailService emailService, ILogger<Registration> logger, TennisContext db,
-        PasswordEncryption pe)
+        PasswordEncryption pe, SmsService smsService)
     {
         _emailService = emailService;
         _logger = logger;
         _db = db;
         _pe = pe;
+        _smsService = smsService;
     }
 
     public void OnGet(string? errorText)
@@ -60,7 +63,14 @@ public class Registration : PageModel
         await _db.SaveChangesAsync();
 
         // Send the verification code
-        await _emailService.SendVerificationCodeAsync(body.EmailOrPhone, "Your Verification Code", code);
+        if (Regex.IsMatch(body.EmailOrPhone, EnvironmentalVariables.PhoneRegex))
+        {
+            _smsService.SendSms(body.EmailOrPhone);
+        }
+        else
+        {
+            await _emailService.SendVerificationCodeAsync(body.EmailOrPhone, "Verifizierungs Code", code);
+        }
 
         return new RedirectToPageResult(nameof(Verification));
     }
