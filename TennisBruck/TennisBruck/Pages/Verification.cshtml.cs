@@ -14,7 +14,7 @@ public class Verification : PageModel
     private TennisContext _db;
     public string? InfoText { get; set; }
     private SmsService _smsService;
-    [BindProperty] public string EmailOrPhone { get; set; }
+    [BindProperty] public string? EmailOrPhone { get; set; }
 
     public Verification(TennisContext db, SmsService smsService)
     {
@@ -22,13 +22,19 @@ public class Verification : PageModel
         _smsService = smsService;
     }
 
-    public void OnGet(string? infoText)
+    public void OnGet(string? infoText, string? emailOrPhone)
     {
         InfoText = infoText;
+        EmailOrPhone = emailOrPhone;
     }
 
     public async Task<IActionResult> OnPostVerifyAsync(string code)
     {
+        if (string.IsNullOrEmpty(EmailOrPhone))
+        {
+            return new RedirectToPageResult(nameof(Login), new { message = "Es ist ein Fehler aufgetreten" });
+        }
+
         // Query the database for the verification entry
         var verification = _db.RegistrationVerifications
             .FirstOrDefault(x =>

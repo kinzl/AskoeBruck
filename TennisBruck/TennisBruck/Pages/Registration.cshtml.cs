@@ -72,7 +72,7 @@ public class Registration : PageModel
             await _emailService.SendVerificationCodeAsync(body.EmailOrPhone, "Verifizierungs Code", code);
         }
 
-        return new RedirectToPageResult(nameof(Verification));
+        return new RedirectToPageResult(nameof(Verification), new { emailOrPhone = body.EmailOrPhone });
     }
 
 

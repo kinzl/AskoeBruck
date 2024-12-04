@@ -53,12 +53,6 @@ public class IndexModel : PageModel
         return new RedirectToPageResult(nameof(CourtGrieskirchen));
     }
 
-    public IActionResult OnPostPunch()
-    {
-        _logger.LogInformation("OnPostPunch");
-        return new RedirectToPageResult(nameof(Punch));
-    }
-
     public IActionResult OnPostShowSettings()
     {
         _logger.LogInformation("OnPostShowSettings");

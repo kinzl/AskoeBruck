@@ -30,7 +30,7 @@ namespace TennisBruck.Services
         }
 
         // Verify the code entered by the user
-        public ActionResult VerifyCode(string toPhoneNumber, string code)
+        public ActionResult VerifyCode(string? toPhoneNumber, string code)
         {
             var verificationCheck = VerificationCheckResource.Create(
                 to: toPhoneNumber,
