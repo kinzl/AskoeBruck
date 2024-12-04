@@ -1,0 +1,69 @@
+@page
+@model TennisBruck.Pages.CourtBruck
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Platz Reservierung Bruck</title>
+    <link rel="stylesheet" href="css/courtBruck.css">
+</head>
+<body>
+<div class="container">
+    <h1>Platz Reservierung Bruck</h1>
+    <div class="date-navigation">
+        <form method="get">
+            <button name="date" value="@Model.CurrentDate.AddDays(-1).ToString("yyyy-MM-dd")">Vorheriger Tag</button>
+            <button name="date" value="@Model.CurrentDate.AddDays(1).ToString("yyyy-MM-dd")">Nächster Tag</button>
+            <input type="date" name="date" value="@Model.CurrentDate.ToString("yyyy-MM-dd")" onchange="this.form.submit()">
+        </form>
+        <button onclick="window.location.href = '/Index'">Zurück</button>
+    </div>
+    <table>
+        <thead>
+        <tr>
+            <th>Time</th>
+            <th>Platz 1</th>
+            <th>Platz 2</th>
+            <th>Platz 3</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var timeSlot in Model.TimeSlots)
+        {
+            <tr>
+                <td>@timeSlot.Time.ToString("HH:mm")</td>
+                @for (int court = 1; court <= 3; court++)
+                {
+                    var reservation = Model.GetReservation(court, timeSlot.Time);
+                    if (reservation == null)
+                    {
+                        <td class="available">
+                            <form method="post" asp-page-handler="CreateReservation">
+                                <input type="hidden" name="CourtNumber" value="@court"/>
+                                <input type="hidden" name="StartTime" value="@timeSlot.Time"/>
+                                <button type="submit">+</button>
+                            </form>
+                        </td>
+                    }
+                    else
+                    {
+                        <td class="reserved">
+                            @reservation.Player.ToString()
+                            @if (Model.CurrentPlayer?.Id == reservation.Player.Id)
+                            {
+                                <form method="post" asp-page-handler="DeleteReservation">
+                                    <input type="hidden" name="ReservationId" value="@reservation.Id"/>
+                                    <button type="submit" class="delete-btn">🗑️</button>
+                                </form>
+                            }
+                        </td>
+                    }
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

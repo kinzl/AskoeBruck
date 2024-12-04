@@ -58,7 +58,7 @@ builder.Services.AddLogging();
 builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<SmsService>();
-builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<CurrentPlayerService>();
 builder.Services.AddScoped<PlanService>();
 builder.Services.AddSingleton<PasswordEncryption>();
 

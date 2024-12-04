@@ -80,11 +80,14 @@
     <!--#endregion -->
 
     <!--#region Court Reservation  -->
-    <section id="court-reservation" class="category">
-        <h2>Platz Reservierung</h2>
-        <p>Reservieren Sie sich jetzt Ihren Platz</p>
-        <button onclick="window.location.href = 'https://tenniskalender.at/public/'">Jetzt Reservieren</button>
-    </section>
+    <form method="post" asp-page-handler="ReserveCourt">
+        <section id="court-reservation" class="category">
+            <h2>Platz Reservierung</h2>
+            <p>Reservieren Sie sich jetzt Ihren Platz</p>
+            <button type="submit">Jetzt Reservieren</button>
+            @* <button onclick="window.location.href = 'https://tenniskalender.at/public/'">Jetzt Reservieren</button> *@
+        </section>
+    </form>
     <!--#endregion -->
 
     <!--#region Court Grieskirchen  -->

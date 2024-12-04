@@ -10,15 +10,15 @@ namespace TennisBruck.Pages;
 
 public class Settings : PageModel
 {
-    private CurrentUserService _currentUserService;
+    private CurrentPlayerService _currentPlayerService;
     private TennisContext _db;
     private PasswordEncryption _pe;
     public string? InfoText { get; set; }
     [BindProperty] public Player Player { get; set; }
 
-    public Settings(CurrentUserService currentUserService, TennisContext db, PasswordEncryption pe)
+    public Settings(CurrentPlayerService currentPlayerService, TennisContext db, PasswordEncryption pe)
     {
-        _currentUserService = currentUserService;
+        _currentPlayerService = currentPlayerService;
         _db = db;
         _pe = pe;
     }
@@ -27,14 +27,14 @@ public class Settings : PageModel
     {
         if (HttpContext.User.Identities.ToList().First().Name == null) return new RedirectToPageResult(nameof(Login));
         InfoText = infoText;
-        Player = _currentUserService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
+        Player = _currentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
         return Page();
     }
 
     public IActionResult OnPostChangeSettings(RegistrationDto body)
     {
         var player = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-        Player = _currentUserService.GetCurrentUser(player)!;
+        Player = _currentPlayerService.GetCurrentUser(player)!;
         Player.Firstname = body.Firstname;
         Player.Lastname = body.Lastname;
         Player.EmailOrPhone = body.EmailOrPhone;
@@ -49,7 +49,7 @@ public class Settings : PageModel
         if (newPassword != newPasswordRepeat)
             return RedirectToPage(nameof(Settings), new { infoText = "Passwörter stimmen nicht überein" });
         var player = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-        Player = _currentUserService.GetCurrentUser(player)!;
+        Player = _currentPlayerService.GetCurrentUser(player)!;
         Player.PasswordHash = _pe.HashPassword(newPassword);
         _db.SaveChanges();
         return RedirectToPage(nameof(Settings), new { infoText = "Neues Passwort gespeichert" });

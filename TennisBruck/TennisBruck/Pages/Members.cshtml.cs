@@ -9,24 +9,24 @@ namespace TennisBruck.Pages;
 public class Members : PageModel
 {
     private TennisContext _db;
-    private CurrentUserService CurrentUserService { get; set; }
+    private CurrentPlayerService CurrentPlayerService { get; set; }
     private readonly ILogger<IndexModel> _logger;
     public Player LoggedInPlayer { get; set; }
     public List<Player> AllPlayers { get; set; }
     public string? InfoBox { get; set; }
 
-    public Members(TennisContext db, ILogger<IndexModel> logger, CurrentUserService currentUserService)
+    public Members(TennisContext db, ILogger<IndexModel> logger, CurrentPlayerService currentPlayerService)
     {
         _db = db;
         _logger = logger;
-        CurrentUserService = currentUserService;
+        CurrentPlayerService = currentPlayerService;
     }
 
     public RedirectToPageResult? OnGet(string? infoBox)
     {
         if (HttpContext.User.Identities.ToList().First().Name == null) return new RedirectToPageResult(nameof(Login));
         InfoBox = infoBox;
-        LoggedInPlayer = CurrentUserService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
+        LoggedInPlayer = CurrentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
         _logger.LogInformation("Id {Name} Signed in", HttpContext.User.Identities.ToList().First().Name);
         AllPlayers = _db.Players.ToList();
         return null;

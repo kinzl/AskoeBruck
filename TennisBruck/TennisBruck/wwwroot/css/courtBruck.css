@@ -1,0 +1,99 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: url('../image/neutralTennisCourt.png') no-repeat center center fixed;
+    background-size: cover;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
+    text-align: center;
+    color: #0044cc;
+    margin-bottom: 20px;
+}
+
+.date-navigation {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.date-navigation button, .date-navigation input[type="date"] {
+    margin: 0 10px;
+    padding: 10px 15px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f7f7f7;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.date-navigation button:hover, .date-navigation input[type="date"]:hover {
+    background-color: #eaeaea;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th, td {
+    text-align: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+th {
+    background-color: #0044cc;
+    color: white;
+    font-weight: bold;
+}
+
+td {
+    background-color: #f7f7f7;
+    font-size: 14px;
+}
+
+td.available button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+td.available button:hover {
+    background-color: #218838;
+}
+
+td.reserved {
+    background-color: #ffcccc;
+    position: relative;
+}
+
+td.reserved .delete-btn {
+    background: none;
+    border: none;
+    color: #d9534f;
+    font-size: 14px;
+    cursor: pointer;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+
+td.reserved .delete-btn:hover {
+    color: #c9302c;
+}

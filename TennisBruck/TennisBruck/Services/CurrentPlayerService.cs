@@ -3,12 +3,12 @@ using TennisDb;
 
 namespace TennisBruck.Services;
 
-public class CurrentUserService
+public class CurrentPlayerService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly TennisContext _db;
 
-    public CurrentUserService(IHttpContextAccessor httpContextAccessor, TennisContext db)
+    public CurrentPlayerService(IHttpContextAccessor httpContextAccessor, TennisContext db)
     {
         _httpContextAccessor = httpContextAccessor;
         _db = db;
