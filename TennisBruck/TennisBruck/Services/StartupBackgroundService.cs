@@ -15,17 +15,16 @@ public class StartupBackgroundService : BackgroundService
         _scope = provider.CreateScope();
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task<Task<int>> ExecuteAsync(CancellationToken stoppingToken)
     {
         Console.WriteLine("ExecuteAsync STARTUPSERVICE");
         var db = _scope.ServiceProvider.GetRequiredService<TennisContext>();
 
-        db.Database.EnsureDeleted();
-        db.Database.EnsureCreated();
-
+        await db.Database.EnsureDeletedAsync(stoppingToken);
+        await db.Database.EnsureCreatedAsync(stoppingToken);
         Seed(db);
 
-        return Task.Run(() => db.SaveChanges(), stoppingToken);
+        return db.SaveChangesAsync(stoppingToken);
     }
 
     private void Seed(TennisContext db)

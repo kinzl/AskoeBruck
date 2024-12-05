@@ -2,7 +2,6 @@ using GrueneisR.RestClientGenerator;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using TennisBruck.Extensions;
 using TennisBruck.Services;
 using TennisDb;
@@ -38,22 +37,9 @@ builder.Services
         //.EnableLogging()
     );
 
-string? connectionStringMariaDb = builder.Configuration.GetConnectionString("TennisDbSqlite");
+builder.Services.AddDbContext<TennisContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSql")));
 
-string location = System.Reflection.Assembly.GetEntryAssembly()!.Location;
-string dataDirectory = Path.GetDirectoryName(location)!;
-Console.WriteLine("Path: " + dataDirectory);
-string? connectionString =
-    connectionStringMariaDb?.Replace("|DataDirectory|", dataDirectory + Path.DirectorySeparatorChar);
-Console.WriteLine($"******** ConnectionString: {connectionString}");
-Console.ForegroundColor = ConsoleColor.Yellow;
-Console.WriteLine($"******** Don't forget to comment out NorthwindContext.OnConfiguring !");
-Console.ResetColor();
-
-builder.Services.AddDbContext<TennisContext>(options => options.UseSqlite(connectionString));
-// builder.Services.AddDbContext<TennisContext>(options => options
-//     .UseMySql(connectionStringMariaDb,
-//         ServerVersion.Create(new Version(11, 3), ServerType.MariaDb)));
 builder.Services.AddLogging();
 builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddScoped<EmailService>();
@@ -65,7 +51,7 @@ builder.Services.AddSingleton<PasswordEncryption>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromSeconds(3);
+    options.IdleTimeout = TimeSpan.FromHours(2);
     options.Cookie.Name = "TennisBruck.Session";
     options.Cookie.IsEssential = true;
     options.Cookie.HttpOnly = true;

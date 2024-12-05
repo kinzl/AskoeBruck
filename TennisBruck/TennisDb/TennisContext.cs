@@ -7,6 +7,7 @@ public class TennisContext : DbContext
     public TennisContext(DbContextOptions<TennisContext> options)
         : base(options)
     {
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
     }
 
     public TennisContext()
