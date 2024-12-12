@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TennisBruck.Services;
@@ -8,6 +9,7 @@ using TennisDb;
 
 namespace TennisBruck.Pages;
 
+[Authorize]
 public class IndexModel : PageModel
 {
     private CurrentPlayerService _currentPlayerService;
@@ -37,7 +39,6 @@ public class IndexModel : PageModel
     {
         _logger.LogInformation("OnPostLogout");
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        // _currentPlayerService.SetPlayer(null);
         return new RedirectToPageResult(nameof(Index));
     }
 

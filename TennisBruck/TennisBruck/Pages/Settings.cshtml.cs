@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TennisBruck.Extensions;
@@ -8,6 +9,7 @@ using TennisDb;
 
 namespace TennisBruck.Pages;
 
+[Authorize]
 public class Settings : PageModel
 {
     private CurrentPlayerService _currentPlayerService;
@@ -25,7 +27,6 @@ public class Settings : PageModel
 
     public IActionResult OnGet(string? infoText)
     {
-        if (HttpContext.User.Identities.ToList().First().Name == null) return new RedirectToPageResult(nameof(Login));
         InfoText = infoText;
         Player = _currentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
         return Page();

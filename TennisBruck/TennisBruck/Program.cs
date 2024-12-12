@@ -1,8 +1,10 @@
 using GrueneisR.RestClientGenerator;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using TennisBruck.Extensions;
+using TennisBruck.Pages;
 using TennisBruck.Services;
 using TennisDb;
 
@@ -18,7 +20,7 @@ builder.Services.AddRazorPages();
 #region -------------------------------------------- ConfigureServices
 
 builder.Services.AddControllers();
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
+// builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
 builder.Services
     .AddEndpointsApiExplorer()
     .AddAuthorization()
@@ -51,7 +53,7 @@ builder.Services.AddSingleton<PasswordEncryption>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.IdleTimeout = TimeSpan.FromSeconds(3);
     options.Cookie.Name = "TennisBruck.Session";
     options.Cookie.IsEssential = true;
     options.Cookie.HttpOnly = true;
@@ -59,12 +61,14 @@ builder.Services.AddSession(options =>
 builder.Services.AddHttpLogging();
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.ExpireTimeSpan = TimeSpan.FromSeconds(3);
-});
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Login"; // Path to the login page
+        options.LogoutPath = "/Logout"; // Path to the logout page
+        options.ExpireTimeSpan = TimeSpan.FromHours(2); // Expire authentication after 20 minutes
+        options.SlidingExpiration = true; // Renew expiration if user is active
+    });
 
 #endregion
 
@@ -86,16 +90,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors(corsKey);
 app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
 
 #endregion
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseSession();

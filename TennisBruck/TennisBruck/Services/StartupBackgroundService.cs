@@ -39,6 +39,17 @@ public class StartupBackgroundService : BackgroundService
             IsPlayingGrieskirchen = false,
             IsAdmin = false
         });
+        
+        db.Players.Add(new Player()
+        {
+            Firstname = "Max",
+            Lastname = "Kammerer",
+            PasswordHash = _pe.HashPassword("1234"),
+            EmailOrPhone = "kammerem@gmail.com",
+            Username = "kammerem",
+            IsPlayingGrieskirchen = false,
+            IsAdmin = false
+        });
 
         db.Players.Add(new Player()
         {

@@ -19,4 +19,5 @@ public class TennisContext : DbContext
     public DbSet<Reservation> Reservations { get; set; }
     public DbSet<Court> Court { get; set; }
     public DbSet<RegistrationVerification> RegistrationVerifications { get; set; }
+    
 }

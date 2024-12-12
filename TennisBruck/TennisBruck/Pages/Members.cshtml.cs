@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TennisBruck.Services;
@@ -5,7 +6,7 @@ using TennisBruck.wwwroot.Dto;
 using TennisDb;
 
 namespace TennisBruck.Pages;
-
+[Authorize]
 public class Members : PageModel
 {
     private TennisContext _db;
@@ -24,10 +25,8 @@ public class Members : PageModel
 
     public RedirectToPageResult? OnGet(string? infoBox)
     {
-        if (HttpContext.User.Identities.ToList().First().Name == null) return new RedirectToPageResult(nameof(Login));
         InfoBox = infoBox;
         LoggedInPlayer = CurrentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
-        _logger.LogInformation("Id {Name} Signed in", HttpContext.User.Identities.ToList().First().Name);
         AllPlayers = _db.Players.ToList();
         return null;
     }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,7 @@ using TennisDb;
 
 namespace TennisBruck.Pages;
 
+[Authorize]
 public class CourtBruck : PageModel
 {
     private readonly TennisContext _db;
@@ -28,10 +30,6 @@ public class CourtBruck : PageModel
     {
         // Parse the date or default to today
         CurrentDate = string.IsNullOrEmpty(date) ? DateTime.Today : DateTime.Parse(date);
-
-        // Load the logged-in user
-        CurrentPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identity?.Name);
-        if (CurrentPlayer == null) return RedirectToPage(nameof(Login));
 
         // Load reservations for the selected day
         Reservations = _db.Reservations
