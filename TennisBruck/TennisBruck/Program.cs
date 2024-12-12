@@ -14,6 +14,9 @@ string swaggerTitle = "MinApiDemo";
 string restClientFolder = Environment.CurrentDirectory;
 string restClientFilename = "_requests.http";
 
+//Load environment variables from .env file
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
@@ -38,9 +41,14 @@ builder.Services
             .SetAction($"swagger/{swaggerVersion}/swagger.json")
         //.EnableLogging()
     );
+string connectionString = builder.Configuration.GetConnectionString("PostgreSql")!;
+Console.WriteLine($"Connection string: {connectionString}");
+connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("PostgresDatabase"))
+    .Replace("myUsername", Environment.GetEnvironmentVariable("PostgresUser"))
+    .Replace("myPassword", Environment.GetEnvironmentVariable("PostgresPassword"));
 
 builder.Services.AddDbContext<TennisContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSql")));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddLogging();
 builder.Services.AddHostedService<StartupBackgroundService>();
@@ -103,7 +111,5 @@ app.UseAuthorization();
 app.UseSession();
 app.MapRazorPages();
 app.MapControllers();
-//Load environment variables from .env file
-DotNetEnv.Env.Load();
 
 app.Run();
