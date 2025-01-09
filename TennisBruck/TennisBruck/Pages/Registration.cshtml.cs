@@ -14,17 +14,15 @@ public class Registration : PageModel
     private readonly ILogger<Registration> _logger;
     private TennisContext _db;
     private PasswordEncryption _pe;
-    private SmsService _smsService;
     public string? ErrorText { get; set; }
 
     public Registration(EmailService emailService, ILogger<Registration> logger, TennisContext db,
-        PasswordEncryption pe, SmsService smsService)
+        PasswordEncryption pe)
     {
         _emailService = emailService;
         _logger = logger;
         _db = db;
         _pe = pe;
-        _smsService = smsService;
     }
 
     public void OnGet(string? errorText)
@@ -65,7 +63,7 @@ public class Registration : PageModel
         // Send the verification code
         if (Regex.IsMatch(body.EmailOrPhone, EnvironmentalVariables.PhoneRegex))
         {
-            _smsService.SendSms(body.EmailOrPhone);
+            // _smsService.SendSms(body.EmailOrPhone);
         }
         else
         {

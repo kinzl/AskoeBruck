@@ -25,7 +25,6 @@
       </PackageReference>
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.1" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
-      <PackageReference Include="Twilio" Version="7.6.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -34,7 +33,7 @@
 
     <ItemGroup>
       <Content Update="appsettings.json">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
       <Content Update="wwwroot\image\loginBackground.png">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

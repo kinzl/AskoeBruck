@@ -1,10 +1,8 @@
 using GrueneisR.RestClientGenerator;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using TennisBruck.Extensions;
-using TennisBruck.Pages;
 using TennisBruck.Services;
 using TennisDb;
 
@@ -23,7 +21,6 @@ builder.Services.AddRazorPages();
 #region -------------------------------------------- ConfigureServices
 
 builder.Services.AddControllers();
-// builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
 builder.Services
     .AddEndpointsApiExplorer()
     .AddAuthorization()
@@ -41,19 +38,22 @@ builder.Services
             .SetAction($"swagger/{swaggerVersion}/swagger.json")
         //.EnableLogging()
     );
-string connectionString = builder.Configuration.GetConnectionString("PostgreSql")!;
-Console.WriteLine($"Connection string: {connectionString}");
-connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("PostgresDatabase"))
-    .Replace("myUsername", Environment.GetEnvironmentVariable("PostgresUser"))
-    .Replace("myPassword", Environment.GetEnvironmentVariable("PostgresPassword"));
 
+builder.Configuration.AddEnvironmentVariables();
+
+string connectionString = builder.Configuration.GetConnectionString("PostgresSql")!;
+connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("POSTGRES_DATABASE"))
+    .Replace("myUsername", Environment.GetEnvironmentVariable("POSTGRES_USER"))
+    .Replace("myPassword", Environment.GetEnvironmentVariable("POSTGRES_PASSWORD"));
+Console.WriteLine($"Connection string: {connectionString}");
+// connectionString = "Host=localhost;Port=5432;Database=mydatabase;Username=myuser;Password=mypassword";
 builder.Services.AddDbContext<TennisContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddLogging();
 builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddScoped<EmailService>();
-builder.Services.AddScoped<SmsService>();
+// builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CurrentPlayerService>();
 builder.Services.AddScoped<PlanService>();
 builder.Services.AddSingleton<PasswordEncryption>();

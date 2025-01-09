@@ -53,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 if (!response.ok) {
+                    console.log(response);
                     throw new Error("Failed to swap players");
                 }
             } catch (error) {

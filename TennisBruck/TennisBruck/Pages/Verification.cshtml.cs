@@ -13,13 +13,12 @@ public class Verification : PageModel
 {
     private TennisContext _db;
     public string? InfoText { get; set; }
-    private SmsService _smsService;
+    // private SmsService _smsService;
     [BindProperty] public string? EmailOrPhone { get; set; }
 
-    public Verification(TennisContext db, SmsService smsService)
+    public Verification(TennisContext db)
     {
         _db = db;
-        _smsService = smsService;
     }
 
     public void OnGet(string? infoText, string? emailOrPhone)
@@ -42,11 +41,11 @@ public class Verification : PageModel
 
         if (verification == null)
         {
-            var result = _smsService.VerifyCode(EmailOrPhone, code);
-            if (result is not OkResult)
-            {
-                return new RedirectToPageResult(nameof(Login), new { message = "Ungültiger oder abgelaufener Code." });
-            }
+            // var result = _smsService.VerifyCode(EmailOrPhone, code);
+            // if (result is not OkResult)
+            // {
+            //     return new RedirectToPageResult(nameof(Login), new { message = "Ungültiger oder abgelaufener Code." });
+            // }
 
             verification = _db.RegistrationVerifications
                 .FirstOrDefault(x => x.EmailOrPhone == EmailOrPhone);
