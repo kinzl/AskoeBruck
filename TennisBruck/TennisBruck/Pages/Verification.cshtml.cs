@@ -12,50 +12,45 @@ namespace TennisBruck.Pages;
 public class Verification : PageModel
 {
     private TennisContext _db;
+
     public string? InfoText { get; set; }
+
     // private SmsService _smsService;
-    [BindProperty] public string? EmailOrPhone { get; set; }
+    public string? EmailOrPhone { get; set; }
 
     public Verification(TennisContext db)
     {
         _db = db;
     }
 
-    public void OnGet(string? infoText, string? emailOrPhone)
+    public void OnGet(string? infoText)
     {
         InfoText = infoText;
-        EmailOrPhone = emailOrPhone;
+        EmailOrPhone = TempData["EmailOrPhone"] as string;
+        TempData["EmailOrPhone"] = EmailOrPhone;
     }
 
     public async Task<IActionResult> OnPostVerifyAsync(string code)
     {
-        if (string.IsNullOrEmpty(EmailOrPhone))
+        EmailOrPhone = TempData["EmailOrPhone"] as string;
+        if (string.IsNullOrEmpty(EmailOrPhone) || string.IsNullOrEmpty(code))
         {
             return new RedirectToPageResult(nameof(Login), new { message = "Es ist ein Fehler aufgetreten" });
         }
 
         // Query the database for the verification entry
         var verification = _db.RegistrationVerifications
-            .FirstOrDefault(x =>
-                x.VerificationCode == code && x.ExpiresAt > DateTime.UtcNow && x.EmailOrPhone == EmailOrPhone);
+            .Single(x => x.EmailOrPhone == EmailOrPhone);
 
-        if (verification == null)
+        if (verification.VerificationCode != code || verification.ExpiresAt < DateTime.UtcNow)
         {
-            // var result = _smsService.VerifyCode(EmailOrPhone, code);
-            // if (result is not OkResult)
-            // {
-            //     return new RedirectToPageResult(nameof(Login), new { message = "Ungültiger oder abgelaufener Code." });
-            // }
-
-            verification = _db.RegistrationVerifications
-                .FirstOrDefault(x => x.EmailOrPhone == EmailOrPhone);
+            return new RedirectToPageResult(nameof(Verification),
+                new { infoText = "Der Code ist ungültig oder falsch" });
         }
 
         // Check the purpose of the verification entry
         if (verification.Purpose == EnvironmentalVariables.PasswordResetPurpose)
         {
-            // Redirect to Reset Password page
-            HttpContext.Session.SetString("VerifiedEmailOrPhone", verification.EmailOrPhone);
             return new RedirectToPageResult(nameof(ResetPassword), new { token = code });
         }
 
@@ -86,6 +81,7 @@ public class Verification : PageModel
 
             await _db.SaveChangesAsync();
 
+            TempData.Remove("EmailOrPhone");
             // Log the user in
 
             var claims = new List<Claim>

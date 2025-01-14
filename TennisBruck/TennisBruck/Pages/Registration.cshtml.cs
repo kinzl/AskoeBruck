@@ -41,7 +41,7 @@ public class Registration : PageModel
                 new { errorText = "Benutzername existiert bereits" });
 
         // Generate a verification code
-        var code = GenerateVerificationCode();
+        var code = ExtensionMethods.GenerateVerificationCode();
         _logger.LogInformation(code);
 
         // Insert the data into the verification table
@@ -70,12 +70,7 @@ public class Registration : PageModel
             await _emailService.SendVerificationCodeAsync(body.EmailOrPhone, "Verifizierungs Code", code);
         }
 
-        return new RedirectToPageResult(nameof(Verification), new { emailOrPhone = body.EmailOrPhone });
-    }
-
-
-    public string GenerateVerificationCode()
-    {
-        return new Random().Next(100000, 999999).ToString();
+        TempData["EmailOrPhone"] = body.EmailOrPhone;
+        return RedirectToPage(nameof(Verification));
     }
 }

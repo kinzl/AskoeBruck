@@ -82,16 +82,16 @@ public class Login : PageModel
 
     public async Task<IActionResult> OnPostForgotPasswordAsync(string emailOrPhone)
     {
-        var player = _db.Players.FirstOrDefault(x => x.EmailOrPhone == emailOrPhone);
+        var player = _db.Players.SingleOrDefault(x => x.EmailOrPhone == emailOrPhone);
 
         if (player == null)
         {
             return new RedirectToPageResult(nameof(Login),
-                new { ErrorText = "Email oder Telefonnummer existiert nicht" });
+                new { Message = "Email oder Telefonnummer existiert nicht" });
         }
 
         // Generate a verification code
-        var code = new Random().Next(100000, 999999).ToString();
+        var code = ExtensionMethods.GenerateVerificationCode();
         _logger.LogInformation(code);
         player.PasswordResetToken = code;
         player.TokenExpiry = DateTime.UtcNow.AddMinutes(10);
@@ -107,10 +107,9 @@ public class Login : PageModel
         };
         _db.RegistrationVerifications.Add(verification);
         await _db.SaveChangesAsync();
-
         await _emailService.SendVerificationCodeAsync(player.EmailOrPhone, "Passwort zurücksetzen", code);
 
-        HttpContext.Session.SetString("ResetEmailOrPhone", emailOrPhone);
+        TempData["EmailOrPhone"] = emailOrPhone;
 
         return new RedirectToPageResult(nameof(Verification));
     }

@@ -17,8 +17,8 @@
 <div class="login-container">
     <div class="login-box">
         <h2>Code Verifizierung</h2>
-
         <form method="post" asp-page-handler="Verify">
+            <label style="color: white">Eine Nachricht wurde an @Model.EmailOrPhone gesendet</label>
             <div class="input-group">
                 <input type="text" id="code" name="code" placeholder="Verifizierungs Code" required>
             </div>

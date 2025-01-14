@@ -75,7 +75,6 @@ public class ResetPassword : PageModel
 
         // Optionally log the password reset event
         Console.WriteLine($"Password reset successfully for user: {user.Id}");
-
         return new RedirectToPageResult(nameof(Login), new { message = "Passwort wurde erfolgreich zurückgesetzt." });
     }
 }
