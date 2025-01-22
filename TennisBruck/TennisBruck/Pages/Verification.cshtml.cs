@@ -35,7 +35,7 @@ public class Verification : PageModel
         EmailOrPhone = TempData["EmailOrPhone"] as string;
         if (string.IsNullOrEmpty(EmailOrPhone) || string.IsNullOrEmpty(code))
         {
-            return new RedirectToPageResult(nameof(Login), new { message = "Es ist ein Fehler aufgetreten" });
+            return RedirectToPage(nameof(Login), new { message = "Es ist ein Fehler aufgetreten" });
         }
 
         // Query the database for the verification entry
@@ -44,14 +44,13 @@ public class Verification : PageModel
 
         if (verification.VerificationCode != code || verification.ExpiresAt < DateTime.UtcNow)
         {
-            return new RedirectToPageResult(nameof(Verification),
-                new { infoText = "Der Code ist ungültig oder falsch" });
+            return RedirectToPage(nameof(Verification), new { infoText = "Ungültiger Code oder abgelaufen." });
         }
 
         // Check the purpose of the verification entry
         if (verification.Purpose == EnvironmentalVariables.PasswordResetPurpose)
         {
-            return new RedirectToPageResult(nameof(ResetPassword), new { token = code });
+            return RedirectToPage(nameof(ResetPassword), new { token = code });
         }
 
         if (verification.Purpose == EnvironmentalVariables.RegistrationPurpose)
@@ -61,7 +60,7 @@ public class Verification : PageModel
 
             if (entry == null)
             {
-                return new RedirectToPageResult(nameof(Verification),
+                return RedirectToPage(nameof(Verification),
                     new { errorText = "Ungültiger Registrierungsprozess." });
             }
 
@@ -102,7 +101,7 @@ public class Verification : PageModel
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(claimsIdentity), authProperties);
 
-            return new RedirectToPageResult(nameof(Index));
+            return RedirectToPage(nameof(Index));
         }
 
         return Page();

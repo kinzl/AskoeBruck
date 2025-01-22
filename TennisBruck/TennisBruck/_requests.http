@@ -1,3 +1,7 @@
 @baseUrl = http://localhost:5281
 ##################################################
 
+
+################################################## SwapPlayer
+POST {{baseUrl}}/SwapPlayer/OnPostSwapPlayers
+#####

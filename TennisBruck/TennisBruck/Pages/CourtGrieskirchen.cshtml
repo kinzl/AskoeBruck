@@ -16,11 +16,13 @@
 <div class="container">
     <h1>Hallenplatz Grieskirchen</h1>
     <form method="post" asp-page-handler="ChangePlayingState">
-        <label class="status-label @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "label-playing" : "label-not-playing")">
+        <label
+            class="status-label @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "label-playing" : "label-not-playing")">
             @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "Sie spielen aktuell in Grieskirchen mit." : "Sie spielen aktuell nicht in Grieskirchen mit.")
         </label>
         <label class="switch">
-            <input type="checkbox" @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "checked" : "") onclick="this.form.submit()">
+            <input type="checkbox" @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "checked" : "")
+                   onclick="this.form.submit()">
             <span class="slider round"></span>
         </label>
     </form>
@@ -35,7 +37,11 @@
             <button>Generiere Plan</button>
         </form>
     }
-
+    
+    <form method="post" asp-page-handler="Back">
+        <button>Zurück</button>
+    </form>
+    
     <div class="table-wrapper">
         <table>
             <thead>

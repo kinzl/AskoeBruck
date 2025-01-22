@@ -2,6 +2,7 @@ using GrueneisR.RestClientGenerator;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using TennisBruck.Controller;
 using TennisBruck.Extensions;
 using TennisBruck.Services;
 using TennisDb;

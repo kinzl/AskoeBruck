@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 // Send swap request to the server
-                const response = await fetch("/TennisBruck/CourtGrieskirchen?handler=SwapPlayers", {
+                const response = await fetch("/SwapPlayer/OnPostSwapPlayers", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -51,7 +51,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         court2Id,
                     }),
                 });
-
+                console.log(JSON.stringify({
+                    player1Id,
+                    player2Id,
+                    court1Id,
+                    court2Id,
+                }), response);
                 if (!response.ok) {
                     console.log(response);
                     throw new Error("Failed to swap players");
