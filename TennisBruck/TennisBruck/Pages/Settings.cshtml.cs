@@ -45,14 +45,24 @@ public class Settings : PageModel
         return RedirectToPage(nameof(Settings), new { infoText = "Daten gespeichert" });
     }
 
-    public IActionResult OnPostChangePassword(string newPassword, string newPasswordRepeat)
+    public IActionResult OnPostChangePassword(string oldPassword, string newPassword, string newPasswordRepeat)
     {
         if (newPassword != newPasswordRepeat)
             return RedirectToPage(nameof(Settings), new { infoText = "Passwörter stimmen nicht überein" });
+        if (oldPassword == newPassword || oldPassword == newPasswordRepeat)
+            return RedirectToPage(nameof(Settings),
+                new { infoText = "Neues Passwort darf nicht gleich dem alten sein" });
         var player = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
         Player = _currentPlayerService.GetCurrentUser(player)!;
+        if (!_pe.HashPassword(oldPassword).Equals(Player.PasswordHash))
+            return RedirectToPage(nameof(Settings), new { infoText = "Altes Passwort ist falsch" });
         Player.PasswordHash = _pe.HashPassword(newPassword);
         _db.SaveChanges();
         return RedirectToPage(nameof(Settings), new { infoText = "Neues Passwort gespeichert" });
+    }
+    
+    public IActionResult OnPostBack()
+    {
+        return RedirectToPage(nameof(Index));
     }
 }

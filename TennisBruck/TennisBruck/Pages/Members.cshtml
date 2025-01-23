@@ -47,7 +47,9 @@
                             <td>@player.EmailOrPhone</td>
                             <td>@player.IsAdmin</td>
                             <td>
-                                <button class="action-button delete" name="playerId" value="@player.Id" type="submit" asp-page-handler="DeleteUser">Löschen</button>
+                                <button class="action-button delete" name="playerId" value="@player.Id" type="submit"
+                                        asp-page-handler="DeleteUser">Löschen
+                                </button>
                             </td>
                         }
                     </tr>
@@ -58,9 +60,15 @@
     </div>
     @if (Model.LoggedInPlayer.IsAdmin)
     {
-        <div class="actions">
-            <button id="createUserButton" class="action-button create" onclick="toggleCreateUser()">Erstelle Benutzer</button>
-        </div>
+        <form method="post">
+            <div class="actions">
+                <button id="createUserButton" class="action-button create" onclick="toggleCreateUser()">Erstelle
+                    Benutzer
+                </button>
+                <button asp-page-handler="Back" type="submit">Zurück</button>
+            </div>
+        </form>
+
         <div id="createUser" class="expandable-section" style="display: none;">
             <form method="post">
                 <div class="form-group">

@@ -34,6 +34,10 @@
 
     <form method="post" asp-page-handler="ChangePassword" class="password-form">
         <h2>Passwort ändern</h2>
+
+        <label for="OldPassword">Altes Passwort</label>
+        <input id="OldPassword" name="oldPassword" type="password" required/>
+
         <label for="NewPassword">Neues Passwort</label>
         <input id="NewPassword" name="newPassword" type="password" required/>
 
@@ -42,7 +46,9 @@
 
         <button type="submit" class="btn">Passwort ändern</button>
     </form>
-
+    <form method="post">
+        <button class="btn" asp-page-handler="Back" type="submit">Zurück</button>
+    </form>
     @if (!string.IsNullOrEmpty(Model.InfoText))
     {
         <div class="info-text">@Model.InfoText</div>

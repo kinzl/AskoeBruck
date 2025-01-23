@@ -6,6 +6,7 @@ using TennisBruck.wwwroot.Dto;
 using TennisDb;
 
 namespace TennisBruck.Pages;
+
 [Authorize]
 public class Members : PageModel
 {
@@ -58,6 +59,11 @@ public class Members : PageModel
         var player = _db.Players.Single(x => x.Id == playerId);
         _db.Players.Remove(player);
         _db.SaveChanges();
-        return new RedirectToPageResult(nameof(Members));
+        return RedirectToPage(nameof(Members));
+    }
+
+    public IActionResult OnPostBack()
+    {
+        return RedirectToPage(nameof(Index));
     }
 }

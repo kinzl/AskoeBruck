@@ -78,11 +78,3 @@ input:focus {
 .btn:active {
     background-color: #003f7f;
 }
-
-/* Info text */
-.info-text {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 14px;
-    color: black;
-}
