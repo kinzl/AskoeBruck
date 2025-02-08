@@ -14,28 +14,71 @@
     <script src="js/movement.js"></script>
 </head>
 <body>
-<h1>Cup System with Group Stages</h1>
+<h1>Vereinsmeisterschaft Bruck</h1>
+@if (Model.CurrentPlayer.IsAdmin)
+{
+    <form method="post">
+        <input name="competitionName" placeholder="Neuer Bewerb Name"/>
+        <button type="submit" asp-page-handler="CreateCompetition">Bewerb erstellen</button>
+    </form>
+}
+<form method="post">
+    <select name="SelectedCompetitionId" asp-for="SelectedCompetitionId" onchange="this.form.submit()">
+        <option value="">Bewerb auswählen</option>
+        @foreach (var competition in Model.Competitions)
+        {
+            <option value="@competition.Id">@competition.Name</option>
+        }
+    </select>
+</form>
 
-<div class="group-stage">
-    <h2>Group Stage</h2>
-    @foreach (var group in Model.Groups)
-    {
-        <div class="group" ondrop="drop(event, this)" ondragover="allowDrop(event)">
-            <h3>@group.Name</h3>
-            @foreach (var team in group.Teams)
-            {
-                <div id="team-@team.Id" class="card" draggable="true" ondragstart="drag(event)">@team.Name</div>
-            }
-        </div>
-    }
-</div>
 
-<div class="knockout">
-    <h2>Knockout Stage</h2>
-    @foreach (var match in Model.KnockoutMatches)
+@if (Model.SelectedCompetition != null)
+{
+    <h3>Selected Competition: @Model.SelectedCompetition.Name</h3>
+    @if (Model.CurrentPlayer.IsAdmin)
     {
-        <div class="match">@match.Team1.Name vs @match.Team2.Name</div>
+        <form method="post">
+            <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+            <button asp-page-handler="DeleteCompetition">Diesen Bewerb löschen</button>
+        </form>
     }
-</div>
+
+    <form method="post">
+        <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
+        <label>Für diesen Bewerb</label>
+        @if (Model.IsRegistered)
+        {
+            <button style="color: red" asp-page-handler="Unregister">Abmelden</button>
+        }
+        else
+        {
+            <button style="color: green" asp-page-handler="Register">Anmelden</button>
+        }
+    </form>
+}
+
+<label>Aktuell eingetragene Bewerbe</label>
+<select size="3">
+    @foreach (var compesition in Model.RegisteredCompetitions)
+    {
+        <option value="@compesition.Id">@compesition.Name</option>
+    }
+</select>
+ 
+<label>Aktuell eingetragene Spieler für diesen Bewerb: @Model.RegisteredCompetitionPlayers.Count()</label>
+<select size="8">
+    @foreach (var player in Model.RegisteredCompetitionPlayers)
+    {
+        <option value="@player.Id">@player.ToString()</option>
+    }
+</select>
+
+
+<label>@Model.Message</label>
+<form method="post">
+    <button asp-page-handler="Back">Zurück</button>
+</form>
+@* Table als Gruppenphase? alle Spiele von allen bewerben die einem selbst betreffen werden wo angezeigt *@
 </body>
 </html>

@@ -22,7 +22,7 @@ public class StartupBackgroundService : BackgroundService
     //
     //     await db.Database.EnsureDeletedAsync(stoppingToken);
     //     await db.Database.EnsureCreatedAsync(stoppingToken);
-    //     Seed(db);
+    //     SeedPlayer(db);
     //
     //     return db.SaveChangesAsync(stoppingToken);
     // }
@@ -34,14 +34,16 @@ public class StartupBackgroundService : BackgroundService
 
         db.Database.EnsureDeleted();
         db.Database.EnsureCreated();
-        Seed(db);
-
+        
+        SeedPlayer(db);
+        SeedCompetition(db);
+        
         db.SaveChanges();
 
         return Task.CompletedTask;
     }
 
-    private void Seed(TennisContext db)
+    private void SeedPlayer(TennisContext db)
     {
         db.Players.Add(new Player()
         {
@@ -119,6 +121,17 @@ public class StartupBackgroundService : BackgroundService
             IsPlayingGrieskirchen = true,
             IsAdmin = true
         });
-        db.SaveChanges();
+    }
+
+    private void SeedCompetition(TennisContext db)
+    {
+        db.Competitions.Add(new Competition()
+        {
+            Name = "Herren Einzel"
+        });
+        db.Competitions.Add(new Competition()
+        {
+            Name = "Herren Doppel"
+        });
     }
 }

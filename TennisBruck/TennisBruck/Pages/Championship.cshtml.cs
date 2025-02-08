@@ -1,50 +1,116 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.IdentityModel.Tokens;
+using TennisBruck.Services;
+using TennisDb;
 
 namespace TennisBruck.Pages;
 
+[Authorize]
 public class Championship : PageModel
 {
-    public List<Group> Groups { get; set; }
-    public List<Match> KnockoutMatches { get; set; }
+    private TennisContext _db;
+    private CurrentPlayerService _currentPlayerService;
+    public Player CurrentPlayer { get; set; }
+    [BindProperty] public List<Competition> Competitions { get; set; }
+    [BindProperty] public Competition? SelectedCompetition { get; set; }
+    [BindProperty] public int? SelectedCompetitionId { get; set; }
+    [BindProperty] public bool IsRegistered { get; set; }
+    [BindProperty] public List<Competition> RegisteredCompetitions { get; set; }
+    [BindProperty] public List<Player> RegisteredCompetitionPlayers { get; set; } = new();
+    public string? Message { get; set; }
 
-    public void OnGet()
+    public Championship(CurrentPlayerService currentPlayerService, TennisContext db)
     {
-        Groups = new List<Group>
+        _currentPlayerService = currentPlayerService;
+        _db = db;
+    }
+
+
+    public void OnGet(int? selectedCompetitionId, string? message)
+    {
+        InitValues(selectedCompetitionId, message);
+    }
+
+    public void OnPost(int? selectedCompetitionId, string? message)
+    {
+        InitValues(selectedCompetitionId, message);
+    }
+
+    private void InitValues(int? selectedCompetitionId, string? message)
+    {
+        if (selectedCompetitionId.HasValue) SelectedCompetitionId = selectedCompetitionId;
+        Message = message;
+        CurrentPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
+        Competitions = _db.Competitions.ToList();
+
+        RegisteredCompetitions = _db.PlayerCompetitions.Where(x => x.Player.Id == CurrentPlayer.Id)
+            .Select(x => x.Competition).ToList();
+
+        if (SelectedCompetitionId.HasValue)
         {
-            new Group
-            {
-                Name = "Group A",
-                Teams = new List<Team> { new Team { Id = 1, Name = "Team 1" }, new Team { Id = 2, Name = "Team 2" } }
-            },
-            new Group
-            {
-                Name = "Group B",
-                Teams = new List<Team> { new Team { Id = 3, Name = "Team 3" }, new Team { Id = 4, Name = "Team 4" } }
-            }
-        };
+            SelectedCompetition = Competitions.FirstOrDefault(c => c.Id == SelectedCompetitionId);
+            IsRegistered = _db.PlayerCompetitions.SingleOrDefault(x =>
+                x.Player.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetitionId) != null;
+            RegisteredCompetitionPlayers = _db.PlayerCompetitions
+                .Where(x => x.Competition.Id == SelectedCompetitionId)
+                .Select(x => x.Player).ToList();
+        }
+    }
 
-        KnockoutMatches = new List<Match>
+    public IActionResult OnPostDeleteCompetition(int competitionId)
+    {
+        var competition = _db.Competitions.Find(competitionId);
+        if (competition == null)
+            return RedirectToPage(new
+                { selectedCompetitionId = competitionId, Message = "Ein Fehler ist aufgetreten" });
+
+        _db.Competitions.Remove(competition);
+        _db.SaveChanges();
+        return RedirectToPage(new { Message = "Bewerb wurde gelöscht" });
+    }
+
+    public IActionResult OnPostCreateCompetition(string competitionName)
+    {
+        if (competitionName.IsNullOrEmpty()) return BadRequest();
+        _db.Competitions.Add(new Competition { Name = competitionName });
+        _db.SaveChanges();
+        return RedirectToPage(new { Message = "Neuer Bewerb erstellt" });
+    }
+
+    public IActionResult OnPostCompetitionChanged(int selectedCompetition)
+    {
+        InitValues(selectedCompetition, null);
+        SelectedCompetition = Competitions[selectedCompetition - 1];
+        return Page();
+    }
+
+    public IActionResult OnPostRegister(int selectedCompetition)
+    {
+        InitValues(selectedCompetition, null);
+        _db.PlayerCompetitions.Add(new PlayerCompetition
         {
-            new Match { Team1 = Groups[0].Teams[0], Team2 = Groups[1].Teams[0] },
-            new Match { Team1 = Groups[0].Teams[1], Team2 = Groups[1].Teams[1] }
-        };
+            Player = CurrentPlayer,
+            Competition = _db.Competitions.Find(selectedCompetition)!
+        });
+        _db.SaveChanges();
+        return RedirectToPage(new { selectedCompetitionId = selectedCompetition, Message = "Beim Bewerb abgemeldet" });
     }
 
-    public class Team
+    public IActionResult OnPostUnregister(int selectedCompetition)
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
+        InitValues(selectedCompetition, null);
+        var playerCompetition = _db.PlayerCompetitions.SingleOrDefault(x =>
+            x.Player.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetition);
+        if (playerCompetition == null) return NotFound();
+        _db.PlayerCompetitions.Remove(playerCompetition);
+        _db.SaveChanges();
+        return RedirectToPage(new { selectedCompetitionId = selectedCompetition, Message = "Vom Bewerb abgemeldet" });
     }
 
-    public class Group
+    public IActionResult OnPostBack()
     {
-        public string Name { get; set; }
-        public List<Team> Teams { get; set; }
-    }
-
-    public class Match
-    {
-        public Team Team1 { get; set; }
-        public Team Team2 { get; set; }
+        return RedirectToPage(nameof(Index));
     }
 }
