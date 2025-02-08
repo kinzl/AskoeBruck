@@ -27,7 +27,7 @@ public class IndexModel : PageModel
     {
         Player = _currentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name);
     }
-
+ 
     public IActionResult OnPostLogin(LoginDto body)
     {
         _logger.LogInformation("OnPostLogin");

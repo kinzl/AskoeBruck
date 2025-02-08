@@ -15,16 +15,30 @@ public class StartupBackgroundService : BackgroundService
         _scope = provider.CreateScope();
     }
 
-    protected override async Task<Task<int>> ExecuteAsync(CancellationToken stoppingToken)
+    // protected override async Task<Task<int>> ExecuteAsync(CancellationToken stoppingToken)
+    // {
+    //     Console.WriteLine("ExecuteAsync STARTUPSERVICE");
+    //     var db = _scope.ServiceProvider.GetRequiredService<TennisContext>();
+    //
+    //     await db.Database.EnsureDeletedAsync(stoppingToken);
+    //     await db.Database.EnsureCreatedAsync(stoppingToken);
+    //     Seed(db);
+    //
+    //     return db.SaveChangesAsync(stoppingToken);
+    // }
+
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         Console.WriteLine("ExecuteAsync STARTUPSERVICE");
         var db = _scope.ServiceProvider.GetRequiredService<TennisContext>();
 
-        await db.Database.EnsureDeletedAsync(stoppingToken);
-        await db.Database.EnsureCreatedAsync(stoppingToken);
+        db.Database.EnsureDeleted();
+        db.Database.EnsureCreated();
         Seed(db);
 
-        return db.SaveChangesAsync(stoppingToken);
+        db.SaveChanges();
+
+        return Task.CompletedTask;
     }
 
     private void Seed(TennisContext db)
@@ -39,7 +53,7 @@ public class StartupBackgroundService : BackgroundService
             IsPlayingGrieskirchen = false,
             IsAdmin = false
         });
-        
+
         db.Players.Add(new Player()
         {
             Firstname = "Max",
