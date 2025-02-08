@@ -1,0 +1,41 @@
+@page
+@model TennisBruck.Pages.Championship
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <title>Vereinsmeisterschaft</title>
+    <link rel="stylesheet" href="~/css/championship.css"/>
+    <script src="js/movement.js"></script>
+</head>
+<body>
+<h1>Cup System with Group Stages</h1>
+
+<div class="group-stage">
+    <h2>Group Stage</h2>
+    @foreach (var group in Model.Groups)
+    {
+        <div class="group" ondrop="drop(event, this)" ondragover="allowDrop(event)">
+            <h3>@group.Name</h3>
+            @foreach (var team in group.Teams)
+            {
+                <div id="team-@team.Id" class="card" draggable="true" ondragstart="drag(event)">@team.Name</div>
+            }
+        </div>
+    }
+</div>
+
+<div class="knockout">
+    <h2>Knockout Stage</h2>
+    @foreach (var match in Model.KnockoutMatches)
+    {
+        <div class="match">@match.Team1.Name vs @match.Team2.Name</div>
+    }
+</div>
+</body>
+</html>
