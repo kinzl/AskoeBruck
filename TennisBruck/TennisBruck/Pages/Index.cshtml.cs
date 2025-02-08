@@ -9,7 +9,6 @@ using TennisDb;
 
 namespace TennisBruck.Pages;
 
-[Authorize]
 public class IndexModel : PageModel
 {
     private CurrentPlayerService _currentPlayerService;
@@ -64,5 +63,10 @@ public class IndexModel : PageModel
     {
         _logger.LogInformation("OnPostReserveCourt");
         return new RedirectToPageResult(nameof(CourtBruck));
+    }
+
+    public IActionResult OnPostChampionship()
+    {
+        return new RedirectToPageResult(nameof(Championship));
     }
 }

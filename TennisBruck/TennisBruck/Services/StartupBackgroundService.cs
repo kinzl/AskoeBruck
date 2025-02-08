@@ -92,7 +92,7 @@ public class StartupBackgroundService : BackgroundService
             EmailOrPhone = "ReppB@gmail.com",
             Username = "ReppB",
             IsPlayingGrieskirchen = true,
-            IsAdmin = true
+            IsAdmin = false
         });
 
         db.Players.Add(new Player()

@@ -74,7 +74,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.LoginPath = "/Login"; // Path to the login page
-        options.LogoutPath = "/Logout"; // Path to the logout page
         options.ExpireTimeSpan = TimeSpan.FromHours(2); // Expire authentication after 20 minutes
         options.SlidingExpiration = true; // Renew expiration if user is active
     });

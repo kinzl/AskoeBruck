@@ -7,7 +7,6 @@ using TennisDb;
 
 namespace TennisBruck.Pages;
 
-[Authorize]
 public class CourtBruck : PageModel
 {
     private readonly TennisContext _db;
@@ -28,6 +27,7 @@ public class CourtBruck : PageModel
 
     public IActionResult OnGet(string? date)
     {
+        CurrentPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identity?.Name);
         // Parse the date or default to today
         CurrentDate = string.IsNullOrEmpty(date) ? DateTime.Today : DateTime.Parse(date);
 
@@ -53,7 +53,6 @@ public class CourtBruck : PageModel
     {
         return Reservations.FirstOrDefault(r => r.CourtNumber == courtNumber && r.StartTime == startTime);
     }
-
 
     public IActionResult OnPostCreateReservation()
     {

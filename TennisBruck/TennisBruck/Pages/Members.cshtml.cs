@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using TennisBruck.Extensions;
 using TennisBruck.Services;
 using TennisBruck.wwwroot.Dto;
 using TennisDb;
@@ -16,12 +17,15 @@ public class Members : PageModel
     public Player LoggedInPlayer { get; set; }
     public List<Player> AllPlayers { get; set; }
     public string? InfoBox { get; set; }
+    private PasswordEncryption _pe;
 
-    public Members(TennisContext db, ILogger<IndexModel> logger, CurrentPlayerService currentPlayerService)
+    public Members(TennisContext db, ILogger<IndexModel> logger, CurrentPlayerService currentPlayerService,
+        PasswordEncryption pe)
     {
         _db = db;
         _logger = logger;
         CurrentPlayerService = currentPlayerService;
+        _pe = pe;
     }
 
     public RedirectToPageResult? OnGet(string? infoBox)
@@ -41,7 +45,7 @@ public class Members : PageModel
             Firstname = body.Firstname,
             Lastname = body.Lastname,
             EmailOrPhone = body.EmailOrPhone,
-            PasswordHash = password,
+            PasswordHash = _pe.HashPassword(password),
             Username = body.Username,
             IsAdmin = false,
             IsPlayingGrieskirchen = false
@@ -65,5 +69,19 @@ public class Members : PageModel
     public IActionResult OnPostBack()
     {
         return RedirectToPage(nameof(Index));
+    }
+
+    public IActionResult OnPostChangeAdmin(int user)
+    {
+        _logger.LogInformation($"Toggling admin status for User ID: {user}");
+
+        var player = _db.Players.FirstOrDefault(p => p.Id == user);
+        if (player != null)
+        {
+            player.IsAdmin = !player.IsAdmin; // Toggle admin status
+            _db.SaveChanges();
+        }
+
+        return RedirectToPage();
     }
 }

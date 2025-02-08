@@ -25,37 +25,6 @@
         }
     </header>
 
-    @* <!--#region navbar  --> *@
-    @* <nav> *@
-    @*     <ul> *@
-    @*         @if (Model.Player == null) *@
-    @*         { *@
-    @*             <li> *@
-    @*                 <a href="#login">Login</a> *@
-    @*             </li> *@
-    @*         } *@
-    @*         else *@
-    @*         { *@
-    @*             <li> *@
-    @*                 <a href="#logout">Logout</a> *@
-    @*             </li> *@
-    @*         } *@
-    @*         <li> *@
-    @*             <a href="#court-reservation">Platz Reservierung</a> *@
-    @*         </li> *@
-    @*         @if (Model.Player != null) *@
-    @*         { *@
-    @*             <li> *@
-    @*                 <a href="#members">Mitglieder</a> *@
-    @*             </li> *@
-    @*         } *@
-    @*         $1$ <li> #1# *@
-    @*         $1$     <a href="#punch">Punsch</a> #1# *@
-    @*         $1$ </li> #1# *@
-    @*     </ul> *@
-    @* </nav> *@
-    @* <!--#endregion  --> *@
-
     <!--#region Login/Logout  -->
     @if (Model.Player == null)
     {
@@ -85,7 +54,6 @@
             <h2>Platz Reservierung</h2>
             <p>Reservieren Sie sich jetzt Ihren Platz</p>
             <button type="submit">Jetzt Reservieren</button>
-            @* <button onclick="window.location.href = 'https://tenniskalender.at/public/'">Jetzt Reservieren</button> *@
         </section>
     </form>
     <!--#endregion -->
@@ -98,6 +66,19 @@
                 <h2>Grieskirchen</h2>
                 <p>Hier sehen Sie den Hallenplan von Grieskirchen</p>
                 <button type="submit">Hallenplan zeigen</button>
+            </section>
+        </form>
+    }
+    <!--#endregion -->
+
+    <!--#region Championship  -->
+    @if (Model.Player != null)
+    {
+        <form method="post" asp-page-handler="Championship">
+            <section id="championship" class="category">
+                <h2>Vereinsmeisterschaft</h2>
+                <p>Hier sehen Sie alle Infos zur Vereinsmeisterschaft</p>
+                <button type="submit">Zur Vereinsmeisterschaft</button>
             </section>
         </form>
     }

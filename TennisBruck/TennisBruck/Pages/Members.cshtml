@@ -22,7 +22,6 @@
             <table>
                 <thead>
                 <tr>
-                    <th>Id</th>
                     <th>Vorname</th>
                     <th>Nachname</th>
                     @if (Model.LoggedInPlayer.IsAdmin)
@@ -38,14 +37,21 @@
                 @foreach (var player in Model.AllPlayers)
                 {
                     <tr>
-                        <td>@player.Id</td>
                         <td>@player.Firstname</td>
                         <td>@player.Lastname</td>
                         @if (Model.LoggedInPlayer.IsAdmin)
                         {
                             <td>@player.Username</td>
                             <td>@player.EmailOrPhone</td>
-                            <td>@player.IsAdmin</td>
+                            <td>
+                                <form method="post" asp-page-handler="ChangeAdmin">
+                                    <input type="hidden" name="user" value="@player.Id"/>
+                                    <input type="checkbox"
+                                           onclick="this.form.submit()"
+                                           @(player.IsAdmin ? "checked" : "")/>
+                                </form>
+                            </td>
+                            
                             <td>
                                 <button class="action-button delete" name="playerId" value="@player.Id" type="submit"
                                         asp-page-handler="DeleteUser">Löschen
@@ -58,6 +64,7 @@
             </table>
         </form>
     </div>
+    
     @if (Model.LoggedInPlayer.IsAdmin)
     {
         <form method="post">

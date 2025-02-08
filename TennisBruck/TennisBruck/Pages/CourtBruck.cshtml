@@ -15,7 +15,8 @@
         <form method="get">
             <button name="date" value="@Model.CurrentDate.AddDays(-1).ToString("yyyy-MM-dd")">Vorheriger Tag</button>
             <button name="date" value="@Model.CurrentDate.AddDays(1).ToString("yyyy-MM-dd")">Nächster Tag</button>
-            <input type="date" name="date" value="@Model.CurrentDate.ToString("yyyy-MM-dd")" onchange="this.form.submit()">
+            <input type="date" name="date" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"
+                   onchange="this.form.submit()">
         </form>
         <button onclick="window.location.href = '/Index'">Zurück</button>
     </div>
@@ -48,16 +49,25 @@
                     }
                     else
                     {
-                        <td class="reserved">
-                            @reservation.Player.ToString()
-                            @if (Model.CurrentPlayer?.Id == reservation.Player.Id)
-                            {
-                                <form method="post" asp-page-handler="DeleteReservation">
-                                    <input type="hidden" name="ReservationId" value="@reservation.Id"/>
-                                    <button type="submit" class="delete-btn">🗑️</button>
-                                </form>
-                            }
-                        </td>
+                        @if (Model.CurrentPlayer == null)
+                        {
+                            <td class="reserved">
+                                Reserviert
+                            </td>
+                        }
+                        else
+                        {
+                            <td class="reserved">
+                                @reservation.Player.ToString()
+                                @if (Model.CurrentPlayer?.Id == reservation.Player.Id)
+                                {
+                                    <form method="post" asp-page-handler="DeleteReservation">
+                                        <input type="hidden" name="ReservationId" value="@reservation.Id"/>
+                                        <button type="submit" class="delete-btn">🗑️</button>
+                                    </form>
+                                }
+                            </td>
+                        }
                     }
                 }
             </tr>
