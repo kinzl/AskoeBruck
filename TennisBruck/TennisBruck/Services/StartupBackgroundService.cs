@@ -34,10 +34,10 @@ public class StartupBackgroundService : BackgroundService
 
         db.Database.EnsureDeleted();
         db.Database.EnsureCreated();
-        
+
         SeedPlayer(db);
         SeedCompetition(db);
-        
+
         db.SaveChanges();
 
         return Task.CompletedTask;
@@ -121,6 +121,7 @@ public class StartupBackgroundService : BackgroundService
             IsPlayingGrieskirchen = true,
             IsAdmin = true
         });
+        db.SaveChanges();
     }
 
     private void SeedCompetition(TennisContext db)
@@ -132,6 +133,57 @@ public class StartupBackgroundService : BackgroundService
         db.Competitions.Add(new Competition()
         {
             Name = "Herren Doppel"
+        });
+        db.SaveChanges();
+        db.PlayerCompetitions.Add(new PlayerCompetition()
+        {
+            Player = db.Players.First(x => x.Username == "asmith"),
+            Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
+        });
+        db.PlayerCompetitions.Add(new PlayerCompetition()
+        {
+            Player = db.Players.First(x => x.Username == "asmith"),
+            Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
+        });
+        db.PlayerCompetitions.Add(new PlayerCompetition()
+        {
+            Player = db.Players.First(x => x.Username == "kammerem"),
+            Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
+        });
+        db.PlayerCompetitions.Add(new PlayerCompetition()
+        {
+            Player = db.Players.First(x => x.Username == "kammerem"),
+            Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
+        });
+        db.PlayerCompetitions.Add(new PlayerCompetition()
+        {
+            Player = db.Players.First(x => x.Username == "kinzle"),
+            Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
+        });
+        db.PlayerCompetitions.Add(new PlayerCompetition()
+        {
+            Player = db.Players.First(x => x.Username == "kinzle"),
+            Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
+        });
+        db.PlayerCompetitions.Add(new PlayerCompetition()
+        {
+            Player = db.Players.First(x => x.Username == "EckerS"),
+            Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
+        });
+        db.PlayerCompetitions.Add(new PlayerCompetition()
+        {
+            Player = db.Players.First(x => x.Username == "EckerS"),
+            Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
+        });
+        db.PlayerCompetitions.Add(new PlayerCompetition()
+        {
+            Player = db.Players.First(x => x.Username == "WimmerG"),
+            Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
+        });
+        db.PlayerCompetitions.Add(new PlayerCompetition()
+        {
+            Player = db.Players.First(x => x.Username == "ReppB"),
+            Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
     }
 }

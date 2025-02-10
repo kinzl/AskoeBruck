@@ -11,17 +11,10 @@
 <head>
     <title>Vereinsmeisterschaft</title>
     <link rel="stylesheet" href="~/css/championship.css"/>
-    <script src="js/movement.js"></script>
 </head>
 <body>
 <h1>Vereinsmeisterschaft Bruck</h1>
-@if (Model.CurrentPlayer.IsAdmin)
-{
-    <form method="post">
-        <input name="competitionName" placeholder="Neuer Bewerb Name"/>
-        <button type="submit" asp-page-handler="CreateCompetition">Bewerb erstellen</button>
-    </form>
-}
+
 <form method="post">
     <select name="SelectedCompetitionId" asp-for="SelectedCompetitionId" onchange="this.form.submit()">
         <option value="">Bewerb auswählen</option>
@@ -35,25 +28,18 @@
 
 @if (Model.SelectedCompetition != null)
 {
-    <h3>Selected Competition: @Model.SelectedCompetition.Name</h3>
-    @if (Model.CurrentPlayer.IsAdmin)
-    {
-        <form method="post">
-            <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
-            <button asp-page-handler="DeleteCompetition">Diesen Bewerb löschen</button>
-        </form>
-    }
+    <h3>@Model.SelectedCompetition.Name</h3>
 
     <form method="post">
         <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
         <label>Für diesen Bewerb</label>
         @if (Model.IsRegistered)
         {
-            <button style="color: red" asp-page-handler="Unregister">Abmelden</button>
+            <button asp-page-handler="Unregister">Abmelden</button>
         }
         else
         {
-            <button style="color: green" asp-page-handler="Register">Anmelden</button>
+            <button asp-page-handler="Register">Anmelden</button>
         }
     </form>
 }
@@ -65,7 +51,7 @@
         <option value="@compesition.Id">@compesition.Name</option>
     }
 </select>
- 
+
 <label>Aktuell eingetragene Spieler für diesen Bewerb: @Model.RegisteredCompetitionPlayers.Count()</label>
 <select size="8">
     @foreach (var player in Model.RegisteredCompetitionPlayers)
@@ -73,12 +59,80 @@
         <option value="@player.Id">@player.ToString()</option>
     }
 </select>
+@{
+    int maxGroupSize = 4; // Max players per group
+    var players = Model.RegisteredCompetitionPlayers.ToList();
+    var random = new Random();
 
+    // Shuffle players to ensure randomness
+    players = players.OrderBy(p => random.Next()).ToList();
+
+    int totalPlayers = players.Count;
+    var groups = new List<List<string>>();
+
+    while (totalPlayers > 0)
+    {
+        int currentGroupSize = Math.Min(maxGroupSize, totalPlayers);
+
+        // Ensure that if 6 players remain, we create [4,2] instead of [3,3]
+        if (totalPlayers == 6)
+        {
+            currentGroupSize = 4;
+        }
+
+        groups.Add(players.Take(currentGroupSize).Select(p => p.ToString()).ToList());
+        players.RemoveRange(0, currentGroupSize);
+        totalPlayers -= currentGroupSize;
+    }
+}
+
+<table>
+    <thead>
+    <tr>
+        @for (int i = 0; i < groups.Count; i++)
+        {
+            <th>Gruppe @(Convert.ToChar('A' + i))</th>
+        }
+    </tr>
+    </thead>
+    <tbody>
+    @for (int row = 0; row < maxGroupSize; row++)
+    {
+        <tr>
+            @for (int col = 0; col < groups.Count; col++)
+            {
+                <td>
+                    @if (row < groups[col].Count)
+                    {
+                        @groups[col][row]
+                    }
+                </td>
+            }
+        </tr>
+    }
+    </tbody>
+</table>
 
 <label>@Model.Message</label>
 <form method="post">
     <button asp-page-handler="Back">Zurück</button>
 </form>
+
+@if (Model.CurrentPlayer.IsAdmin)
+{
+    <form method="post">
+        <input name="competitionName" placeholder="Neuer Bewerb Name"/>
+        <button type="submit" asp-page-handler="CreateCompetition">Bewerb erstellen</button>
+    </form>
+    @if (Model.SelectedCompetition != null)
+    {
+        <form method="post">
+            <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+            <button asp-page-handler="DeleteCompetition">Diesen Bewerb löschen</button>
+        </form>
+    }
+}
+
 @* Table als Gruppenphase? alle Spiele von allen bewerben die einem selbst betreffen werden wo angezeigt *@
 </body>
 </html>
