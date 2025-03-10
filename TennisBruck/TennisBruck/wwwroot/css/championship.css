@@ -1,119 +1,120 @@
-/* General Styles */
 body {
     font-family: Arial, sans-serif;
-    color: #333;
-    margin: 20px;
+    margin: 0;
     padding: 20px;
+    background: url('../image/neutralTennisCourt.png') no-repeat center center fixed;
+    background-size: cover;
     text-align: center;
-    background: #f8f9fa url('../image/neutralTennisCourt.png') no-repeat fixed center center;
 }
 
-/* Header */
 h1 {
-    color: #007bff;
-    margin-bottom: 20px;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* Forms */
 form {
-    margin: 15px auto;
-    padding: 10px;
-    max-width: 500px;
-    background: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
 }
 
-/* Inputs and Select */
-input, select, button {
-    display: block;
-    width: 90%;
-    margin: 10px auto;
+select, button, input {
     padding: 10px;
-    font-size: 16px;
+    margin: 5px;
+    border-radius: 5px;
     border: 1px solid #ccc;
-    border-radius: 5px;
 }
 
-/* Buttons */
 button {
-    background-color: #28a745;
+    background-color: #007BFF;
     color: white;
     border: none;
     cursor: pointer;
-    font-weight: bold;
-    transition: 0.3s;
+    transition: background 0.3s;
 }
 
 button:hover {
-    background-color: #218838;
+    background-color: #0056b3;
 }
 
-button[style*="color: red"] {
-    background-color: #dc3545;
-}
-
-button[style*="color: red"]:hover {
-    background-color: #c82333;
-}
-
-/* Select Elements */
-select {
-    background: white;
-    cursor: pointer;
-}
-
-select[size] {
-    width: 50%;
-    text-align: center;
-    background: #fff;
-    border: 1px solid #ccc;
-    padding: 5px;
-}
-
-/* Tables */
-table {
-    width: 50%;
-    margin: 20px auto;
-    border-collapse: collapse;
-    background: white;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-thead {
-    background-color: #007bff;
-    color: white;
-}
-
-th, td {
-    padding: 10px;
-    border: 1px solid #ddd;
-}
-
-tr:nth-child(even) {
-    background-color: #f2f2f2;
-}
-
-/* Labels */
 label {
     font-weight: bold;
     display: block;
-    margin-top: 15px;
+    margin-top: 10px;
+    color: white;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    body {
-        margin: 10px;
-        padding: 10px;
-    }
+select[size] {
+    display: block;
+    width: 300px;
+    margin: 10px auto;
+    background-color: white;
+}
 
-    table {
-        width: 90%;
-    }
+/* Group Table */
+.group-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
 
-    select[size] {
-        width: 90%;
-    }
+.group {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.3);
+    width: 250px;
+    text-align: center;
+    border: 3px solid #007BFF;
+    position: relative;
+}
+
+.group:nth-child(even) {
+    border-color: #28A745;
+    background: rgba(240, 255, 240, 0.9);
+}
+
+.group h3 {
+    background-color: #007BFF;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin: -20px -20px 10px -20px;
+}
+
+.group:nth-child(even) h3 {
+    background-color: #28A745;
+}
+
+.player-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.player-list li {
+    padding: 10px;
+    border-bottom: 2px dashed #ccc;
+    font-weight: bold;
+}
+
+.player-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.player-table td {
+    padding: 8px;
+    border-bottom: 1px solid #ccc;
+}
+
+.player-id {
+    font-weight: bold;
+    color: #007BFF;
+    width: 40px;
+    text-align: center;
+}
+
+.player-name {
+    text-align: left;
 }

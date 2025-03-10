@@ -6,7 +6,6 @@
 }
 
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <title>Vereinsmeisterschaft</title>
@@ -15,8 +14,8 @@
 <body>
 <h1>Vereinsmeisterschaft Bruck</h1>
 
-<form method="post">
-    <select name="SelectedCompetitionId" asp-for="SelectedCompetitionId" onchange="this.form.submit()">
+<form method="post" asp-page-handler="CompetitionChanged">
+    <select name="selectedCompetitionId" onchange="this.form.submit()">
         <option value="">Bewerb auswählen</option>
         @foreach (var competition in Model.Competitions)
         {
@@ -24,7 +23,6 @@
         }
     </select>
 </form>
-
 
 @if (Model.SelectedCompetition != null)
 {
@@ -44,74 +42,67 @@
     </form>
 }
 
-<label>Aktuell eingetragene Bewerbe</label>
-<select size="3">
-    @foreach (var compesition in Model.RegisteredCompetitions)
+<div class="group-container">
+    @foreach (var group in Model.Groups)
     {
-        <option value="@compesition.Id">@compesition.Name</option>
-    }
-</select>
-
-<label>Aktuell eingetragene Spieler für diesen Bewerb: @Model.RegisteredCompetitionPlayers.Count()</label>
-<select size="8">
-    @foreach (var player in Model.RegisteredCompetitionPlayers)
-    {
-        <option value="@player.Id">@player.ToString()</option>
-    }
-</select>
-@{
-    int maxGroupSize = 4; // Max players per group
-    var players = Model.RegisteredCompetitionPlayers.ToList();
-    var random = new Random();
-
-    // Shuffle players to ensure randomness
-    players = players.OrderBy(p => random.Next()).ToList();
-
-    int totalPlayers = players.Count;
-    var groups = new List<List<string>>();
-
-    while (totalPlayers > 0)
-    {
-        int currentGroupSize = Math.Min(maxGroupSize, totalPlayers);
-
-        // Ensure that if 6 players remain, we create [4,2] instead of [3,3]
-        if (totalPlayers == 6)
-        {
-            currentGroupSize = 4;
-        }
-
-        groups.Add(players.Take(currentGroupSize).Select(p => p.ToString()).ToList());
-        players.RemoveRange(0, currentGroupSize);
-        totalPlayers -= currentGroupSize;
-    }
-}
-
-<table>
-    <thead>
-    <tr>
-        @for (int i = 0; i < groups.Count; i++)
-        {
-            <th>Gruppe @(Convert.ToChar('A' + i))</th>
-        }
-    </tr>
-    </thead>
-    <tbody>
-    @for (int row = 0; row < maxGroupSize; row++)
-    {
-        <tr>
-            @for (int col = 0; col < groups.Count; col++)
-            {
-                <td>
-                    @if (row < groups[col].Count)
+        <div class="group">
+            <h3>@group.GroupName</h3>
+            <table class="player-table">
+                @for (int i = 0; i < @group.MaxAmount; i++)
+                {
+                    @try
                     {
-                        @groups[col][row]
+                        var player = group.GroupPlayers[i].Player;
+
+                        <tr>
+                            <td class="player-id">@(i + 1)</td>
+                            <td class="player-name">@player.ToString()</td>
+                            @if (Model.CurrentPlayer.IsAdmin)
+                            {
+                                <td>
+                                    <form method="post">
+                                        <input type="hidden" name="groupId" value="@group.Id"/>
+                                        <input type="hidden" name="playerId" value="@player.Id"/>
+                                        <button asp-page-handler="RemovePlayerFromGroup">-</button>
+                                    </form>
+                                </td>
+                            }
+                        </tr>
                     }
-                </td>
-            }
-        </tr>
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        <tr>
+                            <td>
+                                <form method="post" asp-page-handler="AddPlayerToGroup">
+                                    <input type="hidden" name="groupId" value="@group.Id"/>
+                                    <select name="playerId" onchange="this.form.submit()">
+                                        <option value="">Spieler auswählen</option>
+                                        @foreach (var player in Model.RegisteredCompetitionPlayers.Where(x => x.GroupPlayers.All(y => y.GroupId != group.Id)))
+                                        {
+                                            <option value="@player.Id">@player.ToString()</option>
+                                        }
+                                    </select>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                <tr>
+                    <td>
+                        <form method="post">
+                            <input type="hidden" value="@group.Id" name="groupId"/>
+                            <button asp-page-handler="IncreaseGroupSize">+</button>
+                            @if (group.MaxAmount > group.GroupPlayers.Count)
+                            {
+                                <button asp-page-handler="DecreaseGroupSize">-</button>
+                            }
+                        </form>
+                    </td>
+                </tr>
+            </table>
+        </div>
     }
-    </tbody>
-</table>
+</div>
 
 <label>@Model.Message</label>
 <form method="post">
@@ -132,7 +123,5 @@
         </form>
     }
 }
-
-@* Table als Gruppenphase? alle Spiele von allen bewerben die einem selbst betreffen werden wo angezeigt *@
 </body>
 </html>

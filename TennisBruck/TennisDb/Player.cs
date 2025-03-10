@@ -13,5 +13,5 @@ public partial class Player
     public DateTime? TokenExpiry { get; set; }
     public bool IsPlayingGrieskirchen { get; set; }
     public List<PlayerCourtGrieskirchen> PlayerCourtGrieskirchen { get; set; }
-    public List<PlayerCompetition> PlayerCompetitions { get; set; }
+    public List<GroupPlayer> GroupPlayers { get; set; }
 }

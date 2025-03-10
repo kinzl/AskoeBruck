@@ -46,6 +46,9 @@
       </Content>
       <Content Include="Dto\LoginDto.cs" />
       <Content Include="Dto\RegistrationDto.cs" />
+      <Content Update="appsettings.Production.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
     <ItemGroup>

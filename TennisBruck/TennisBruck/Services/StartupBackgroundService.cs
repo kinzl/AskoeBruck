@@ -185,5 +185,50 @@ public class StartupBackgroundService : BackgroundService
             Player = db.Players.First(x => x.Username == "ReppB"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
+        db.SaveChanges();
+        db.Groups.Add(new Group()
+        {
+            GroupName = "Gruppe A",
+            MaxAmount = 4,
+            Competition = db.Competitions.First(x => x.Name == "Herren Einzel"),
+            GroupPlayers = new List<GroupPlayer>()
+            {
+                new GroupPlayer()
+                {
+                    Player = db.Players.First(x => x.Username == "asmith")
+                },
+                new GroupPlayer()
+                {
+                    Player = db.Players.First(x => x.Username == "kammerem")
+                },
+                new GroupPlayer()
+                {
+                    Player = db.Players.First(x => x.Username == "kinzle")
+                },
+                new GroupPlayer()
+                {
+                    Player = db.Players.First(x => x.Username == "EckerS")
+                }
+            },
+        });
+
+        db.Groups.Add(new Group()
+        {
+            GroupName = "Gruppe B",
+            MaxAmount = 4,
+            Competition = db.Competitions.First(x => x.Name == "Herren Einzel"),
+            GroupPlayers = new List<GroupPlayer>()
+            {
+                new GroupPlayer()
+                {
+                    Player = db.Players.First(x => x.Username == "WimmerG")
+                },
+                new GroupPlayer()
+                {
+                    Player = db.Players.First(x => x.Username == "ReppB")
+                }
+            },
+        });
+        db.SaveChanges();
     }
 }
