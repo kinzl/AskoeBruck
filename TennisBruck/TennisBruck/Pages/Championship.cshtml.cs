@@ -101,18 +101,22 @@ public class Championship : PageModel
             Competition = SelectedCompetition!
         });
         _db.SaveChanges();
-        return RedirectToPage(new { Message = "Beim Bewerb abgemeldet" });
+        return RedirectToPage(new { Message = $"Beim Bewerb anemeldet" });
     }
 
     public IActionResult OnPostUnregister()
     {
         InitValues(null);
-        var playerCompetition = _db.PlayerCompetitions.SingleOrDefault(x =>
+        var playerCompetition = _db.PlayerCompetitions.Single(x =>
             x.Player.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
-        if (playerCompetition == null) return NotFound();
         _db.PlayerCompetitions.Remove(playerCompetition);
+
+        var groupPlayers = _db.GroupPlayers.SingleOrDefault(x =>
+            x.PlayerId == CurrentPlayer.Id && x.PlayerId == playerCompetition.Player.Id);
+        if (groupPlayers != null) _db.GroupPlayers.Remove(groupPlayers);
+
         _db.SaveChanges();
-        return RedirectToPage(new { Message = "Vom Bewerb abgemeldet" });
+        return RedirectToPage(new { Message = $"Vom Bewerb abgemeldet" });
     }
 
     public IActionResult OnPostIncreaseGroupSize(int groupId)
@@ -159,7 +163,47 @@ public class Championship : PageModel
             .Include(x => x.Group)
             .Single(x => x.PlayerId == playerId && x.GroupId == groupId);
         _db.GroupPlayers.Remove(groupPlayer);
- 
+
+        _db.SaveChanges();
+        return RedirectToPage();
+    }
+
+    public IActionResult OnPostCreateGroup()
+    {
+        InitValues(null);
+        _db.Groups.Add(new Group
+        {
+            Competition = SelectedCompetition!,
+            MaxAmount = 1,
+            GroupName = "Gruppe "
+        });
+        _db.SaveChanges();
+
+        var groups = _db.Groups.Where(x => x.Competition.Id == SelectedCompetition!.Id).ToList();
+
+        for (int i = 0; i < groups.Count; i++)
+        {
+            groups[i].GroupName = $"Gruppe {(char)(i + 65)}";
+        }
+
+        _db.SaveChanges();
+
+        return RedirectToPage();
+    }
+
+    public IActionResult OnPostDeleteGroup(int groupId)
+    {
+        var selectedGroup = _db.Groups.Single(x => x.Id == groupId);
+        _db.Groups.Remove(selectedGroup);
+        _db.SaveChanges();
+        return RedirectToPage();
+    }
+
+    public IActionResult OnPostRemovePlayerFromCompetition(int playerId)
+    {
+        var playerCompetition = _db.PlayerCompetitions.Single(x =>
+            x.Id == playerId && x.Competition.Id == SelectedCompetition!.Id);
+        _db.PlayerCompetitions.Remove(playerCompetition);
         _db.SaveChanges();
         return RedirectToPage();
     }
