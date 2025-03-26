@@ -116,10 +116,26 @@
     }
 </div>
 
+@if (Model.SelectedCompetition != null)
+{
+    <form method="post">
+        <button asp-page-handler="SaveGroups">Diese Gruppen Einteilung speichern</button>
+    </form>
+}
+
 <form method="post">
     <button asp-page-handler="Back">Zurück</button>
 </form>
 
+<h4>Deine nächsten Spiele</h4>
+<select size="5">
+    @foreach (var match in Model.PersonalMatches)
+    {
+        <option value="@match.Id">@match.Player1 vs @match.Player2 (@match.Group.Competition.Name)</option>
+    }
+</select>
+
+@* Weitere Infos *@
 <button type="button" id="infoButton" onclick="toggleInfo()">Mehr Infos</button>
 <div id="infoBox" style="display: none">
     <div>

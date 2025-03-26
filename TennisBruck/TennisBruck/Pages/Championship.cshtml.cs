@@ -13,15 +13,16 @@ namespace TennisBruck.Pages;
 public class Championship : PageModel
 {
     private TennisContext _db;
+    public bool IsRegistered { get; set; }
     private CurrentPlayerService _currentPlayerService;
     public Player CurrentPlayer { get; set; }
 
     public List<Competition> Competitions { get; set; }
     public Competition? SelectedCompetition { get; set; }
-    public bool IsRegistered { get; set; }
     public List<Competition> RegisteredCompetitions { get; set; }
     public List<Player> RegisteredCompetitionPlayers { get; set; } = new();
     public List<Group> Groups { get; set; } = new();
+    public List<Match> PersonalMatches { get; set; }
     public string? Message { get; set; }
 
     public Championship(CurrentPlayerService currentPlayerService, TennisContext db)
@@ -47,6 +48,11 @@ public class Championship : PageModel
         CurrentPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
         Message = message;
         Competitions = _db.Competitions.ToList();
+
+        PersonalMatches = _db.Matches
+            .Include(x => x.Group.Competition)
+            .Where(x => x.Player1 == CurrentPlayer || x.Player2 == CurrentPlayer)
+            .ToList();
 
         RegisteredCompetitions = _db.PlayerCompetitions.Where(x => x.Player.Id == CurrentPlayer.Id)
             .Select(x => x.Competition).ToList();
@@ -206,6 +212,34 @@ public class Championship : PageModel
         _db.PlayerCompetitions.Remove(playerCompetition);
         _db.SaveChanges();
         return RedirectToPage();
+    }
+
+    public IActionResult OnPostSaveGroups()
+    {
+        //Create matches for the groups
+        InitValues(null);
+        var competitionGroup = _db.Groups.Where(x => x.Competition.Id == SelectedCompetition!.Id)
+            .Include(group => group.GroupPlayers).ThenInclude(groupPlayer => groupPlayer.Player).ToList();
+        foreach (var group in competitionGroup)
+        {
+            var groupPlayers = group.GroupPlayers;
+            for (int i = 0; i < groupPlayers.Count; i++)
+            {
+                for (int j = i + 1; j < groupPlayers.Count; j++)
+                {
+                    _db.Matches.Add(new Match
+                    {
+                        Player1 = groupPlayers[i].Player,
+                        Player2 = groupPlayers[j].Player,
+                        Group = group,
+                        Sets = new List<Set>()
+                    });
+                }
+            }
+        }
+
+        _db.SaveChanges();
+        return RedirectToPage(new { Message = "Spiele wurden erstellt" });
     }
 
     public IActionResult OnPostBack()
