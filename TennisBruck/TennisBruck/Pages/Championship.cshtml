@@ -134,12 +134,13 @@
         <label>@match.Player1 vs @match.Player2 (@match.Group.Competition.Name)</label>
         @if (match.Sets.ToList().Count == 0)
         {
-            <input name="score" placeholder="Spielstand im Format x:x x:x usw."/>
+            <input name="score" placeholder="Format x:x x:x usw."/>
             <button asp-page-handler="SaveMatch">Spielstand speichern</button>
         }
         else
         {
             <label>@match.SetToString()</label>
+            //ToDo: Spielstand ändern (Edit)
         }
     </form>
 }
