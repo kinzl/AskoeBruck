@@ -59,10 +59,9 @@
                     @try
                     {
                         var player = group.GroupPlayers[i].Player;
-
                         <tr>
                             <td class="player-id">@(i + 1)</td>
-                            <td class="player-name">@player.ToString()</td>
+                            <td class="player-scoreType">@player.ToString()</td>
                             @if (Model.CurrentPlayer.IsAdmin)
                             {
                                 <td>
@@ -127,13 +126,24 @@
     <button asp-page-handler="Back">Zurück</button>
 </form>
 
-<h4>Deine nächsten Spiele</h4>
-<select size="5">
-    @foreach (var match in Model.PersonalMatches)
-    {
-        <option value="@match.Id">@match.Player1 vs @match.Player2 (@match.Group.Competition.Name)</option>
-    }
-</select>
+<h4>Deine Spiele</h4>
+@foreach (var match in Model.PersonalMatches)
+{
+    <form method="post">
+        <input name="matchId" type="hidden" value="@match.Id"/>
+        <label>@match.Player1 vs @match.Player2 (@match.Group.Competition.Name)</label>
+        @if (match.Sets.ToList().Count == 0)
+        {
+            <input name="score" placeholder="Spielstand im Format x:x x:x usw."/>
+            <button asp-page-handler="SaveMatch">Spielstand speichern</button>
+        }
+        else
+        {
+            <label>@match.SetToString()</label>
+        }
+    </form>
+}
+
 
 @* Weitere Infos *@
 <button type="button" id="infoButton" onclick="toggleInfo()">Mehr Infos</button>
@@ -167,6 +177,8 @@
         </form>
         @if (Model.SelectedCompetition != null)
         {
+            //ToDo: Rekursiver call in db bei anzeige von KO. Runden (der gewonnene spieler wird in der db gespeichert und die nächste runde wird angezeigt)
+
             <form method="post">
                 <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
                 <button asp-page-handler="DeleteCompetition">Diesen Bewerb löschen</button>

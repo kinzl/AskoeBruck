@@ -22,11 +22,11 @@
             <table>
                 <thead>
                 <tr>
-                    <th>Vorname</th>
-                    <th>Nachname</th>
+                    <th>VorscoreType</th>
+                    <th>NachscoreType</th>
                     @if (Model.LoggedInPlayer.IsAdmin)
                     {
-                        <th>Benutzername</th>
+                        <th>BenutzerscoreType</th>
                         <th>Email oder Nummer</th>
                         <th>Admin</th>
                         <th>Löschen</th>
@@ -79,16 +79,16 @@
         <div id="createUser" class="expandable-section" style="display: none;">
             <form method="post">
                 <div class="form-group">
-                    <label for="firstnameInput">Vorname</label>
-                    <input id="firstnameInput" name="firstname" class="form-input" required/>
+                    <label for="firstnameInput">VorscoreType</label>
+                    <input id="firstnameInput" name="firstscoreType" class="form-input" required/>
                 </div>
                 <div class="form-group">
-                    <label for="lastnameInput">Nachname</label>
-                    <input id="lastnameInput" name="lastname" class="form-input" required/>
+                    <label for="lastnameInput">NachscoreType</label>
+                    <input id="lastnameInput" name="lastscoreType" class="form-input" required/>
                 </div>
                 <div class="form-group">
-                    <label for="usernameInput">Benutzername</label>
-                    <input id="usernameInput" name="username" class="form-input" required/>
+                    <label for="usernameInput">BenutzerscoreType</label>
+                    <input id="usernameInput" name="userscoreType" class="form-input" required/>
                 </div>
                 <div class="form-group">
                     <label for="emailOrPhoneInput">Email oder Telefonnummer</label>

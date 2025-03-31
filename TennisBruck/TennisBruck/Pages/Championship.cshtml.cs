@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TennisBruck.Services;
@@ -51,6 +52,9 @@ public class Championship : PageModel
 
         PersonalMatches = _db.Matches
             .Include(x => x.Group.Competition)
+            .Include(x => x.Player1)
+            .Include(x => x.Player2)
+            .Include(x => x.Sets)
             .Where(x => x.Player1 == CurrentPlayer || x.Player2 == CurrentPlayer)
             .ToList();
 
@@ -218,6 +222,10 @@ public class Championship : PageModel
     {
         //Create matches for the groups
         InitValues(null);
+        var removedMatches = _db.Matches.Where(x => x.Group.Competition.Id == SelectedCompetition!.Id).ToList();
+        _db.RemoveRange(removedMatches);
+        _db.SaveChanges();
+
         var competitionGroup = _db.Groups.Where(x => x.Competition.Id == SelectedCompetition!.Id)
             .Include(group => group.GroupPlayers).ThenInclude(groupPlayer => groupPlayer.Player).ToList();
         foreach (var group in competitionGroup)
@@ -240,6 +248,37 @@ public class Championship : PageModel
 
         _db.SaveChanges();
         return RedirectToPage(new { Message = "Spiele wurden erstellt" });
+    }
+
+    public IActionResult OnPostSaveMatch(string score, int matchId)
+    {
+        try
+        {
+            var match = _db.Matches
+                .Include(x => x.Sets)
+                .Single(x => x.Id == matchId);
+            var sets = score.Split(" ");
+            for (var i = 0; i < sets.Length; i++)
+            {
+                var games = sets[i].Split(":");
+                match.Sets.Add(new Set
+                {
+                    SetNumber = i + 1,
+                    Player1GamesWon = int.Parse(games[0]),
+                    Player2GamesWon = int.Parse(games[1])
+                });
+            }
+
+            _db.SaveChanges();
+        }
+        catch (Exception e)
+        {
+            return RedirectToPage(new
+                { Message = "Fehler beim Speichern des Spiels (Falsche eingabe des Spielstandes?" });
+        }
+
+        return RedirectToPage(new
+            { Message = "Spiele wurden gespeichert" });
     }
 
     public IActionResult OnPostBack()

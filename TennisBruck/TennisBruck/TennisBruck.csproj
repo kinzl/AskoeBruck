@@ -84,4 +84,9 @@
       </None>
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Pages\Components\ScoreControllerInvokeAsync.cshtml" />
+      <_ContentIncludedByDefault Remove="Pages\Shared\Components\ScoreComponent\ScoreComponent.cshtml" />
+    </ItemGroup>
+
 </Project>
