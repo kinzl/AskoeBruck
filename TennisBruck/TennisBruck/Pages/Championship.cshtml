@@ -52,6 +52,12 @@
             <form method="post">
                 <input type="hidden" value="@group.Id" name="groupId"/>
                 <button asp-page-handler="DeleteGroup">Diese Gruppe löschen</button>
+
+                <button asp-page-handler="IncreaseGroupSize">Spieler mehr</button>
+                @if (group.MaxAmount > group.GroupPlayers.Count)
+                {
+                    <button asp-page-handler="DecreaseGroupSize">Spieler weniger</button>
+                }
             </form>
 
             <table class="player-table">
@@ -78,7 +84,7 @@
                                     <form method="post">
                                         <input type="hidden" name="groupId" value="@group.Id"/>
                                         <input type="hidden" name="playerId" value="@player.Id"/>
-                                        <button asp-page-handler="RemovePlayerFromGroup">Spieler löschen</button>
+                                        <button asp-page-handler="RemovePlayerFromGroup">Spieler entfernen</button>
                                     </form>
                                 </td>
                             }
