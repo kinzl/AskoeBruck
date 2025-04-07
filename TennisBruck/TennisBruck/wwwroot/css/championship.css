@@ -125,16 +125,6 @@ button:active {
     border-bottom: 1px solid #e2e8f0;
 }
 
-.player-id {
-    font-weight: 600;
-    color: #3b82f6;
-    width: 40px;
-}
-
-.player-score {
-    color: #1e293b;
-}
-
 /* Info Box */
 #infoBox {
     background: white;

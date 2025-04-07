@@ -5,6 +5,7 @@
     Layout = null;
 }
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,16 +53,25 @@
                 <input type="hidden" value="@group.Id" name="groupId"/>
                 <button asp-page-handler="DeleteGroup">Diese Gruppe löschen</button>
             </form>
-            <h3>@group.GroupName</h3>
+
             <table class="player-table">
+                <thead>
+                <tr>
+                    <th><h3>@group.GroupName</h3></th>
+                    <th></th>
+                    <th>Punkte</th>
+                </tr>
+                </thead>
+                <tbody>
                 @for (int i = 0; i < @group.MaxAmount; i++)
                 {
                     @try
                     {
                         var player = group.GroupPlayers[i].Player;
                         <tr>
-                            <td class="player-id">@(i + 1)</td>
-                            <td class="player-scoreType">@player.ToString()</td>
+                            <td>@(i + 1) @player.ToString()</td>
+                            <td class="player-id"></td>
+                            <td>@Model.Groups.Single(x => group.Id == x.Id).GroupPlayers.Single(x => x.Group.Id == group.Id && x.Player.Id == player.Id).Points</td>
                             @if (Model.CurrentPlayer.IsAdmin)
                             {
                                 <td>
@@ -104,6 +114,7 @@
                         </form>
                     </td>
                 </tr>
+                </tbody>
             </table>
         </div>
     }

@@ -7,4 +7,5 @@ public class GroupPlayer
     public Group Group { get; set; }
     public int PlayerId { get; set; }
     public int GroupId { get; set; }
+    public int Points { get; set; } = 0;
 }

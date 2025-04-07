@@ -72,9 +72,17 @@ public class Championship : PageModel
                 .Select(x => x.Player).ToList();
 
             Groups = _db.Groups
-                .Where(x => x.Competition.Id == selectedCompetitionId)
                 .Include(x => x.GroupPlayers)
+                .Where(x => x.Competition.Id == selectedCompetitionId)
                 .ToList();
+
+// Sort players within each group by their points
+            foreach (var group in Groups)
+            {
+                group.GroupPlayers = group.GroupPlayers
+                    .OrderByDescending(p => p.Points)
+                    .ToList();
+            }
         }
     }
 
@@ -254,27 +262,43 @@ public class Championship : PageModel
     {
         try
         {
+            int setsWonPlayer1 = 0;
+            int setsWonPlayer2 = 0;
             var match = _db.Matches
                 .Include(x => x.Sets)
+                .Include(x => x.Player1)
+                .Include(x => x.Player2)
+                .Include(x => x.Group)
                 .Single(x => x.Id == matchId);
             var sets = score.Split(" ");
             for (var i = 0; i < sets.Length; i++)
             {
                 var games = sets[i].Split(":");
+                if (int.Parse(games[0]) < int.Parse(games[1]))
+                    setsWonPlayer2++;
+                else
+                    setsWonPlayer1++;
                 match.Sets.Add(new Set
                 {
                     SetNumber = i + 1,
                     Player1GamesWon = int.Parse(games[0]),
-                    Player2GamesWon = int.Parse(games[1])
+                    Player2GamesWon = int.Parse(games[1]),
                 });
             }
+
+            if(setsWonPlayer1 == setsWonPlayer2) 
+                return RedirectToPage(new { Message = "Unentschieden ist nicht erlaubt" });
+            var winner = setsWonPlayer1 > setsWonPlayer2 ? match.Player1 : match.Player2;
+            var groupPlayer = _db.GroupPlayers
+                .Single(x => x.Group.Id == match.Group.Id && x.Player.Id == winner.Id);
+            groupPlayer.Points += 3;
 
             _db.SaveChanges();
         }
         catch (Exception e)
         {
             return RedirectToPage(new
-                { Message = "Fehler beim Speichern des Spiels (Falsche eingabe des Spielstandes?" });
+                { Message = "Fehler beim Speichern des Spiels (Falsche eingabe des Spielstandes?)" });
         }
 
         return RedirectToPage(new
