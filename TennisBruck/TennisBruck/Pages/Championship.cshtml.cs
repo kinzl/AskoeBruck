@@ -286,12 +286,13 @@ public class Championship : PageModel
                 });
             }
 
-            if(setsWonPlayer1 == setsWonPlayer2) 
+            if (setsWonPlayer1 == setsWonPlayer2)
                 return RedirectToPage(new { Message = "Unentschieden ist nicht erlaubt" });
             var winner = setsWonPlayer1 > setsWonPlayer2 ? match.Player1 : match.Player2;
             var groupPlayer = _db.GroupPlayers
                 .Single(x => x.Group.Id == match.Group.Id && x.Player.Id == winner.Id);
             groupPlayer.Points += 3;
+            match.Winner = winner;
 
             _db.SaveChanges();
         }
@@ -303,6 +304,23 @@ public class Championship : PageModel
 
         return RedirectToPage(new
             { Message = "Spiele wurden gespeichert" });
+    }
+
+    public IActionResult OnPostDeleteMatch(int matchId)
+    {
+        var match = _db.Matches
+            .Include(x => x.Sets)
+            .Include(x => x.Group)
+            .Include(x => x.Winner)
+            .Single(x => x.Id == matchId);
+        match.Sets.Clear();
+        var groupPlayer = _db.GroupPlayers
+            .Single(x => x.Group.Id == match.Group.Id && x.Player.Id == match.Winner!.Id);
+        groupPlayer.Points -= 3;
+        match.Winner = null;
+        _db.SaveChanges();
+
+        return RedirectToPage();
     }
 
     public IActionResult OnPostBack()
