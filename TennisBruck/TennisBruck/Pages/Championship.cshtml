@@ -2,40 +2,221 @@
 @model TennisBruck.Pages.Championship
 
 @{
-    Layout = null;
+	Layout = null;
 }
 
-<!DOCTYPE html>
 
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Vereinsmeisterschaft</title>
-    <link rel="stylesheet" href="~/css/championship.css"/>
-    <script src="js/movement.js"></script>
+	<title>Vereinsmeisterschaft</title>
+	<link rel="stylesheet" href="~/css/championship.css"/>
+	<link rel="stylesheet" href="~/css/tournament.css"/>
+	<script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
+	<script src="https://underscorejs.org/underscore-min.js"></script>
+	<script src="js/toggleVisibility.js"></script>
+	<script src="js/tournament.js"></script>
 </head>
 <body>
-<h1>Cup System with Group Stages</h1>
+<h1>Vereinsmeisterschaft Bruck</h1>
 
-<div class="group-stage">
-    <h2>Group Stage</h2>
-    @foreach (var group in Model.Groups)
-    {
-        <div class="group" ondrop="drop(event, this)" ondragover="allowDrop(event)">
-            <h3>@group.Name</h3>
-            @foreach (var team in group.Teams)
-            {
-                <div id="team-@team.Id" class="card" draggable="true" ondragstart="drag(event)">@team.Name</div>
-            }
-        </div>
-    }
+<form method="post" asp-page-handler="CompetitionChanged">
+	<select name="selectedCompetitionId" onchange="this.form.submit()">
+		<option value="">Bewerb auswählen</option>
+		@foreach (var competition in Model.Competitions)
+		{
+			<option value="@competition.Id">@competition.Name</option>
+		}
+	</select>
+</form>
+
+@if (Model.SelectedCompetition != null)
+{
+	<h3>@Model.SelectedCompetition.Name</h3>
+
+	<form method="post">
+		<input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
+		<label>Für diesen Bewerb</label>
+		@if (Model.IsRegistered)
+		{
+			<button asp-page-handler="Unregister">Abmelden</button>
+		}
+		else
+		{
+			<button asp-page-handler="Register">Anmelden</button>
+		}
+	</form>
+}
+<label>@Model.Message</label>
+
+<div class="group-container">
+	@foreach (var group in Model.Groups)
+	{
+		<div class="group">
+			<form method="post">
+				<input type="hidden" value="@group.Id" name="groupId"/>
+				<button asp-page-handler="DeleteGroup">Diese Gruppe löschen</button>
+
+				<button asp-page-handler="IncreaseGroupSize">Spieler mehr</button>
+				@if (group.MaxAmount > group.GroupPlayers.Count)
+				{
+					<button asp-page-handler="DecreaseGroupSize">Spieler weniger</button>
+				}
+			</form>
+
+			<table class="player-table">
+				<thead>
+				<tr>
+					<th><h3>@group.GroupName</h3></th>
+					<th></th>
+					<th>Punkte</th>
+				</tr>
+				</thead>
+				<tbody>
+				@for (int i = 0; i < @group.MaxAmount; i++)
+				{
+					@try
+					{
+						var player = group.GroupPlayers[i].Player;
+						<tr>
+							<td>@(i + 1) @player.ToString()</td>
+							<td class="player-id"></td>
+							<td>@Model.Groups.Single(x => group.Id == x.Id).GroupPlayers.Single(x => x.Group.Id == group.Id && x.Player.Id == player.Id).Points</td>
+							@if (Model.CurrentPlayer.IsAdmin)
+							{
+								<td>
+									<form method="post">
+										<input type="hidden" name="groupId" value="@group.Id"/>
+										<input type="hidden" name="playerId" value="@player.Id"/>
+										<button asp-page-handler="RemovePlayerFromGroup">Spieler entfernen</button>
+									</form>
+								</td>
+							}
+						</tr>
+					}
+					catch (ArgumentOutOfRangeException)
+					{
+						<tr>
+							<td>
+								<form method="post" asp-page-handler="AddPlayerToGroup">
+									<input type="hidden" name="groupId" value="@group.Id"/>
+									<select name="playerId" onchange="this.form.submit()">
+										<option value="">Spieler auswählen</option>
+										@foreach (var player in Model.RegisteredCompetitionPlayers.Where(x => x.GroupPlayers.All(y => y.GroupId != group.Id)))
+										{
+											<option value="@player.Id">@player.ToString()</option>
+										}
+									</select>
+								</form>
+							</td>
+						</tr>
+					}
+				}
+				<tr>
+					<td>
+						<form method="post">
+							<input type="hidden" value="@group.Id" name="groupId"/>
+							<button asp-page-handler="IncreaseGroupSize">+</button>
+							@if (group.MaxAmount > group.GroupPlayers.Count)
+							{
+								<button asp-page-handler="DecreaseGroupSize">-</button>
+							}
+						</form>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	}
+	@if (Model.SelectedCompetition != null)
+	{
+		<form method="post">
+			<button asp-page-handler="CreateGroup">Gruppe erstellen</button>
+		</form>
+	}
 </div>
 
-<div class="knockout">
-    <h2>Knockout Stage</h2>
-    @foreach (var match in Model.KnockoutMatches)
-    {
-        <div class="match">@match.Team1.Name vs @match.Team2.Name</div>
-    }
+@if (Model.SelectedCompetition != null)
+{
+	<form method="post">
+		<button asp-page-handler="SaveGroups">Diese Gruppen Einteilung speichern</button>
+	</form>
+}
+
+<form method="post">
+	<button asp-page-handler="Back">Zurück</button>
+</form>
+
+<h4>Deine Spiele</h4>
+@foreach (var match in Model.PersonalMatches)
+{
+	<form method="post">
+		<input name="matchId" type="hidden" value="@match.Id"/>
+		<label>@match.Player1 vs @match.Player2 (@match.Group.Competition.Name)</label>
+		@if (match.Sets.ToList().Count == 0)
+		{
+			<input name="score" placeholder="Format x:x x:x usw."/>
+			<button asp-page-handler="SaveMatch">Spielstand speichern</button>
+		}
+		else
+		{
+			<label>@match.SetToString()</label>
+			@if (match.Player1.Id == Model.CurrentPlayer.Id || match.Player2.Id == Model.CurrentPlayer.Id || Model.CurrentPlayer.IsAdmin)
+			{
+				<button asp-page-handler="DeleteMatch">Ergebnis löschen</button>
+			}
+		}
+	</form>
+}
+
+
+@* Weitere Infos *@
+<button type="button" id="infoButton" onclick="toggleInfo()">Mehr Infos</button>
+<div id="infoBox" style="display: none">
+	<div>
+		<h3>Angemeldete Spieler</h3>
+		<table class="table">
+			@foreach (var player in Model.RegisteredCompetitionPlayers)
+			{
+				<tr>
+					<td>@player.ToString()</td>
+					@if (Model.CurrentPlayer.IsAdmin)
+					{
+						<td>
+							<form method="post">
+								<input type="hidden" name="playerId" value="@player.Id"/>
+								<button asp-page-handler="RemovePlayerFromCompetition">Spieler löschen</button>
+							</form>
+						</td>
+					}
+				</tr>
+			}
+		</table>
+	</div>
+
+	@if (Model.CurrentPlayer.IsAdmin)
+	{
+		<form method="post">
+			<input name="competitionName" placeholder="Neuer Bewerb Name"/>
+			<button type="submit" asp-page-handler="CreateCompetition">Bewerb erstellen</button>
+		</form>
+		@if (Model.SelectedCompetition != null)
+		{
+			//ToDo: Rekursiver call in db bei anzeige von KO. Runden (der gewonnene spieler wird in der db gespeichert und die nächste runde wird angezeigt)
+
+			<form method="post">
+				<input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+				<button asp-page-handler="DeleteCompetition">Diesen Bewerb löschen</button>
+			</form>
+		}
+	}
 </div>
 </body>
 </html>
+
+
+<title>Tournament Bracket Generator</title>
+
+<div id="add" class="metroBtn">Add Bracket</div>
+<div class="brackets" id="brackets">
+</div>

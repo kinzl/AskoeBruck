@@ -17,17 +17,17 @@
 
     <form method="post" asp-page-handler="ChangeSettings" class="settings-form">
         <h2>Persönliche Daten</h2>
-        <label for="Firstname">Vorname</label>
-        <input id="Firstname" name="Firstname" value="@Model.Player.Firstname" required/>
+        <label for="Firstname">VorscoreType</label>
+        <input id="Firstname" name="FirstscoreType" value="@Model.Player.Firstname" required/>
 
-        <label for="Lastname">Nachname</label>
-        <input id="Lastname" name="Lastname" value="@Model.Player.Lastname" required/>
+        <label for="Lastname">NachscoreType</label>
+        <input id="Lastname" name="LastscoreType" value="@Model.Player.Lastname" required/>
 
         <label for="EmailOrPhone">E-Mail oder Telefonnummer</label>
         <input id="EmailOrPhone" name="EmailOrPhone" value="@Model.Player.EmailOrPhone" required/>
 
-        <label for="Username">Benutzername</label>
-        <input id="Username" name="Username" value="@Model.Player.Username" required/>
+        <label for="Username">BenutzerscoreType</label>
+        <input id="Username" name="UserscoreType" value="@Model.Player.Username" required/>
 
         <button type="submit" class="btn">Speichern</button>
     </form>

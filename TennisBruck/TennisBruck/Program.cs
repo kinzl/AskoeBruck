@@ -19,6 +19,7 @@ DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
+Console.WriteLine($"Current Environment: {builder.Environment.EnvironmentName}");
 #region -------------------------------------------- ConfigureServices
 
 builder.Services.AddControllers();
@@ -40,7 +41,12 @@ builder.Services
         //.EnableLogging()
     );
 
-builder.Configuration.AddEnvironmentVariables();
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
 
 // string connectionString = builder.Configuration.GetConnectionString("PostgresSql")!;
 // connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("POSTGRES_DATABASE"))
@@ -64,12 +70,12 @@ builder.Services.AddSingleton<PasswordEncryption>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromSeconds(3);
+    options.IdleTimeout = TimeSpan.FromHours(2);
     options.Cookie.Name = "TennisBruck.Session";
     options.Cookie.IsEssential = true;
     options.Cookie.HttpOnly = true;
 });
-builder.Services.AddHttpLogging();
+// builder.Services.AddHttpLogging();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

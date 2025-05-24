@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
@@ -46,6 +46,9 @@
       </Content>
       <Content Include="Dto\LoginDto.cs" />
       <Content Include="Dto\RegistrationDto.cs" />
+      <Content Update="appsettings.Production.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
     <ItemGroup>
@@ -79,6 +82,11 @@
       <None Update=".env">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Pages\Components\ScoreControllerInvokeAsync.cshtml" />
+      <_ContentIncludedByDefault Remove="Pages\Shared\Components\ScoreComponent\ScoreComponent.cshtml" />
     </ItemGroup>
 
 </Project>
