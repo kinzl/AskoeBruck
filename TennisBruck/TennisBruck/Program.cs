@@ -42,14 +42,16 @@ builder.Services
 
 builder.Configuration.AddEnvironmentVariables();
 
-string connectionString = builder.Configuration.GetConnectionString("PostgresSql")!;
-connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("POSTGRES_DATABASE"))
-    .Replace("myUsername", Environment.GetEnvironmentVariable("POSTGRES_USER"))
-    .Replace("myPassword", Environment.GetEnvironmentVariable("POSTGRES_PASSWORD"));
-Console.WriteLine($"Connection string: {connectionString}");
-// connectionString = "Host=localhost;Port=5432;Database=mydatabase;Username=myuser;Password=mypassword";
-builder.Services.AddDbContext<TennisContext>(options =>
-    options.UseNpgsql(connectionString));
+// string connectionString = builder.Configuration.GetConnectionString("PostgresSql")!;
+// connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("POSTGRES_DATABASE"))
+//     .Replace("myUsername", Environment.GetEnvironmentVariable("POSTGRES_USER"))
+//     .Replace("myPassword", Environment.GetEnvironmentVariable("POSTGRES_PASSWORD"));
+// Console.WriteLine($"Connection string: {connectionString}");
+// // connectionString = "Host=localhost;Port=5432;Database=mydatabase;Username=myuser;Password=mypassword";
+// builder.Services.AddDbContext<TennisContext>(options =>
+//     options.UseNpgsql(connectionString));
+// ConnectToPostgresDb();
+ConnectToSqliteDb();
 
 builder.Services.AddLogging();
 builder.Services.AddHostedService<StartupBackgroundService>();
@@ -113,3 +115,23 @@ app.MapRazorPages();
 app.MapControllers();
 
 app.Run();
+
+void ConnectToPostgresDb()
+{
+    string connectionString = builder.Configuration.GetConnectionString("PostgresSql")!;
+    connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("POSTGRES_DATABASE"))
+        .Replace("myUsername", Environment.GetEnvironmentVariable("POSTGRES_USER"))
+        .Replace("myPassword", Environment.GetEnvironmentVariable("POSTGRES_PASSWORD"));
+    Console.WriteLine($"Connection string: {connectionString}");
+// connectionString = "Host=localhost;Port=5432;Database=mydatabase;Username=myuser;Password=mypassword";
+    builder.Services.AddDbContext<TennisContext>(options =>
+        options.UseNpgsql(connectionString));
+}
+
+void ConnectToSqliteDb()
+{
+    string connectionString = builder.Configuration.GetConnectionString("TennisDbSqlite")!;
+    Console.WriteLine($"Connection string: {connectionString}");
+    builder.Services.AddDbContext<TennisContext>(options =>
+        options.UseSqlite(connectionString));
+}
