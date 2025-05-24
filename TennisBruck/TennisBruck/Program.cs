@@ -92,7 +92,6 @@ var app = builder.Build();
 
 #region -------------------------------------------- Middleware pipeline
 
-app.UseHttpLogging();
 app.UseHttpsRedirection();
 if (app.Environment.IsDevelopment())
 {
@@ -136,8 +135,13 @@ void ConnectToPostgresDb()
 
 void ConnectToSqliteDb()
 {
-    string connectionString = builder.Configuration.GetConnectionString("TennisDbSqlite")!;
-    Console.WriteLine($"Connection string: {connectionString}");
-    builder.Services.AddDbContext<TennisContext>(options =>
-        options.UseSqlite(connectionString));
+    string? connectionString = builder.Configuration.GetConnectionString("TennisDbSqlite")!;
+    string location = System.Reflection.Assembly.GetEntryAssembly()!.Location;
+    string dataDirectory = Path.GetDirectoryName(location)!;
+    connectionString = connectionString?.Replace("|DataDirectory|", dataDirectory + Path.DirectorySeparatorChar);
+    Console.WriteLine($"******** ConnectionString: {connectionString}");
+    Console.ForegroundColor = ConsoleColor.Yellow;
+    Console.WriteLine($"******** Don't forget to comment out NorthwindContext.OnConfiguring !");
+    Console.ResetColor();
+    builder.Services.AddDbContext<TennisContext>(options => options.UseSqlite(connectionString));
 }
