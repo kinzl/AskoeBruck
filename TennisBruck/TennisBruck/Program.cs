@@ -1,5 +1,6 @@
 using GrueneisR.RestClientGenerator;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using TennisBruck.Controller;
@@ -20,6 +21,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 Console.WriteLine($"Current Environment: {builder.Environment.EnvironmentName}");
+
 #region -------------------------------------------- ConfigureServices
 
 builder.Services.AddControllers();
@@ -75,6 +77,12 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
     options.Cookie.HttpOnly = true;
 });
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, "keys")))
+    .SetApplicationName("TennisBruck")
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(14)); // Set key lifetime to 14 days
+
 // builder.Services.AddHttpLogging();
 builder.Services.AddHttpContextAccessor();
 
