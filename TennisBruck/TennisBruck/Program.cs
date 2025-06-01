@@ -79,9 +79,7 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Environment.CurrentDirectory, "keys")))
-    .SetApplicationName("TennisBruck")
-    .SetDefaultKeyLifetime(TimeSpan.FromDays(14)); // Set key lifetime to 14 days
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(365));
 
 // builder.Services.AddHttpLogging();
 builder.Services.AddHttpContextAccessor();
