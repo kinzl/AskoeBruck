@@ -63,7 +63,8 @@ public class Members : PageModel
         var player = _db.Players.Single(x => x.Id == playerId);
         _db.Players.Remove(player);
         _db.SaveChanges();
-        return RedirectToPage(nameof(Members));
+        return RedirectToPage(nameof(Members),
+            new { InfoBox = $"Benutzer {player.Firstname} {player.Lastname} wurde gelöscht." });
     }
 
     public IActionResult OnPostBack()

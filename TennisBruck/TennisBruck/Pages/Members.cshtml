@@ -11,13 +11,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Members</title>
-    <link rel="stylesheet" href="css/members.css">
-    <script src="js/toggleVisibility.js"></script>
+    <link rel="stylesheet" href="/css/members.css">
+    <script src="/js/toggleVisibility.js"></script>
 </head>
 <body>
+<div class="header">
+    <div class="logo">
+        <svg width="24" height="24" fill="white" style="margin-right: 8px;" viewBox="0 0 24 24">
+            <path
+                d="M12 2C8.13 2 5 5.13 5 9v5c0 1.47.81 2.75 2 3.45V22h10v-4.55c1.19-.7 2-1.98 2-3.45V9c0-3.87-3.13-7-7-7z"/>
+        </svg>
+        Tennis<span>Bruck</span>
+    </div>
+    <div class="user">
+        <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
+            <path d="M12 12c2.7 0 5.5 1.3 6 4v2H6v-2c.5-2.7 3.3-4 6-4zm0-2a3 3 0 100-6 3 3 0 000 6z"/>
+        </svg>
+        @Model.LoggedInPlayer.ToString()
+    </div>
+</div>
+
 <div class="members-container">
     <div class="members-box">
-        <h2>Members List</h2>
+        <h2>Mitglieder Liste</h2>
+
         <form method="post">
             <table>
                 <thead>
@@ -27,7 +44,7 @@
                     @if (Model.LoggedInPlayer.IsAdmin)
                     {
                         <th>Benutzername</th>
-                        <th>Email oder Nummer</th>
+                        <th>Email</th>
                         <th>Admin</th>
                         <th>Löschen</th>
                     }
@@ -36,7 +53,7 @@
                 <tbody>
                 @foreach (var player in Model.AllPlayers)
                 {
-                    <tr>
+                    <tr class="@(player.IsAdmin ? "admin-row" : null)">
                         <td>@player.Firstname</td>
                         <td>@player.Lastname</td>
                         @if (Model.LoggedInPlayer.IsAdmin)
@@ -46,16 +63,18 @@
                             <td>
                                 <form method="post" asp-page-handler="ChangeAdmin">
                                     <input type="hidden" name="user" value="@player.Id"/>
-                                    <input type="checkbox"
-                                           onclick="this.form.submit()"
-                                           @(player.IsAdmin ? "checked" : "")/>
+                                    <label class="switch">
+                                        <input type="checkbox" onclick="this.form.submit()"
+                                               @(player.IsAdmin ? "checked" : null)/>
+                                        <span class="slider"></span>
+                                    </label>
                                 </form>
                             </td>
-                            
                             <td>
-                                <button class="action-button delete" name="playerId" value="@player.Id" type="submit"
-                                        asp-page-handler="DeleteUser">Löschen
-                                </button>
+                                <form method="post">
+                                    <button class="delete" name="playerId" value="@player.Id" type="submit"
+                                            asp-page-handler="DeleteUser">🗑️</button>
+                                </form>
                             </td>
                         }
                     </tr>
@@ -64,15 +83,15 @@
             </table>
         </form>
     </div>
-    
+
     @if (Model.LoggedInPlayer.IsAdmin)
     {
         <form method="post">
             <div class="actions">
-                <button id="createUserButton" class="action-button create" onclick="toggleCreateUser()">Erstelle
-                    Benutzer
+                <button id="createUserButton" class="action-button create" onclick="toggleCreateUser()" type="button">
+                    Create User
                 </button>
-                <button asp-page-handler="Back" type="submit">Zurück</button>
+                <button class="action-button" asp-page-handler="Back" type="submit">Back</button>
             </div>
         </form>
 
@@ -91,10 +110,10 @@
                     <input id="usernameInput" name="username" class="form-input" required/>
                 </div>
                 <div class="form-group">
-                    <label for="emailOrPhoneInput">Email oder Telefonnummer</label>
+                    <label for="emailOrPhoneInput">Email</label>
                     <input id="emailOrPhoneInput" name="emailOrPhone" class="form-input" required/>
                 </div>
-                <button type="submit" class="action-button submit" asp-page-handler="CreateUser">Erstellen</button>
+                <button type="submit" class="action-button create" asp-page-handler="CreateUser">Erstellen</button>
             </form>
         </div>
         <label class="info-label">@Model.InfoBox</label>
