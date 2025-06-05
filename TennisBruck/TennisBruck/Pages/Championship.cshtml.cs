@@ -58,8 +58,10 @@ public class Championship : PageModel
             .Where(x => x.Player1 == CurrentPlayer || x.Player2 == CurrentPlayer)
             .ToList();
 
-        RegisteredCompetitions = _db.PlayerCompetitions.Where(x => x.Player.Id == CurrentPlayer.Id)
-            .Select(x => x.Competition).ToList();
+        RegisteredCompetitions = _db.PlayerCompetitions
+            .Where(x => x.Player.Id == CurrentPlayer.Id)
+            .Select(x => x.Competition)
+            .ToList();
 
         if (selectedCompetitionId != 0)
         {
@@ -99,7 +101,11 @@ public class Championship : PageModel
     public IActionResult OnPostCreateCompetition(string competitionName)
     {
         if (competitionName.IsNullOrEmpty()) return RedirectToPage(new { Message = "Bitte geben Sie einen Namen ein" });
-        _db.Competitions.Add(new Competition { Name = competitionName });
+        _db.Competitions.Add(new Competition
+        {
+            Name = competitionName,
+            PlayerCompetitions = new List<PlayerCompetition>()
+        });
         _db.SaveChanges();
         return RedirectToPage(new { Message = "Neuer Bewerb erstellt" });
     }
@@ -154,11 +160,12 @@ public class Championship : PageModel
         return RedirectToPage();
     }
 
-    public IActionResult OnPostAddPlayerToGroup(int playerId, int groupId)
+    public IActionResult OnPostAddPlayerToGroup(int playerId, int groupId, int competitionId)
     {
         if (_db.GroupPlayers.Any(x => x.PlayerId == playerId))
         {
-            var groupPlayer = _db.GroupPlayers.Single(x => x.PlayerId == playerId);
+            var groupPlayer =
+                _db.GroupPlayers.Single(x => x.PlayerId == playerId && x.Group.Competition.Id == competitionId);
             groupPlayer.GroupId = groupId;
         }
         else
@@ -166,7 +173,8 @@ public class Championship : PageModel
             _db.GroupPlayers.Add(new GroupPlayer()
             {
                 GroupId = groupId,
-                PlayerId = playerId
+                PlayerId = playerId,
+                
             });
         }
 
@@ -296,7 +304,7 @@ public class Championship : PageModel
 
             _db.SaveChanges();
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return RedirectToPage(new
                 { Message = "Fehler beim Speichern des Spiels (Falsche eingabe des Spielstandes?)" });

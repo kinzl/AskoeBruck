@@ -99,10 +99,6 @@
                             <tr>
                                 <th>Spieler</th>
                                 <th>Punkte</th>
-                                @if (Model.CurrentPlayer.IsAdmin)
-                                {
-                                    <th></th>
-                                }
                             </tr>
                             </thead>
                             <tbody>
@@ -111,8 +107,10 @@
                                 try
                                 {
                                     var player = group.GroupPlayers[i].Player;
+                                    var doublePlayer = group.Competition.PlayerCompetitions
+                                        .FirstOrDefault(pc => pc.DoublePlayer?.Id == player.Id)?.DoublePlayer;
                                     <tr>
-                                        <td>@(i + 1). @player.ToString()</td>
+                                        <td>@(i + 1). @player.ToString() / @doublePlayer?.ToString()</td>
                                         <td>@group.GroupPlayers[i].Points</td>
                                         @if (Model.CurrentPlayer.IsAdmin)
                                         {
@@ -134,6 +132,8 @@
                                         <td colspan="3">
                                             <form method="post" asp-page-handler="AddPlayerToGroup">
                                                 <input type="hidden" name="groupId" value="@group.Id"/>
+                                                <input type="hidden" name="competitionId"
+                                                       value="@group.Competition.Id"/>
                                                 <select class="player-select" name="playerId"
                                                         onchange="this.form.submit()">
                                                     <option value="">Spieler auswählen</option>
