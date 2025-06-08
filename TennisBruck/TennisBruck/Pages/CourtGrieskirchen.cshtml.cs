@@ -38,6 +38,14 @@ public class CourtGrieskirchen : PageModel
             .OrderBy(x => x.MatchDay)
             .ToList();
 
+        foreach (var court in Courts)
+        {
+            court.PlayerCourtGrieskirchens = court.PlayerCourtGrieskirchens
+                .OrderBy(pcg => pcg.Player.ToString()) // or use .Name if there's a dedicated property
+                .ToList();
+        }
+
+
         return Page();
     }
 

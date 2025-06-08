@@ -6,72 +6,144 @@
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
+    <meta charset="utf-8"/>
     <title>Hallenplatz Grieskirchen</title>
-    <link rel="stylesheet" href="css/courtGrieskirchen.css">
     <script src="js/courtGrieskirchen.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<div class="container">
-    <h1>Hallenplatz Grieskirchen</h1>
-    <form method="post" asp-page-handler="ChangePlayingState">
-        <label
-            class="status-label @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "label-playing" : "label-not-playing")">
-            @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "Sie spielen aktuell in Grieskirchen mit." : "Sie spielen aktuell nicht in Grieskirchen mit.")
-        </label>
-        <label class="switch">
-            <input type="checkbox" @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "checked" : "")
-                   onclick="this.form.submit()">
-            <span class="slider round"></span>
-        </label>
-    </form>
+<body class="bg-emerald-50">
 
-    @if (Model.LoggedInPlayer.IsAdmin)
-    {
-        <form method="post" asp-page-handler="GeneratePlan">
-            <label class="status-label" for="startDate">Start Datum</label>
-            <input id="startDate" type="date" name="startDate" placeholder="StartDate" value="2024-10-11" required/>
-            <label class="status-label" for="endDate">End Datum</label>
-            <input id="endDate" type="date" name="endDate" placeholder="EndDate" value="2025-04-18" required/>
-            <button>Generiere Plan</button>
-        </form>
-    }
-    
-    <form method="post" asp-page-handler="Back">
-        <button>Zurück</button>
-    </form>
-    
-    <div class="table-wrapper">
-        <table>
-            <thead>
-            <tr>
-                <th>Datum</th>
-                <th>Spieler 1</th>
-                <th>Spieler 2</th>
-                <th>Spieler 3</th>
-                <th>Spieler 4</th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach (var item in Model.Courts)
-            {
-                <tr>
-                    <td>@item.MatchDay.ToString("dd.MM.yy")</td>
-                    @foreach (var playerCourtGrieskirchen in item.PlayerCourtGrieskirchens)
+<div class="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-slate-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-emerald-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <h1 class="text-2xl font-bold text-gray-900">Hallenplatz Grieskirchen</h1>
+                <form method="post" asp-page-handler="Back">
+                    <button
+                        class="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                        <span>Zurück</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spielstatus -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Spielstatus</h2>
+                    <p class="text-sm @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "text-emerald-600" : "text-gray-500")">
+                        @(Model.LoggedInPlayer.IsPlayingGrieskirchen
+                            ? "Sie spielen aktuell in Grieskirchen mit."
+                            : "Sie spielen aktuell nicht in Grieskirchen mit.")
+                    </p>
+                </div>
+                <form method="post" asp-page-handler="ChangePlayingState">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="isPlayingGrieskirchen"
+                               onchange="this.form.submit()"
+                               @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "checked" : "")
+                               class="sr-only peer"/>
+                        <div
+                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </label>
+                </form>
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        @if (Model.LoggedInPlayer.IsAdmin)
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Admin Panel</h2>
+                <form method="post" asp-page-handler="GeneratePlan"
+                      class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" for="startDate">Start Datum</label>
+                        <input type="date" id="startDate" name="startDate"
+                               value="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               class="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               required/>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" for="endDate">End Datum</label>
+                        <input type="date" id="endDate" name="endDate"
+                               value="@DateTime.Today.AddMonths(6).ToString("yyyy-MM-dd")"
+                               class="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               required/>
+                    </div>
+                    <button
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md">
+                        Generiere Plan
+                    </button>
+                </form>
+            </div>
+        }
+
+        <!-- Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Spielplan</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Datum
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Spieler 1
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Spieler 2
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Spieler 3
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Spieler 4
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach (var court in Model.Courts)
                     {
-                        <td id="player-@playerCourtGrieskirchen.Player.Id"
-                            class="draggable-player" draggable="true"
-                            data-player-id="@playerCourtGrieskirchen.Player.Id"
-                            data-court-id="@item.Id">
-                            @playerCourtGrieskirchen.Player
-                        </td>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                                @court.MatchDay.ToString("dd.MM.yy")
+                            </td>
+                            @foreach (var player in court.PlayerCourtGrieskirchens)
+                            {
+                                <td>
+                                    <div id="player-@player.Player.Id"
+                                         class="draggable-player px-6 py-4 bg-gray-100 rounded-xl whitespace-nowrap flex items-center gap-2 shadow-sm hover:ring-2 hover:ring-emerald-400 transition duration-200"
+                                         draggable="true"
+                                         data-player-id="@player.Player.Id"
+                                         data-court-id="@court.Id">
+                                        <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
+                                             stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M5.121 17.804A13.937 13.937 0 0112 15c2.636 0 5.093.76 7.121 2.072M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        </svg>
+                                        <span>@player.Player</span>
+                                    </div>
+                                </td>
+
+                            }
+                        </tr>
                     }
-                </tr>
-            }
-            </tbody>
-        </table>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
+
 </body>
 </html>

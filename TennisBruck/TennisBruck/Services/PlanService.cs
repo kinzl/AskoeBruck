@@ -2,33 +2,23 @@ using TennisDb;
 
 namespace TennisBruck.Services;
 
-public class PlanService
+public class PlanService(TennisContext db)
 {
-    private TennisContext _db;
-
-    public PlanService(TennisContext db)
-    {
-        _db = db;
-    }
-
     public void GeneratePlanGrieskirchen(DateTime startDate, DateTime endDate)
     {
         // Clear existing data
-        _db.Court.RemoveRange(_db.Court);
-        _db.PlayerCourtGrieskirchen.RemoveRange(_db.PlayerCourtGrieskirchen);
+        db.Court.RemoveRange(db.Court);
+        db.PlayerCourtGrieskirchen.RemoveRange(db.PlayerCourtGrieskirchen);
 
         // Retrieve players who are marked as playing in Grieskirchen
-        var players = _db.Players.Where(x => x.IsPlayingGrieskirchen).ToList();
+        var players = db.Players.Where(x => x.IsPlayingGrieskirchen).ToList();
         if (players.Count < 4) return;
 
         // Generate match days for every Friday within the date range
         var matchDays = new List<DateTime>();
         for (var date = startDate; date <= endDate; date = date.AddDays(7))
         {
-            if (date.DayOfWeek == DayOfWeek.Friday)
-            {
-                matchDays.Add(date);
-            }
+            matchDays.Add(date);
         }
 
         // Dictionary to track the number of matches each player has participated in
@@ -68,10 +58,10 @@ public class PlanService
             }
 
             // Add the court entry with players to the database
-            _db.Court.Add(court);
+            db.Court.Add(court);
         }
 
-        _db.SaveChanges();
+        db.SaveChanges();
         Console.WriteLine("Balanced plan generated successfully.");
     }
 }
