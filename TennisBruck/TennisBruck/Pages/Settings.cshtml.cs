@@ -54,7 +54,7 @@ public class Settings : PageModel
                 new { infoText = "Neues Passwort darf nicht gleich dem alten sein" });
         var player = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
         Player = _currentPlayerService.GetCurrentUser(player)!;
-        if (!_pe.HashPassword(oldPassword).Equals(Player.PasswordHash))
+        if (!_pe.VerifyPassword(oldPassword, Player.PasswordHash))
             return RedirectToPage(nameof(Settings), new { infoText = "Altes Passwort ist falsch" });
         Player.PasswordHash = _pe.HashPassword(newPassword);
         _db.SaveChanges();

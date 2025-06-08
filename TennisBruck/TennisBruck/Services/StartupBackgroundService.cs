@@ -1,35 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
-using TennisBruck.Extensions;
+﻿using TennisBruck.Extensions;
 using TennisDb;
 
 namespace TennisBruck.Services;
 
-public class StartupBackgroundService : BackgroundService
+public class StartupBackgroundService(IServiceProvider provider, PasswordEncryption pe) : BackgroundService
 {
-    private readonly IServiceScope _scope;
-    private PasswordEncryption _pe;
-
-    public StartupBackgroundService(IServiceProvider provider, PasswordEncryption pe)
-    {
-        _pe = pe;
-        _scope = provider.CreateScope();
-    }
-
-    // protected override async Task<Task<int>> ExecuteAsync(CancellationToken stoppingToken)
-    // {
-    //     Console.WriteLine("ExecuteAsync STARTUPSERVICE");
-    //     var db = _scope.ServiceProvider.GetRequiredService<TennisContext>();
-    //
-    //     await db.Database.EnsureDeletedAsync(stoppingToken);
-    //     await db.Database.EnsureCreatedAsync(stoppingToken);
-    //     SeedPlayer(db);
-    //
-    //     return db.SaveChangesAsync(stoppingToken);
-    // }
+    private readonly IServiceScope _scope = provider.CreateScope();
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Console.WriteLine("ExecuteAsync STARTUPSERVICE");
+        Console.WriteLine("ExecuteAsync STARTUP SERVICE");
         var db = _scope.ServiceProvider.GetRequiredService<TennisContext>();
 
         db.Database.EnsureDeleted();
@@ -49,7 +29,7 @@ public class StartupBackgroundService : BackgroundService
         {
             Firstname = "Alice",
             Lastname = "Smith",
-            PasswordHash = _pe.HashPassword("1234"),
+            PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "asmi@gmail.com",
             Username = "asmith",
             IsPlayingGrieskirchen = false,
@@ -60,7 +40,7 @@ public class StartupBackgroundService : BackgroundService
         {
             Firstname = "Max",
             Lastname = "Kammerer",
-            PasswordHash = _pe.HashPassword("1234"),
+            PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "kammerem@gmail.com",
             Username = "kammerem",
             IsPlayingGrieskirchen = false,
@@ -71,7 +51,7 @@ public class StartupBackgroundService : BackgroundService
         {
             Firstname = "Emil",
             Lastname = "Kinzl",
-            PasswordHash = _pe.HashPassword("1234"),
+            PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "ekin@gmail.com",
             Username = "kinzle",
             IsPlayingGrieskirchen = true,
@@ -82,7 +62,7 @@ public class StartupBackgroundService : BackgroundService
         {
             Firstname = "Stefan",
             Lastname = "Ecker",
-            PasswordHash = _pe.HashPassword("1234"),
+            PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "EckerStefan@gmail.com",
             Username = "EckerS",
             IsPlayingGrieskirchen = true,
@@ -93,7 +73,7 @@ public class StartupBackgroundService : BackgroundService
         {
             Firstname = "Gerald",
             Lastname = "Wimmer",
-            PasswordHash = _pe.HashPassword("1234"),
+            PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "WimmerGerald@gmail.com",
             Username = "WimmerG",
             IsPlayingGrieskirchen = true,
@@ -104,7 +84,7 @@ public class StartupBackgroundService : BackgroundService
         {
             Firstname = "Bernhard",
             Lastname = "Repp",
-            PasswordHash = _pe.HashPassword("1234"),
+            PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "ReppB@gmail.com",
             Username = "ReppB",
             IsPlayingGrieskirchen = true,
@@ -115,7 +95,7 @@ public class StartupBackgroundService : BackgroundService
         {
             Firstname = "Stefan",
             Lastname = "Hofer",
-            PasswordHash = _pe.HashPassword("1234"),
+            PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "HoferS@gmail.com",
             Username = "HoferS",
             IsPlayingGrieskirchen = true,
