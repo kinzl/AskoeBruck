@@ -1,4 +1,5 @@
 @page
+@using TennisDb
 @model TennisBruck.Pages.Championship
 
 @{
@@ -108,9 +109,37 @@
                                 {
                                     var player = group.GroupPlayers[i].Player;
                                     var doublePlayer = group.Competition.PlayerCompetitions
-                                        .FirstOrDefault(pc => pc.DoublePlayer?.Id == player.Id)?.DoublePlayer;
+                                        .FirstOrDefault(pc => pc.Player.Id == player.Id)?.DoublePlayer;
                                     <tr>
-                                        <td>@(i + 1). @player.ToString() / @doublePlayer?.ToString()</td>
+                                        @if (doublePlayer == null)
+                                        {
+                                            <td>@(i + 1). @player.ToString()</td>
+                                        }
+                                        else
+                                        {
+                                            <td>@(i + 1). @player.ToString() / @doublePlayer.ToString()</td>
+                                        }
+                                        @if (doublePlayer == null && !group.Competition.IsSingle)
+                                        {
+                                            <td colspan="3">
+                                                <form method="post" asp-page-handler="AddDoublePlayer">
+                                                    <input type="hidden" name="groupId" value="@group.Id"/>
+                                                    <input type="hidden" name="competitionId"
+                                                           value="@group.Competition.Id"/>
+                                                    <input type="hidden" name="playerId" value="@player.Id"/>
+                                                    <select class="player-select" name="doublePlayerId"
+                                                            onchange="this.form.submit()">
+                                                        <option value="">Spieler auswählen</option>
+                                                        @foreach (var registeredPlayer in Model.RegisteredCompetitionPlayers.Where(p => p.GroupPlayers.All(gp => gp.GroupId != group.Id)))
+                                                        {
+                                                            @if (Model.DoublePlayers.Any(x => x != null && x.Id == registeredPlayer.Id)) continue;
+                                                            <option
+                                                                value="@registeredPlayer.Id">@registeredPlayer.ToString()</option>
+                                                        }
+                                                    </select>
+                                                </form>
+                                            </td>
+                                        }
                                         <td>@group.GroupPlayers[i].Points</td>
                                         @if (Model.CurrentPlayer.IsAdmin)
                                         {
@@ -118,6 +147,8 @@
                                                 <form method="post">
                                                     <input type="hidden" name="groupId" value="@group.Id"/>
                                                     <input type="hidden" name="playerId" value="@player.Id"/>
+                                                    <input type="hidden" name="doublePlayerId"
+                                                           value="@doublePlayer?.Id"/>
                                                     <button class="icon-button delete"
                                                             asp-page-handler="RemovePlayerFromGroup">❌
                                                     </button>
@@ -139,6 +170,7 @@
                                                     <option value="">Spieler auswählen</option>
                                                     @foreach (var player in Model.RegisteredCompetitionPlayers.Where(p => p.GroupPlayers.All(gp => gp.GroupId != group.Id)))
                                                     {
+                                                        @if (Model.DoublePlayers.Any(x => x != null && x.Id == player.Id)) continue;
                                                         <option value="@player.Id">@player.ToString()</option>
                                                     }
                                                 </select>

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TennisBruck.Services;
@@ -24,6 +23,7 @@ public class Championship : PageModel
     public List<Player> RegisteredCompetitionPlayers { get; set; } = new();
     public List<Group> Groups { get; set; } = new();
     public List<Match> PersonalMatches { get; set; }
+    public List<Player?> DoublePlayers { get; set; }
     public string? Message { get; set; }
 
     public Championship(CurrentPlayerService currentPlayerService, TennisContext db)
@@ -50,6 +50,8 @@ public class Championship : PageModel
         Message = message;
         Competitions = _db.Competitions.ToList();
 
+        DoublePlayers = _db.PlayerCompetitions.Select(x => x.DoublePlayer).ToList();
+
         PersonalMatches = _db.Matches
             .Include(x => x.Group.Competition)
             .Include(x => x.Player1)
@@ -75,6 +77,10 @@ public class Championship : PageModel
 
             Groups = _db.Groups
                 .Include(x => x.GroupPlayers)
+                .ThenInclude(x => x.Player)
+                .Include(x => x.Competition)
+                .ThenInclude(x => x.PlayerCompetitions)
+                .ThenInclude(x => x.Player)
                 .Where(x => x.Competition.Id == selectedCompetitionId)
                 .ToList();
 
@@ -162,10 +168,12 @@ public class Championship : PageModel
 
     public IActionResult OnPostAddPlayerToGroup(int playerId, int groupId, int competitionId)
     {
-        if (_db.GroupPlayers.Any(x => x.PlayerId == playerId))
+        if (_db.GroupPlayers.Any(x => x.PlayerId == playerId && x.Group.Competition.Id == competitionId))
         {
-            var groupPlayer =
-                _db.GroupPlayers.Single(x => x.PlayerId == playerId && x.Group.Competition.Id == competitionId);
+            var groupPlayer = _db.GroupPlayers
+                .Include(x => x.Player)
+                .Include(x => x.Group)
+                .Single(x => x.PlayerId == playerId && x.Group.Competition.Id == competitionId);
             groupPlayer.GroupId = groupId;
         }
         else
@@ -174,7 +182,6 @@ public class Championship : PageModel
             {
                 GroupId = groupId,
                 PlayerId = playerId,
-                
             });
         }
 
@@ -182,13 +189,31 @@ public class Championship : PageModel
         return RedirectToPage();
     }
 
-    public IActionResult OnPostRemovePlayerFromGroup(int groupId, int playerId)
+    public IActionResult OnPostAddDoublePlayer(int doublePlayerId, int playerId, int competitionId)
+    {
+        var playerCompetition = _db.PlayerCompetitions
+            .SingleOrDefault(x => x.Player.Id == playerId && x.Competition.Id == competitionId);
+        if (playerCompetition == null) return RedirectToPage();
+
+        playerCompetition.DoublePlayer = _db.Players.Single(x => x.Id == doublePlayerId);
+        _db.SaveChanges();
+
+        return RedirectToPage();
+    }
+
+    public IActionResult OnPostRemovePlayerFromGroup(int groupId, int playerId, int? doublePlayerId)
     {
         var groupPlayer = _db.GroupPlayers
             .Include(x => x.Player)
-            .Include(x => x.Group)
+            .Include(x => x.Group).ThenInclude(group => group.Competition)
+            .ThenInclude(competition => competition.PlayerCompetitions)
+            .ThenInclude(playerCompetition => playerCompetition.DoublePlayer)
             .Single(x => x.PlayerId == playerId && x.GroupId == groupId);
         _db.GroupPlayers.Remove(groupPlayer);
+
+        if (doublePlayerId.HasValue)
+            groupPlayer.Group.Competition.PlayerCompetitions
+                .Single(x => x.DoublePlayer != null && x.DoublePlayer.Id == doublePlayerId.Value).DoublePlayer = null;
 
         _db.SaveChanges();
         return RedirectToPage();
