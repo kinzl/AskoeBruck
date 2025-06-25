@@ -24,8 +24,8 @@
         <h1>Vereinsmeisterschaft Bruck</h1>
         <i class="icon">🏆</i>
     </header>
-
     <main>
+        <label>@Model.Message</label>
         <!-- Competition Selector -->
         <section class="competition-selector">
             <form method="post" asp-page-handler="CompetitionChanged">
@@ -276,6 +276,10 @@
                         <form method="post" class="competition-creation">
                             <input type="text" name="competitionName" class="competition-input"
                                    placeholder="Neuer Bewerb Name"/>
+                            <input id="radioSingle" type="radio" name="isSingle" value="true"/>
+                            <label for="radioSingle">Einzel</label>
+                            <input id="radioDouble" type="radio" name="isSingle" value="false"/>
+                            <label for="radioDouble">Doppel</label>
                             <button class="create-competition" asp-page-handler="CreateCompetition">➕ Bewerb erstellen
                             </button>
                         </form>
@@ -299,7 +303,6 @@
         <form method="post">
             <button class="back-button" asp-page-handler="Back">Zurück</button>
         </form>
-        <label>@Model.Message</label>
     </footer>
 </div>
 </body>

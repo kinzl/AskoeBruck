@@ -104,12 +104,14 @@ public class Championship : PageModel
         return RedirectToPage(new { Message = "Bewerb wurde gelöscht" });
     }
 
-    public IActionResult OnPostCreateCompetition(string competitionName)
+    public IActionResult OnPostCreateCompetition(string competitionName, bool? isSingle)
     {
-        if (competitionName.IsNullOrEmpty()) return RedirectToPage(new { Message = "Bitte geben Sie einen Namen ein" });
+        if (competitionName.IsNullOrEmpty() || !isSingle.HasValue)
+            return RedirectToPage(new { Message = "Bitte geben Sie einen Namen ein oder Wählen Sie einen Bewerb" });
         _db.Competitions.Add(new Competition
         {
             Name = competitionName,
+            IsSingle = isSingle.Value,
             PlayerCompetitions = new List<PlayerCompetition>()
         });
         _db.SaveChanges();
