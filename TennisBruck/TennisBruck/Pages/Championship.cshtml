@@ -204,7 +204,15 @@
                         <form method="post">
                             <input type="hidden" name="matchId" value="@match.Id"/>
                             <div class="match-header">
-                                <span class="match-players">@match.Player1 vs @match.Player2</span>
+                                @if (match.DoublePlayer1 != null && match.DoublePlayer2 != null)
+                                {
+                                    <span class="match-players">@match.Player1.ToString() / @match.DoublePlayer1.ToString() vs @match.Player2.ToString() / @match.DoublePlayer2.ToString()</span>
+                                }
+                                else
+                                {
+                                    <span
+                                        class="match-players">@match.Player1.ToString() vs @match.Player2.ToString()</span>
+                                }
                                 <span class="match-competition">(@match.Group.Competition.Name)</span>
                             </div>
 

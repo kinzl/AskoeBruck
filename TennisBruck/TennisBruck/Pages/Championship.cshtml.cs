@@ -57,7 +57,9 @@ public class Championship : PageModel
             .Include(x => x.Player1)
             .Include(x => x.Player2)
             .Include(x => x.Sets)
-            .Where(x => x.Player1 == CurrentPlayer || x.Player2 == CurrentPlayer)
+            .Where(x => x.Player1 == CurrentPlayer || x.Player2 == CurrentPlayer ||
+                        (x.DoublePlayer1 != null && x.DoublePlayer1 == CurrentPlayer) ||
+                        (x.DoublePlayer2 != null && x.DoublePlayer2 == CurrentPlayer))
             .ToList();
 
         RegisteredCompetitions = _db.PlayerCompetitions
@@ -68,8 +70,12 @@ public class Championship : PageModel
         if (selectedCompetitionId != 0)
         {
             SelectedCompetition = Competitions.FirstOrDefault(c => c.Id == selectedCompetitionId);
+
             IsRegistered = _db.PlayerCompetitions.SingleOrDefault(x =>
-                x.Player.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId) != null;
+                ((x.Player.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId) ||
+                 (x.DoublePlayer.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId))) != null;
+
+
             RegisteredCompetitionPlayers = _db.PlayerCompetitions
                 .Include(x => x.Player.GroupPlayers)
                 .Where(x => x.Competition.Id == selectedCompetitionId)
@@ -133,14 +139,16 @@ public class Championship : PageModel
             Competition = SelectedCompetition!
         });
         _db.SaveChanges();
-        return RedirectToPage(new { Message = $"Beim Bewerb anemeldet" });
+        return RedirectToPage(new { Message = $"Beim Bewerb angemeldet" });
     }
 
     public IActionResult OnPostUnregister()
     {
         InitValues(null);
         var playerCompetition = _db.PlayerCompetitions.Single(x =>
-            x.Player.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
+            x.DoublePlayer != null &&
+            ((x.Player.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id) ||
+             x.DoublePlayer.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id));
         _db.PlayerCompetitions.Remove(playerCompetition);
 
         var groupPlayers = _db.GroupPlayers.SingleOrDefault(x =>
@@ -194,10 +202,19 @@ public class Championship : PageModel
     public IActionResult OnPostAddDoublePlayer(int doublePlayerId, int playerId, int competitionId)
     {
         var playerCompetition = _db.PlayerCompetitions
+            .Include(x => x.Player)
+            .Include(x => x.Competition)
             .SingleOrDefault(x => x.Player.Id == playerId && x.Competition.Id == competitionId);
         if (playerCompetition == null) return RedirectToPage();
 
-        playerCompetition.DoublePlayer = _db.Players.Single(x => x.Id == doublePlayerId);
+        var doublePlayer = _db.PlayerCompetitions
+            .Include(x => x.Player)
+            .Include(x => x.Competition)
+            .ThenInclude(x => x.PlayerCompetitions)
+            .Single(x => x.Player.Id == doublePlayerId && x.Competition.Id == competitionId);
+        playerCompetition.DoublePlayer = doublePlayer.Player;
+        _db.PlayerCompetitions.Remove(doublePlayer);
+
         _db.SaveChanges();
 
         return RedirectToPage();
@@ -270,7 +287,13 @@ public class Championship : PageModel
         _db.SaveChanges();
 
         var competitionGroup = _db.Groups.Where(x => x.Competition.Id == SelectedCompetition!.Id)
-            .Include(group => group.GroupPlayers).ThenInclude(groupPlayer => groupPlayer.Player).ToList();
+            .Include(group => group.GroupPlayers).ThenInclude(groupPlayer => groupPlayer.Player)
+            .ThenInclude(player => player.GroupPlayers)
+            .Include(group => group.Competition).ThenInclude(competition => competition.PlayerCompetitions)
+            .ThenInclude(playerCompetition => playerCompetition.DoublePlayer).Include(group => group.Competition)
+            .ThenInclude(competition => competition.PlayerCompetitions)
+            .ThenInclude(playerCompetition => playerCompetition.Player).ToList();
+
         foreach (var group in competitionGroup)
         {
             var groupPlayers = group.GroupPlayers;
@@ -278,12 +301,18 @@ public class Championship : PageModel
             {
                 for (int j = i + 1; j < groupPlayers.Count; j++)
                 {
+                    var team1 = groupPlayers[i].Group.Competition.PlayerCompetitions
+                        .Single(x => x.Player.Id == groupPlayers[i].Player.Id);
+                    var team2 = groupPlayers[j].Group.Competition.PlayerCompetitions
+                        .Single(x => x.Player.Id == groupPlayers[j].Player.Id);
                     _db.Matches.Add(new Match
                     {
-                        Player1 = groupPlayers[i].Player,
-                        Player2 = groupPlayers[j].Player,
+                        Player1 = team1.Player,
+                        DoublePlayer1 = team1.DoublePlayer,
+                        Player2 = team2.Player,
+                        DoublePlayer2 = team2.DoublePlayer,
                         Group = group,
-                        Sets = new List<Set>()
+                        Sets = []
                     });
                 }
             }

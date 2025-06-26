@@ -157,18 +157,12 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             Player = db.Players.First(x => x.Username == "ReppB"),
             Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
         });
-        // db.PlayerCompetitions.Add(new PlayerCompetition()
-        // {
-        //     Player = db.Players.First(x => x.Username == "asmith"),
-        //     DoublePlayer = db.Players.First(x => x.Username == "kammerem"),
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Doppel"),
-        // });
-        // db.PlayerCompetitions.Add(new PlayerCompetition()
-        // {
-        //     Player = db.Players.First(x => x.Username == "kinzle"),
-        //     DoublePlayer = db.Players.First(x => x.Username == "EckerS"),
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
-        // });
+        db.PlayerCompetitions.Add(new PlayerCompetition()
+        {
+            Player = db.Players.First(x => x.Username == "HoferS"),
+            Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
+        });
+        
         db.SaveChanges();
         db.Groups.Add(new Group()
         {
@@ -210,11 +204,19 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
                 new()
                 {
                     Player = db.Players.First(x => x.Username == "ReppB")
-                }
+                },
+                new()
+                {
+                    Player = db.Players.First(x => x.Username == "HoferS")
+                },
+                new()
+                {
+                    Player = db.Players.First(x => x.Username == "EckerS")
+                },
             }
         });
 
-        // db.Groups.Add(new Group()
+        // db.Groups.Add(new Group
         // {
         //     GroupName = "Gruppe Doppel A",
         //     MaxAmount = 4,
@@ -223,19 +225,11 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         //     {
         //         new()
         //         {
-        //             Player = db.Players.First(x => x.Username == "asmith")
-        //         },
-        //         new()
-        //         {
         //             Player = db.Players.First(x => x.Username == "kinzle")
         //         },
         //         new()
         //         {
         //             Player = db.Players.First(x => x.Username == "EckerS")
-        //         },
-        //         new()
-        //         {
-        //             Player = db.Players.First(x => x.Username == "kammerem")
         //         }
         //     }
         // });
