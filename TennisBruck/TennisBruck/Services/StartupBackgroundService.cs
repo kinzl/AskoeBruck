@@ -204,15 +204,7 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
                 new()
                 {
                     Player = db.Players.First(x => x.Username == "ReppB")
-                },
-                new()
-                {
-                    Player = db.Players.First(x => x.Username == "HoferS")
-                },
-                new()
-                {
-                    Player = db.Players.First(x => x.Username == "EckerS")
-                },
+                }
             }
         });
 

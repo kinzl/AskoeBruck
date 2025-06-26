@@ -6,4 +6,5 @@ public class Competition
     public string Name { get; set; }
     public bool IsSingle { get; set; }
     public List<PlayerCompetition> PlayerCompetitions { get; set; }
+    public List<Group> Groups { get; set; }
 }

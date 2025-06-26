@@ -145,17 +145,23 @@ public class Championship : PageModel
     public IActionResult OnPostUnregister()
     {
         InitValues(null);
-        var playerCompetition = _db.PlayerCompetitions.Single(x =>
-            x.DoublePlayer != null &&
-            ((x.Player.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id) ||
-             x.DoublePlayer.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id));
-        _db.PlayerCompetitions.Remove(playerCompetition);
+        if (SelectedCompetition!.IsSingle)
+        {
+            var playerCompetition = _db.PlayerCompetitions.Single(x =>
+                x.Player.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
+            _db.PlayerCompetitions.Remove(playerCompetition);
 
-        var groupPlayers = _db.GroupPlayers.SingleOrDefault(x =>
-            x.PlayerId == CurrentPlayer.Id && x.PlayerId == playerCompetition.Player.Id);
-        if (groupPlayers != null) _db.GroupPlayers.Remove(groupPlayers);
+            var groupPlayers = _db.GroupPlayers.SingleOrDefault(x =>
+                x.PlayerId == CurrentPlayer.Id && x.PlayerId == playerCompetition.Player.Id);
+            if (groupPlayers != null) _db.GroupPlayers.Remove(groupPlayers);
 
-        _db.SaveChanges();
+            _db.SaveChanges();
+        }
+        else
+        {
+            //ToDo: Handle unregistering from doubles competition (player1 or player2)
+        }
+
         return RedirectToPage(new { Message = $"Vom Bewerb abgemeldet" });
     }
 
@@ -212,6 +218,7 @@ public class Championship : PageModel
             .Include(x => x.Competition)
             .ThenInclude(x => x.PlayerCompetitions)
             .Single(x => x.Player.Id == doublePlayerId && x.Competition.Id == competitionId);
+
         playerCompetition.DoublePlayer = doublePlayer.Player;
         _db.PlayerCompetitions.Remove(doublePlayer);
 
@@ -228,12 +235,24 @@ public class Championship : PageModel
             .ThenInclude(competition => competition.PlayerCompetitions)
             .ThenInclude(playerCompetition => playerCompetition.DoublePlayer)
             .Single(x => x.PlayerId == playerId && x.GroupId == groupId);
-        _db.GroupPlayers.Remove(groupPlayer);
+
 
         if (doublePlayerId.HasValue)
+        {
+            var doublePlayer = groupPlayer.Group.Competition.PlayerCompetitions
+                .Single(x => x.DoublePlayer != null && x.DoublePlayer.Id == doublePlayerId.Value).DoublePlayer;
+            if (doublePlayer != null)
+                _db.PlayerCompetitions.Add(new PlayerCompetition
+                {
+                    Player = doublePlayer,
+                    Competition = groupPlayer.Group.Competition,
+                    DoublePlayer = null
+                });
             groupPlayer.Group.Competition.PlayerCompetitions
-                .Single(x => x.DoublePlayer != null && x.DoublePlayer.Id == doublePlayerId.Value).DoublePlayer = null;
+                .Single(x => x.DoublePlayer != null && x.DoublePlayer.Id == doublePlayerId).DoublePlayer = null;
+        }
 
+        _db.GroupPlayers.Remove(groupPlayer);
         _db.SaveChanges();
         return RedirectToPage();
     }
