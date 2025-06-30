@@ -154,15 +154,46 @@ public class Championship : PageModel
             var groupPlayers = _db.GroupPlayers.SingleOrDefault(x =>
                 x.PlayerId == CurrentPlayer.Id && x.PlayerId == playerCompetition.Player.Id);
             if (groupPlayers != null) _db.GroupPlayers.Remove(groupPlayers);
-
-            _db.SaveChanges();
         }
         else
         {
-            //ToDo: Handle unregistering from doubles competition (player1 or player2)
+            var playerCompetition = _db.PlayerCompetitions
+                .Include(x => x.Player)
+                .Include(x => x.DoublePlayer)
+                .SingleOrDefault(x => x.Player.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
+
+            if (playerCompetition != null)
+            {
+                if (playerCompetition.DoublePlayer != null)
+                {
+                    playerCompetition.Player = playerCompetition.DoublePlayer;
+                    playerCompetition.DoublePlayer = null;
+                }
+                else
+                {
+                    _db.PlayerCompetitions.Remove(playerCompetition);
+                }
+            }
+            else
+            {
+                playerCompetition = _db.PlayerCompetitions
+                    .Include(x => x.Player)
+                    .Include(x => x.DoublePlayer)
+                    .SingleOrDefault(x =>
+                        x.DoublePlayer!.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
+                playerCompetition!.DoublePlayer = null;
+            }
+            var groupPlayers = _db.GroupPlayers.SingleOrDefault(x =>
+                x.PlayerId == CurrentPlayer.Id && x.Group.Competition.Id == SelectedCompetition!.Id);
+            
+            if (groupPlayers != null)
+            {
+                _db.GroupPlayers.Remove(groupPlayers);
+            }
         }
 
-        return RedirectToPage(new { Message = $"Vom Bewerb abgemeldet" });
+        _db.SaveChanges();
+        return RedirectToPage(new { Message = "Vom Bewerb abgemeldet" });
     }
 
     public IActionResult OnPostIncreaseGroupSize(int groupId)
