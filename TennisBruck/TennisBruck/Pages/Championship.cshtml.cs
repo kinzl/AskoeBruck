@@ -32,13 +32,7 @@ public class Championship : PageModel
         _db = db;
     }
 
-
     public void OnGet(string? message)
-    {
-        InitValues(message);
-    }
-
-    public void OnPost(string? message)
     {
         InitValues(message);
     }
@@ -72,8 +66,8 @@ public class Championship : PageModel
             SelectedCompetition = Competitions.FirstOrDefault(c => c.Id == selectedCompetitionId);
 
             IsRegistered = _db.PlayerCompetitions.SingleOrDefault(x =>
-                ((x.Player.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId) ||
-                 (x.DoublePlayer.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId))) != null;
+                (x.Player.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId) ||
+                (x.DoublePlayer.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId)) != null;
 
 
             RegisteredCompetitionPlayers = _db.PlayerCompetitions
@@ -183,9 +177,10 @@ public class Championship : PageModel
                         x.DoublePlayer!.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
                 playerCompetition!.DoublePlayer = null;
             }
+
             var groupPlayers = _db.GroupPlayers.SingleOrDefault(x =>
                 x.PlayerId == CurrentPlayer.Id && x.Group.Competition.Id == SelectedCompetition!.Id);
-            
+
             if (groupPlayers != null)
             {
                 _db.GroupPlayers.Remove(groupPlayers);
@@ -321,6 +316,7 @@ public class Championship : PageModel
 
     public IActionResult OnPostRemovePlayerFromCompetition(int playerId)
     {
+        //ToDo: Remove player from all groups and matches
         var playerCompetition = _db.PlayerCompetitions.Single(x =>
             x.Id == playerId && x.Competition.Id == SelectedCompetition!.Id);
         _db.PlayerCompetitions.Remove(playerCompetition);
@@ -441,4 +437,112 @@ public class Championship : PageModel
     {
         return RedirectToPage(nameof(Index));
     }
+
+    [BindProperty] public int SelectedSize { get; set; }
+
+    [BindProperty] public List<BracketInput> Inputs { get; set; } = new();
+
+    public List<Match> Matches { get; set; } = new();
+    public string FinalWinner { get; set; }
+
+    private readonly List<int> knownBrackets = new() { 2, 4, 8, 16, 32 };
+
+    public void OnPost()
+    {
+        InitValues(null);
+        if (!knownBrackets.Contains(SelectedSize)) return;
+
+        Matches = BuildBracket(SelectedSize);
+        ApplyUserInputs();
+    }
+
+    private List<Match> BuildBracket(int size)
+    {
+        int closest = knownBrackets.First(k => k >= size);
+        int byes = closest - size;
+        if (byes > 0) size = closest;
+
+        var brackets = new List<Match>();
+        int round = 1;
+        double baseT = size / 2;
+        double baseC = size / 2;
+        int matchId = 1;
+        int nextInc = size / 2;
+
+        for (int i = 1; i <= (size - 1); i++)
+        {
+            double baseR = i / baseT;
+            bool isBye = byes > 0 && (i % 2 != 0 || byes >= (baseT - i));
+
+            if (isBye) byes--;
+
+            brackets.Add(new Match()
+            {
+                BracketNo = matchId++,
+                RoundNo = round,
+                Player1 = new Player(), // null
+                Player2 = new Player(), // null
+                IsBye = isBye,
+                NextGame = nextInc + i > size - 1 ? null : nextInc + i
+            });
+
+            if (i % 2 != 0) nextInc--;
+
+            while (baseR >= 1)
+            {
+                round++;
+                baseC /= 2;
+                baseT += baseC;
+                baseR = i / baseT;
+            }
+        }
+
+        return brackets;
+    }
+
+    private void ApplyUserInputs()
+    {
+        foreach (var match in Matches)
+        {
+            var input = Inputs.FirstOrDefault(i => i.BracketNo == match.BracketNo);
+            if (input != null)
+            {
+                match.Player1 = RegisteredCompetitionPlayers.FirstOrDefault(p => p.Id == input.Player1Id);
+                match.Player2 = RegisteredCompetitionPlayers.FirstOrDefault(p => p.Id == input.Player2Id);
+                // match.ScoreA = input.ScoreA;
+                // match.ScoreB = input.ScoreB;
+            }
+        }
+
+        // var final = Matches.Last();
+        // if (!string.IsNullOrEmpty(final.TeamA) && !string.IsNullOrEmpty(final.TeamB)
+        //                                        && final.ScoreA.HasValue && final.ScoreB.HasValue)
+        // {
+        //     FinalWinner = final.Winner;
+        // }
+    }
+
+
+    private List<string> GetShuffledExampleTeams() =>
+        new List<string>
+        {
+            "New Jersey Devils", "New York Islanders", "New York Rangers", "Philadelphia Flyers",
+            "Pittsburgh Penguins", "Boston Bruins", "Buffalo Sabres", "Montreal Canadiens",
+            "Ottawa Senators", "Toronto Maple Leafs", "Carolina Hurricanes", "Florida Panthers",
+            "Tampa Bay Lightning", "Washington Capitals", "Winnipeg Jets", "Chicago Blackhawks",
+            "Columbus Blue Jackets", "Detroit Red Wings", "Nashville Predators", "St. Louis Blues",
+            "Calgary Flames", "Colorado Avalanche", "Edmonton Oilers", "Minnesota Wild",
+            "Vancouver Canucks", "Anaheim Ducks", "Dallas Stars", "Los Angeles Kings",
+            "Phoenix Coyotes", "San Jose Sharks", "Montreal Wanderers", "Quebec Nordiques", "Hartford Whalers"
+        }.OrderBy(_ => Guid.NewGuid()).ToList();
+
+    public class BracketInput
+    {
+        public int BracketNo { get; set; }
+        public int? Player1Id { get; set; }
+        public int? Player2Id { get; set; }
+        public int? ScoreA { get; set; }
+        public int? ScoreB { get; set; }
+    }
+
 }

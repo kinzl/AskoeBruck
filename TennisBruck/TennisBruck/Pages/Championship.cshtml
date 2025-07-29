@@ -206,7 +206,8 @@
                             <div class="match-header">
                                 @if (match.DoublePlayer1 != null && match.DoublePlayer2 != null)
                                 {
-                                    <span class="match-players">@match.Player1.ToString() / @match.DoublePlayer1.ToString() vs @match.Player2.ToString() / @match.DoublePlayer2.ToString()</span>
+                                    <span
+                                        class="match-players">@match.Player1.ToString() / @match.DoublePlayer1.ToString() vs @match.Player2.ToString() / @match.DoublePlayer2.ToString()</span>
                                 }
                                 else
                                 {
@@ -242,13 +243,107 @@
             </div>
         </section>
 
-        <!-- Tournament Bracket -->
+        @{
+            ViewData["Title"] = "Tournament Bracket";
+            var grouped = Model.Matches.GroupBy(m => m.RoundNo).OrderBy(g => g.Key);
+        }
+
         <section class="tournament-section">
-            <h2>K.O Phase</h2>
-            <div class="tournament-controls">
-                <div class="add-bracket" id="add">Finale erstellen</div>
-            </div>
-            <div class="brackets" id="brackets"></div>
+            <h2 class="bracket-title">K.O Phase</h2>
+
+            <form method="post">
+                <div class="tournament-controls">
+                    <label for="SelectedSize">Bracket Size:</label>
+                    <select asp-for="SelectedSize">
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="8">8</option>
+                        <option value="16">16</option>
+                        <option value="32">32</option>
+                    </select>
+                    <button type="submit">Create / Update Bracket</button>
+                </div>
+
+                @if (Model.Matches.Any() && Model.SelectedCompetition != null && Model.SelectedCompetition.Id != 0)
+                {
+                    <div class="brackets">
+                        <div class="group">
+                            @foreach (var round in grouped)
+                            {
+                                <div class="r@round.Key">
+                                    @foreach (var match in round)
+                                    {
+                                        if (match.IsBye)
+                                        {
+                                            <div></div>
+                                        }
+                                        else
+                                        {
+                                            var index = match.BracketNo - 1;
+
+                                            <div>
+                                                <div class="bracketbox">
+                                                    <input type="hidden" name="Inputs[@index].BracketNo"
+                                                           value="@match.BracketNo"/>
+                                                    <span class="info">Match @match.BracketNo</span>
+
+                                                    <select name="Inputs[@index].Player1Id" class="teama">
+                                                        <option value="">-- Player 1 --</option>
+                                                        @foreach (var team in Model.RegisteredCompetitionPlayers)
+                                                        {
+                                                            <option value="@team.Id" selected="@(match.Player1?.Id == team.Id)">
+                                                                @team.ToString()
+                                                            </option>
+                                                        }
+                                                    </select>
+
+                                                    <select name="Inputs[@index].Player2Id" class="teamb">
+                                                        <option value="">-- Player 2 --</option>
+                                                        @foreach (var team in Model.RegisteredCompetitionPlayers)
+                                                        {
+                                                            <option value="@team.Id" selected="@(match.Player2?.Id == team.Id)">
+                                                                @team.ToString()
+                                                            </option>
+                                                        }
+                                                    </select>
+
+
+                                                    @* <input name="Inputs[@index].Score" *@
+                                                    @*        value="@(match.ScoreB ?? null)" placeholder="Score" *@
+                                                    @*        min="0" class="score-input" style="width: 80px;"/> *@
+                                                    @* *@
+                                                    @* @if (!string.IsNullOrEmpty(match.Winner)) *@
+                                                    @* { *@
+                                                    @*     <div *@
+                                                    @*         style="margin-top: 0.5rem; font-weight: bold; color: #16a34a;"> *@
+                                                    @*         Winner: @match.Winner *@
+                                                    @*     </div> *@
+                                                    @* } *@
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Model.FinalWinner))
+                            {
+                                <div class="r@(grouped.Count() + 1)">
+                                    <div class="final">
+                                        <div class="bracketbox">
+                                            <span class="teamc">🏆 Final Winner: @Model.FinalWinner</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="tournament-controls">
+                        <button type="submit">Update Results</button>
+                    </div>
+                }
+            </form>
         </section>
 
         <!-- Info Section -->

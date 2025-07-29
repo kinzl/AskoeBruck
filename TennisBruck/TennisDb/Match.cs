@@ -10,6 +10,11 @@ public class Match
     public Player? DoublePlayer2 { get; set; }
     public List<Set> Sets { get; set; }
     public Group Group { get; set; }
+    public int BracketNo { get; set; }
+
+    public int RoundNo { get; set; }
+    public int? NextGame { get; set; }
+    public bool IsBye { get; set; }
 
     public string SetToString()
     {
