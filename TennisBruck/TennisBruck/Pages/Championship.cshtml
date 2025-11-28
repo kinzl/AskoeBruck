@@ -1,4 +1,5 @@
 @page
+@using Microsoft.IdentityModel.Tokens
 @using TennisDb
 @model TennisBruck.Pages.Championship
 
@@ -109,7 +110,7 @@
                                 {
                                     var player = group.GroupPlayers[i].Player;
                                     var doublePlayer = group.Competition.PlayerCompetitions
-                                        .FirstOrDefault(pc => pc.Player.Id == player.Id)?.DoublePlayer;
+                                        .FirstOrDefault(pc => pc.SinglePlayer.Id == player.Id)?.DoublePlayer;
                                     <tr>
                                         @if (doublePlayer == null)
                                         {
@@ -122,12 +123,12 @@
                                         @if (doublePlayer == null && !group.Competition.IsSingle)
                                         {
                                             <td colspan="3">
-                                                <form method="post" asp-page-handler="AddDoublePlayer">
+                                                <form method="post" asp-page-handler="AddDoubleSinglePlayer">
                                                     <input type="hidden" name="groupId" value="@group.Id"/>
                                                     <input type="hidden" name="competitionId"
                                                            value="@group.Competition.Id"/>
                                                     <input type="hidden" name="playerId" value="@player.Id"/>
-                                                    <select class="player-select" name="doublePlayerId"
+                                                    <select class="player-select" name="doubleSinglePlayerId"
                                                             onchange="this.form.submit()">
                                                         <option value="">Spieler auswählen</option>
                                                         @foreach (var registeredPlayer in Model.RegisteredCompetitionPlayers.Where(p => p.GroupPlayers.All(gp => gp.GroupId != group.Id)))
@@ -147,10 +148,10 @@
                                                 <form method="post">
                                                     <input type="hidden" name="groupId" value="@group.Id"/>
                                                     <input type="hidden" name="playerId" value="@player.Id"/>
-                                                    <input type="hidden" name="doublePlayerId"
+                                                    <input type="hidden" name="doubleSinglePlayerId"
                                                            value="@doublePlayer?.Id"/>
                                                     <button class="icon-button delete"
-                                                            asp-page-handler="RemovePlayerFromGroup">❌
+                                                            asp-page-handler="RemoveSinglePlayerFromGroup">❌
                                                     </button>
                                                 </form>
                                             </td>
@@ -161,7 +162,7 @@
                                 {
                                     <tr>
                                         <td colspan="3">
-                                            <form method="post" asp-page-handler="AddPlayerToGroup">
+                                            <form method="post" asp-page-handler="AddSinglePlayerToGroup">
                                                 <input type="hidden" name="groupId" value="@group.Id"/>
                                                 <input type="hidden" name="competitionId"
                                                        value="@group.Competition.Id"/>
@@ -261,7 +262,7 @@
                         <option value="16">16</option>
                         <option value="32">32</option>
                     </select>
-                    <button type="submit">Create / Update Bracket</button>
+                    <button type="submit" asp-page-handler="CreateBracket">Create / Update Bracket</button>
                 </div>
 
                 @if (Model.Matches.Any() && Model.SelectedCompetition != null && Model.SelectedCompetition.Id != 0)
@@ -288,22 +289,46 @@
                                                     <span class="info">Match @match.BracketNo</span>
 
                                                     <select name="Inputs[@index].Player1Id" class="teama">
-                                                        <option value="">-- Player 1 --</option>
+                                                        <option value="">-- SinglePlayer 1 --</option>
                                                         @foreach (var team in Model.RegisteredCompetitionPlayers)
                                                         {
-                                                            <option value="@team.Id" selected="@(match.Player1?.Id == team.Id)">
+                                                            <option value="@team.Id"
+                                                                    selected="@(match.Player1?.Id == team.Id)">
                                                                 @team.ToString()
                                                             </option>
                                                         }
                                                     </select>
 
                                                     <select name="Inputs[@index].Player2Id" class="teamb">
-                                                        <option value="">-- Player 2 --</option>
+                                                        <option value="">-- SinglePlayer 2 --</option>
                                                         @foreach (var team in Model.RegisteredCompetitionPlayers)
                                                         {
-                                                            <option value="@team.Id" selected="@(match.Player2?.Id == team.Id)">
+                                                            <option value="@team.Id"
+                                                                    selected="@(match.Player2?.Id == team.Id)">
                                                                 @team.ToString()
                                                             </option>
+                                                        }
+
+                                                        @if (match.Sets != null && !match.Sets.IsNullOrEmpty())
+                                                        {
+                                                            <div class="match-result"
+                                                                 style="margin-top: 0.5rem; font-weight: 600;">
+                                                                Result:
+                                                                <span style="color:#2563eb;">
+                                                                    @foreach (var item in match.Sets)
+                                                                    {
+                                                                        item.Player1GamesWon.ToString();
+                                                                        item.Player2GamesWon.ToString();
+                                                                    }
+                                                                </span>
+
+                                                                @* @if (!string.IsNullOrEmpty(match.Winner)) *@
+                                                                @* { *@
+                                                                @*     <span style="margin-left: 0.5rem; color:#16a34a;"> *@
+                                                                @*         (Winner: @match.Winner) *@
+                                                                @*     </span> *@
+                                                                @* } *@
+                                                            </div>
                                                         }
                                                     </select>
 
@@ -326,22 +351,12 @@
                                 </div>
                             }
 
-                            @if (!string.IsNullOrEmpty(Model.FinalWinner))
-                            {
-                                <div class="r@(grouped.Count() + 1)">
-                                    <div class="final">
-                                        <div class="bracketbox">
-                                            <span class="teamc">🏆 Final Winner: @Model.FinalWinner</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
                         </div>
                     </div>
 
-                    <div class="tournament-controls">
-                        <button type="submit">Update Results</button>
-                    </div>
+                        <div class="tournament-controls">
+                            <button type="submit" asp-page-handler="ApplyUserInputs">Update Results</button>
+                        </div>
                 }
             </form>
         </section>
@@ -363,7 +378,7 @@
                                         <form method="post">
                                             <input type="hidden" name="playerId" value="@player.Id"/>
                                             <button class="icon-button delete"
-                                                    asp-page-handler="RemovePlayerFromCompetition">🗑️
+                                                    asp-page-handler="RemoveSinglePlayerFromCompetition">🗑️
                                             </button>
                                         </form>
                                     </td>

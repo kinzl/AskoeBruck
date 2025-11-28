@@ -25,4 +25,5 @@ public class TennisContext : DbContext
     public DbSet<GroupPlayer> GroupPlayers { get; set; }
     public DbSet<Match> Matches { get; set; }
     public DbSet<Set> Sets { get; set; }
+    public DbSet<KnockoutMatch> KnockoutMatch { get; set; }
 }

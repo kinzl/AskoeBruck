@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using TennisBruck.Extensions;
 using TennisBruck.Services;
 using TennisDb;
 
@@ -37,7 +38,7 @@ public class Championship : PageModel
         InitValues(message);
     }
 
-    private void InitValues(string? message)
+    private void InitValues(string? message = null)
     {
         int? selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
         CurrentPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
@@ -57,30 +58,30 @@ public class Championship : PageModel
             .ToList();
 
         RegisteredCompetitions = _db.PlayerCompetitions
-            .Where(x => x.Player.Id == CurrentPlayer.Id)
+            .Where(x => x.SinglePlayer.Id == CurrentPlayer.Id)
             .Select(x => x.Competition)
             .ToList();
-
+        Matches = _db.KnockoutMatch.ToList();
         if (selectedCompetitionId != 0)
         {
             SelectedCompetition = Competitions.FirstOrDefault(c => c.Id == selectedCompetitionId);
 
             IsRegistered = _db.PlayerCompetitions.SingleOrDefault(x =>
-                (x.Player.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId) ||
+                (x.SinglePlayer.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId) ||
                 (x.DoublePlayer.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId)) != null;
 
 
             RegisteredCompetitionPlayers = _db.PlayerCompetitions
-                .Include(x => x.Player.GroupPlayers)
+                .Include(x => x.SinglePlayer.GroupPlayers)
                 .Where(x => x.Competition.Id == selectedCompetitionId)
-                .Select(x => x.Player).ToList();
+                .Select(x => x.SinglePlayer).ToList();
 
             Groups = _db.Groups
                 .Include(x => x.GroupPlayers)
                 .ThenInclude(x => x.Player)
                 .Include(x => x.Competition)
                 .ThenInclude(x => x.PlayerCompetitions)
-                .ThenInclude(x => x.Player)
+                .ThenInclude(x => x.SinglePlayer)
                 .Where(x => x.Competition.Id == selectedCompetitionId)
                 .ToList();
 
@@ -129,7 +130,7 @@ public class Championship : PageModel
         InitValues(null);
         _db.PlayerCompetitions.Add(new PlayerCompetition
         {
-            Player = CurrentPlayer,
+            SinglePlayer = CurrentPlayer,
             Competition = SelectedCompetition!
         });
         _db.SaveChanges();
@@ -142,25 +143,26 @@ public class Championship : PageModel
         if (SelectedCompetition!.IsSingle)
         {
             var playerCompetition = _db.PlayerCompetitions.Single(x =>
-                x.Player.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
+                x.SinglePlayer.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
             _db.PlayerCompetitions.Remove(playerCompetition);
 
             var groupPlayers = _db.GroupPlayers.SingleOrDefault(x =>
-                x.PlayerId == CurrentPlayer.Id && x.PlayerId == playerCompetition.Player.Id);
+                x.PlayerId == CurrentPlayer.Id && x.PlayerId == playerCompetition.SinglePlayer.Id);
             if (groupPlayers != null) _db.GroupPlayers.Remove(groupPlayers);
         }
         else
         {
             var playerCompetition = _db.PlayerCompetitions
-                .Include(x => x.Player)
+                .Include(x => x.SinglePlayer)
                 .Include(x => x.DoublePlayer)
-                .SingleOrDefault(x => x.Player.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
+                .SingleOrDefault(x =>
+                    x.SinglePlayer.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
 
             if (playerCompetition != null)
             {
                 if (playerCompetition.DoublePlayer != null)
                 {
-                    playerCompetition.Player = playerCompetition.DoublePlayer;
+                    playerCompetition.SinglePlayer = playerCompetition.DoublePlayer;
                     playerCompetition.DoublePlayer = null;
                 }
                 else
@@ -171,7 +173,7 @@ public class Championship : PageModel
             else
             {
                 playerCompetition = _db.PlayerCompetitions
-                    .Include(x => x.Player)
+                    .Include(x => x.SinglePlayer)
                     .Include(x => x.DoublePlayer)
                     .SingleOrDefault(x =>
                         x.DoublePlayer!.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
@@ -234,18 +236,18 @@ public class Championship : PageModel
     public IActionResult OnPostAddDoublePlayer(int doublePlayerId, int playerId, int competitionId)
     {
         var playerCompetition = _db.PlayerCompetitions
-            .Include(x => x.Player)
+            .Include(x => x.SinglePlayer)
             .Include(x => x.Competition)
-            .SingleOrDefault(x => x.Player.Id == playerId && x.Competition.Id == competitionId);
+            .SingleOrDefault(x => x.SinglePlayer.Id == playerId && x.Competition.Id == competitionId);
         if (playerCompetition == null) return RedirectToPage();
 
         var doublePlayer = _db.PlayerCompetitions
-            .Include(x => x.Player)
+            .Include(x => x.SinglePlayer)
             .Include(x => x.Competition)
             .ThenInclude(x => x.PlayerCompetitions)
-            .Single(x => x.Player.Id == doublePlayerId && x.Competition.Id == competitionId);
+            .Single(x => x.SinglePlayer.Id == doublePlayerId && x.Competition.Id == competitionId);
 
-        playerCompetition.DoublePlayer = doublePlayer.Player;
+        playerCompetition.DoublePlayer = doublePlayer.SinglePlayer;
         _db.PlayerCompetitions.Remove(doublePlayer);
 
         _db.SaveChanges();
@@ -270,7 +272,7 @@ public class Championship : PageModel
             if (doublePlayer != null)
                 _db.PlayerCompetitions.Add(new PlayerCompetition
                 {
-                    Player = doublePlayer,
+                    SinglePlayer = doublePlayer,
                     Competition = groupPlayer.Group.Competition,
                     DoublePlayer = null
                 });
@@ -338,7 +340,8 @@ public class Championship : PageModel
             .Include(group => group.Competition).ThenInclude(competition => competition.PlayerCompetitions)
             .ThenInclude(playerCompetition => playerCompetition.DoublePlayer).Include(group => group.Competition)
             .ThenInclude(competition => competition.PlayerCompetitions)
-            .ThenInclude(playerCompetition => playerCompetition.Player).ToList();
+            .ThenInclude(playerCompetition => playerCompetition.SinglePlayer)
+            .ToList();
 
         foreach (var group in competitionGroup)
         {
@@ -348,14 +351,14 @@ public class Championship : PageModel
                 for (int j = i + 1; j < groupPlayers.Count; j++)
                 {
                     var team1 = groupPlayers[i].Group.Competition.PlayerCompetitions
-                        .Single(x => x.Player.Id == groupPlayers[i].Player.Id);
+                        .Single(x => x.SinglePlayer.Id == groupPlayers[i].Player.Id);
                     var team2 = groupPlayers[j].Group.Competition.PlayerCompetitions
-                        .Single(x => x.Player.Id == groupPlayers[j].Player.Id);
+                        .Single(x => x.SinglePlayer.Id == groupPlayers[j].Player.Id);
                     _db.Matches.Add(new Match
                     {
-                        Player1 = team1.Player,
+                        Player1 = team1.SinglePlayer,
                         DoublePlayer1 = team1.DoublePlayer,
-                        Player2 = team2.Player,
+                        Player2 = team2.SinglePlayer,
                         DoublePlayer2 = team2.DoublePlayer,
                         Group = group,
                         Sets = []
@@ -442,27 +445,27 @@ public class Championship : PageModel
 
     [BindProperty] public List<BracketInput> Inputs { get; set; } = new();
 
-    public List<Match> Matches { get; set; } = new();
-    public string FinalWinner { get; set; }
+    public List<KnockoutMatch> Matches { get; set; } = new();
 
-    private readonly List<int> knownBrackets = new() { 2, 4, 8, 16, 32 };
+    private readonly List<int> _knownBrackets = new() { 2, 4, 8, 16, 32 };
 
-    public void OnPost()
+    public IActionResult OnPostCreateBracket()
     {
-        InitValues(null);
-        if (!knownBrackets.Contains(SelectedSize)) return;
+        InitValues();
+        if (!_knownBrackets.Contains(SelectedSize)) return RedirectToPage();
 
-        Matches = BuildBracket(SelectedSize);
-        ApplyUserInputs();
+        UpdateBracket(SelectedSize);
+        OnPostApplyUserInputs();
+        return RedirectToPage();
     }
-
-    private List<Match> BuildBracket(int size)
+    private void UpdateBracket(int size)
     {
-        int closest = knownBrackets.First(k => k >= size);
+        _db.KnockoutMatch.ExecuteDelete();
+        _db.SaveChanges();
+        int closest = _knownBrackets.First(k => k >= size);
         int byes = closest - size;
         if (byes > 0) size = closest;
 
-        var brackets = new List<Match>();
         int round = 1;
         double baseT = size / 2;
         double baseC = size / 2;
@@ -476,12 +479,12 @@ public class Championship : PageModel
 
             if (isBye) byes--;
 
-            brackets.Add(new Match()
+            _db.KnockoutMatch.Add(new KnockoutMatch()
             {
                 BracketNo = matchId++,
                 RoundNo = round,
-                Player1 = new Player(), // null
-                Player2 = new Player(), // null
+                Player1 = null, // null
+                Player2 = null, // null
                 IsBye = isBye,
                 NextGame = nextInc + i > size - 1 ? null : nextInc + i
             });
@@ -497,10 +500,12 @@ public class Championship : PageModel
             }
         }
 
-        return brackets;
+        _db.SaveChanges();
+        //
+        // return brackets;
     }
 
-    private void ApplyUserInputs()
+    public void OnPostApplyUserInputs()
     {
         foreach (var match in Matches)
         {
@@ -513,36 +518,5 @@ public class Championship : PageModel
                 // match.ScoreB = input.ScoreB;
             }
         }
-
-        // var final = Matches.Last();
-        // if (!string.IsNullOrEmpty(final.TeamA) && !string.IsNullOrEmpty(final.TeamB)
-        //                                        && final.ScoreA.HasValue && final.ScoreB.HasValue)
-        // {
-        //     FinalWinner = final.Winner;
-        // }
     }
-
-
-    private List<string> GetShuffledExampleTeams() =>
-        new List<string>
-        {
-            "New Jersey Devils", "New York Islanders", "New York Rangers", "Philadelphia Flyers",
-            "Pittsburgh Penguins", "Boston Bruins", "Buffalo Sabres", "Montreal Canadiens",
-            "Ottawa Senators", "Toronto Maple Leafs", "Carolina Hurricanes", "Florida Panthers",
-            "Tampa Bay Lightning", "Washington Capitals", "Winnipeg Jets", "Chicago Blackhawks",
-            "Columbus Blue Jackets", "Detroit Red Wings", "Nashville Predators", "St. Louis Blues",
-            "Calgary Flames", "Colorado Avalanche", "Edmonton Oilers", "Minnesota Wild",
-            "Vancouver Canucks", "Anaheim Ducks", "Dallas Stars", "Los Angeles Kings",
-            "Phoenix Coyotes", "San Jose Sharks", "Montreal Wanderers", "Quebec Nordiques", "Hartford Whalers"
-        }.OrderBy(_ => Guid.NewGuid()).ToList();
-
-    public class BracketInput
-    {
-        public int BracketNo { get; set; }
-        public int? Player1Id { get; set; }
-        public int? Player2Id { get; set; }
-        public int? ScoreA { get; set; }
-        public int? ScoreB { get; set; }
-    }
-
 }

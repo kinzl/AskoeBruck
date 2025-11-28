@@ -51,7 +51,7 @@ $(document).on('ready', function () {
             teamMark += 2;
             if (i % 2 != 0) nextInc--;
             while (baseR >= 1) {
-                round++;
+                round++;b
                 baseC /= 2;
                 baseT = baseT + baseC;
                 baseR = i / baseT;

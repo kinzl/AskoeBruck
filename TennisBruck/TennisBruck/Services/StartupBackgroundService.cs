@@ -119,47 +119,47 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         db.SaveChanges();
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            Player = db.Players.First(x => x.Username == "asmith"),
+            SinglePlayer = db.Players.First(x => x.Username == "asmith"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            Player = db.Players.First(x => x.Username == "kammerem"),
+            SinglePlayer = db.Players.First(x => x.Username == "kammerem"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            Player = db.Players.First(x => x.Username == "kinzle"),
+            SinglePlayer = db.Players.First(x => x.Username == "kinzle"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            Player = db.Players.First(x => x.Username == "EckerS"),
+            SinglePlayer = db.Players.First(x => x.Username == "EckerS"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            Player = db.Players.First(x => x.Username == "WimmerG"),
+            SinglePlayer = db.Players.First(x => x.Username == "WimmerG"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            Player = db.Players.First(x => x.Username == "ReppB"),
+            SinglePlayer = db.Players.First(x => x.Username == "ReppB"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            Player = db.Players.First(x => x.Username == "WimmerG"),
+            SinglePlayer = db.Players.First(x => x.Username == "WimmerG"),
             Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            Player = db.Players.First(x => x.Username == "ReppB"),
+            SinglePlayer = db.Players.First(x => x.Username == "ReppB"),
             Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            Player = db.Players.First(x => x.Username == "HoferS"),
+            SinglePlayer = db.Players.First(x => x.Username == "HoferS"),
             Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
         });
         
@@ -217,11 +217,11 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         //     {
         //         new()
         //         {
-        //             Player = db.Players.First(x => x.Username == "kinzle")
+        //             SinglePlayer = db.Players.First(x => x.Username == "kinzle")
         //         },
         //         new()
         //         {
-        //             Player = db.Players.First(x => x.Username == "EckerS")
+        //             SinglePlayer = db.Players.First(x => x.Username == "EckerS")
         //         }
         //     }
         // });
