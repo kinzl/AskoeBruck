@@ -455,9 +455,10 @@ public class Championship : PageModel
         if (!_knownBrackets.Contains(SelectedSize)) return RedirectToPage();
 
         UpdateBracket(SelectedSize);
-        OnPostApplyUserInputs();
+        // OnPostApplyUserInputs();
         return RedirectToPage();
     }
+
     private void UpdateBracket(int size)
     {
         _db.KnockoutMatch.ExecuteDelete();
@@ -483,8 +484,6 @@ public class Championship : PageModel
             {
                 BracketNo = matchId++,
                 RoundNo = round,
-                Player1 = null, // null
-                Player2 = null, // null
                 IsBye = isBye,
                 NextGame = nextInc + i > size - 1 ? null : nextInc + i
             });
@@ -501,12 +500,11 @@ public class Championship : PageModel
         }
 
         _db.SaveChanges();
-        //
-        // return brackets;
     }
 
-    public void OnPostApplyUserInputs()
+    public IActionResult OnPostApplyUserInputs()
     {
+        InitValues();
         foreach (var match in Matches)
         {
             var input = Inputs.FirstOrDefault(i => i.BracketNo == match.BracketNo);
@@ -514,9 +512,12 @@ public class Championship : PageModel
             {
                 match.Player1 = RegisteredCompetitionPlayers.FirstOrDefault(p => p.Id == input.Player1Id);
                 match.Player2 = RegisteredCompetitionPlayers.FirstOrDefault(p => p.Id == input.Player2Id);
+                _db.SaveChanges();
                 // match.ScoreA = input.ScoreA;
                 // match.ScoreB = input.ScoreB;
             }
         }
+
+        return RedirectToPage();
     }
 }

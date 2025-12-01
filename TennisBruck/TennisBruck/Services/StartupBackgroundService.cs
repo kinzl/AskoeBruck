@@ -162,7 +162,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             SinglePlayer = db.Players.First(x => x.Username == "HoferS"),
             Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
         });
-        
         db.SaveChanges();
         db.Groups.Add(new Group()
         {
