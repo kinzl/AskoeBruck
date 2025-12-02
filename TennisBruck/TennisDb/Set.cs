@@ -7,5 +7,4 @@ public class Set
     public int Player1GamesWon { get; set; }
     public int Player2GamesWon { get; set; }
     public Match Match { get; set; }
-    public KnockoutMatch KnockoutMatch { get; set; }
 }

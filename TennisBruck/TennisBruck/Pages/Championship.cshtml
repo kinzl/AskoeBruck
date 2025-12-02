@@ -123,12 +123,12 @@
                                         @if (doublePlayer == null && !group.Competition.IsSingle)
                                         {
                                             <td colspan="3">
-                                                <form method="post" asp-page-handler="AddDoubleSinglePlayer">
+                                                <form method="post" asp-page-handler="AddDoublePlayer">
                                                     <input type="hidden" name="groupId" value="@group.Id"/>
                                                     <input type="hidden" name="competitionId"
                                                            value="@group.Competition.Id"/>
                                                     <input type="hidden" name="playerId" value="@player.Id"/>
-                                                    <select class="player-select" name="doubleSinglePlayerId"
+                                                    <select class="player-select" name="doublePlayerId"
                                                             onchange="this.form.submit()">
                                                         <option value="">Spieler auswählen</option>
                                                         @foreach (var registeredPlayer in Model.RegisteredCompetitionPlayers.Where(p => p.GroupPlayers.All(gp => gp.GroupId != group.Id)))
@@ -162,7 +162,7 @@
                                 {
                                     <tr>
                                         <td colspan="3">
-                                            <form method="post" asp-page-handler="AddSinglePlayerToGroup">
+                                            <form method="post" asp-page-handler="AddSinglePlayer">
                                                 <input type="hidden" name="groupId" value="@group.Id"/>
                                                 <input type="hidden" name="competitionId"
                                                        value="@group.Competition.Id"/>
@@ -263,7 +263,7 @@
 
                 <form method="post">
                     <div class="tournament-controls">
-                        <label for="SelectedSize">Bracket Size:</label>
+                        <label for="SelectedSize">Größe:</label>
                         <select asp-for="SelectedSize">
                             <option value="2">2</option>
                             <option value="4">4</option>

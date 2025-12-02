@@ -25,6 +25,13 @@ public class Championship : PageModel
     public List<Group> Groups { get; set; } = new();
     public List<Match> PersonalMatches { get; set; }
     public List<Player?> DoublePlayers { get; set; }
+    [BindProperty] public int SelectedSize { get; set; }
+
+    [BindProperty] public List<BracketInput> Inputs { get; set; } = new();
+
+    public List<KnockoutMatch> Matches { get; set; } = new();
+
+    private readonly List<int> _knownBrackets = new() { 2, 4, 8, 16, 32 };
     public string? Message { get; set; }
 
     public Championship(CurrentPlayerService currentPlayerService, TennisContext db)
@@ -127,7 +134,7 @@ public class Championship : PageModel
 
     public IActionResult OnPostRegister()
     {
-        InitValues(null);
+        InitValues();
         _db.PlayerCompetitions.Add(new PlayerCompetition
         {
             SinglePlayer = CurrentPlayer,
@@ -139,7 +146,7 @@ public class Championship : PageModel
 
     public IActionResult OnPostUnregister()
     {
-        InitValues(null);
+        InitValues();
         if (SelectedCompetition!.IsSingle)
         {
             var playerCompetition = _db.PlayerCompetitions.Single(x =>
@@ -210,7 +217,7 @@ public class Championship : PageModel
         return RedirectToPage();
     }
 
-    public IActionResult OnPostAddPlayerToGroup(int playerId, int groupId, int competitionId)
+    public IActionResult OnPostAddSinglePlayer(int playerId, int groupId, int competitionId)
     {
         if (_db.GroupPlayers.Any(x => x.PlayerId == playerId && x.Group.Competition.Id == competitionId))
         {
@@ -287,7 +294,7 @@ public class Championship : PageModel
 
     public IActionResult OnPostCreateGroup()
     {
-        InitValues(null);
+        InitValues();
         _db.Groups.Add(new Group
         {
             Competition = SelectedCompetition!,
@@ -329,7 +336,7 @@ public class Championship : PageModel
     public IActionResult OnPostSaveGroups()
     {
         //Create matches for the groups
-        InitValues(null);
+        InitValues();
         var removedMatches = _db.Matches.Where(x => x.Group.Competition.Id == SelectedCompetition!.Id).ToList();
         _db.RemoveRange(removedMatches);
         _db.SaveChanges();
@@ -391,7 +398,7 @@ public class Championship : PageModel
                     setsWonPlayer2++;
                 else
                     setsWonPlayer1++;
-                match.Sets.Add(new Set
+                match.Sets?.Add(new Set
                 {
                     SetNumber = i + 1,
                     Player1GamesWon = int.Parse(games[0]),
@@ -402,9 +409,13 @@ public class Championship : PageModel
             if (setsWonPlayer1 == setsWonPlayer2)
                 return RedirectToPage(new { Message = "Unentschieden ist nicht erlaubt" });
             var winner = setsWonPlayer1 > setsWonPlayer2 ? match.Player1 : match.Player2;
-            var groupPlayer = _db.GroupPlayers
-                .Single(x => x.Group.Id == match.Group.Id && x.Player.Id == winner.Id);
-            groupPlayer.Points += 3;
+            if (match is not KnockoutMatch)
+            {
+                var groupPlayer = _db.GroupPlayers
+                    .Single(x => x.Group.Id == match.Group!.Id && x.Player.Id == winner.Id);
+                groupPlayer.Points += 3;
+            }
+
             match.Winner = winner;
 
             _db.SaveChanges();
@@ -426,10 +437,14 @@ public class Championship : PageModel
             .Include(x => x.Group)
             .Include(x => x.Winner)
             .Single(x => x.Id == matchId);
-        match.Sets.Clear();
-        var groupPlayer = _db.GroupPlayers
-            .Single(x => x.Group.Id == match.Group.Id && x.Player.Id == match.Winner!.Id);
-        groupPlayer.Points -= 3;
+        match.Sets?.Clear();
+        if (match is not KnockoutMatch)
+        {
+            var groupPlayer = _db.GroupPlayers
+                .Single(x => x.Group.Id == match.Group!.Id && x.Player.Id == match.Winner!.Id);
+            groupPlayer.Points -= 3;
+        }
+
         match.Winner = null;
         _db.SaveChanges();
 
@@ -440,14 +455,6 @@ public class Championship : PageModel
     {
         return RedirectToPage(nameof(Index));
     }
-
-    [BindProperty] public int SelectedSize { get; set; }
-
-    [BindProperty] public List<BracketInput> Inputs { get; set; } = new();
-
-    public List<KnockoutMatch> Matches { get; set; } = new();
-
-    private readonly List<int> _knownBrackets = new() { 2, 4, 8, 16, 32 };
 
     public IActionResult OnPostCreateBracket()
     {
@@ -513,8 +520,6 @@ public class Championship : PageModel
                 match.Player1 = RegisteredCompetitionPlayers.FirstOrDefault(p => p.Id == input.Player1Id);
                 match.Player2 = RegisteredCompetitionPlayers.FirstOrDefault(p => p.Id == input.Player2Id);
                 _db.SaveChanges();
-                // match.ScoreA = input.ScoreA;
-                // match.ScoreB = input.ScoreB;
             }
         }
 
