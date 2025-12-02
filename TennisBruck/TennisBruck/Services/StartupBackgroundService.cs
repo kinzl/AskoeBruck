@@ -106,15 +106,17 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
 
     private void SeedCompetition(TennisContext db)
     {
-        db.Competitions.Add(new Competition()
+        db.Competitions.Add(new Competition
         {
             Name = "Herren Einzel",
-            IsSingle = true
+            IsSingle = true,
+            PlayerCompetitions = []
         });
-        db.Competitions.Add(new Competition()
+        db.Competitions.Add(new Competition
         {
             Name = "Herren Doppel",
-            IsSingle = false
+            IsSingle = false,
+            PlayerCompetitions = []
         });
         db.SaveChanges();
         db.PlayerCompetitions.Add(new PlayerCompetition()

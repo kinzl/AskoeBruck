@@ -20,14 +20,14 @@ public class Championship : PageModel
 
     public List<Competition> Competitions { get; set; }
     public Competition? SelectedCompetition { get; set; }
-    public List<Competition> RegisteredCompetitions { get; set; }
-    public List<Player> RegisteredCompetitionPlayers { get; set; } = new();
+    public List<PlayerCompetition> RegisteredCompetitionPlayers { get; set; } = new();
     public List<Group> Groups { get; set; } = new();
     public List<Match> PersonalMatches { get; set; }
     public List<Player?> DoublePlayers { get; set; }
     [BindProperty] public int SelectedSize { get; set; }
 
     [BindProperty] public List<BracketInput> Inputs { get; set; } = new();
+    [BindProperty] public int Pairs { get; set; } = 1;
 
     public List<KnockoutMatch> Matches { get; set; } = new();
 
@@ -48,6 +48,7 @@ public class Championship : PageModel
     private void InitValues(string? message = null)
     {
         int? selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
+        Pairs = int.Parse(HttpContext.Session.GetString("pairs") ?? "1");
         CurrentPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
         Message = message;
         Competitions = _db.Competitions.ToList();
@@ -64,10 +65,6 @@ public class Championship : PageModel
                         (x.DoublePlayer2 != null && x.DoublePlayer2 == CurrentPlayer))
             .ToList();
 
-        RegisteredCompetitions = _db.PlayerCompetitions
-            .Where(x => x.SinglePlayer.Id == CurrentPlayer.Id)
-            .Select(x => x.Competition)
-            .ToList();
         Matches = _db.KnockoutMatch.ToList();
         if (selectedCompetitionId != 0)
         {
@@ -81,7 +78,13 @@ public class Championship : PageModel
             RegisteredCompetitionPlayers = _db.PlayerCompetitions
                 .Include(x => x.SinglePlayer.GroupPlayers)
                 .Where(x => x.Competition.Id == selectedCompetitionId)
-                .Select(x => x.SinglePlayer).ToList();
+                .Select(x => x)
+                .ToList();
+
+            // PlayerCompetitions = _db.PlayerCompetitions
+            //     .Include(x => x.SinglePlayer.GroupPlayers)
+            //     .Where(x => x.Competition.Id == selectedCompetitionId)
+            //     .ToList();
 
             Groups = _db.Groups
                 .Include(x => x.GroupPlayers)
@@ -213,6 +216,16 @@ public class Championship : PageModel
         var group = _db.Groups.Single(x => x.Id == groupId);
         if (group.MaxAmount == 1) return RedirectToPage();
         group.MaxAmount--;
+        _db.SaveChanges();
+        return RedirectToPage();
+    }
+
+    public IActionResult OnPostAssignDoublePlayers(int firstPlayer, int secondPlayer)
+    {
+        InitValues();
+        var playerCompetition = _db.PlayerCompetitions.Single(x => x.Competition.Id == SelectedCompetition!.Id);
+        playerCompetition.SinglePlayer = _db.Players.Single(x => x.Id == firstPlayer);
+        playerCompetition.DoublePlayer = _db.Players.Single(x => x.Id == secondPlayer);
         _db.SaveChanges();
         return RedirectToPage();
     }
@@ -517,12 +530,34 @@ public class Championship : PageModel
             var input = Inputs.FirstOrDefault(i => i.BracketNo == match.BracketNo);
             if (input != null)
             {
-                match.Player1 = RegisteredCompetitionPlayers.FirstOrDefault(p => p.Id == input.Player1Id);
-                match.Player2 = RegisteredCompetitionPlayers.FirstOrDefault(p => p.Id == input.Player2Id);
+                match.Player1 = RegisteredCompetitionPlayers.FirstOrDefault(p => p.SinglePlayer.Id == input.Player1Id)
+                    ?.SinglePlayer;
+                match.Player2 = RegisteredCompetitionPlayers.FirstOrDefault(p => p.SinglePlayer.Id == input.Player2Id)
+                    ?.SinglePlayer;
                 _db.SaveChanges();
             }
         }
 
         return RedirectToPage();
     }
+
+    #region EditPairs
+
+    public IActionResult OnPostIncreasePairs()
+    {
+        InitValues();
+        Pairs++;
+        HttpContext.Session.SetString("pairs", Pairs.ToString());
+        return RedirectToPage();
+    }
+
+    public IActionResult OnPostDecreasePairs()
+    {
+        InitValues();
+        Pairs--;
+        HttpContext.Session.SetString("pairs", Pairs.ToString());
+        return RedirectToPage();
+    }
+
+    #endregion
 }

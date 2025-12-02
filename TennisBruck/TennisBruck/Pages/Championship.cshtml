@@ -64,6 +64,64 @@
             }
         </section>
 
+        @* Paare konfigurieren *@
+        @if (Model.SelectedCompetition != null && !Model.SelectedCompetition.IsSingle)
+        {
+            <h2>Paare Konfigurieren</h2>
+            <form method="post">
+
+                @for (int i = 0; i < Model.RegisteredCompetitionPlayers.Count; i++)
+                {
+                    var player = Model.RegisteredCompetitionPlayers[i];
+
+                    <div class="double-assign-container">
+                        <div class="double-assign-pair">
+
+                            <div class="double-select-wrapper">
+                                <label class="double-label">Spieler A</label>
+                                <select class="double-select" name="doublePlayer[@i]">
+                                    <option value="@player.SinglePlayer.Id">@player.SinglePlayer.ToString()</option>
+                                    @foreach (var otherPlayer in Model.RegisteredCompetitionPlayers)
+                                    {
+                                        if (otherPlayer.Id != player.Id)
+                                        {
+                                            <option
+                                                value="@otherPlayer.Id">@otherPlayer.SinglePlayer.ToString()</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <span class="double-separator">+</span>
+
+                            <div class="double-select-wrapper">
+                                <label class="double-label">Spieler B</label>
+                                <select class="double-select" name="doublePlayer[@i]">
+                                    @if (player.DoublePlayer == null)
+                                    {
+                                        <option value="">Spieler auswählen</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@player.DoublePlayer.Id">@player.DoublePlayer.ToString()</option>
+                                    }
+                                    @foreach (var otherPlayer in Model.RegisteredCompetitionPlayers)
+                                    {
+                                        if (otherPlayer.Id != player.Id)
+                                        {
+                                            <option value="@otherPlayer.Id">@otherPlayer.ToString()</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                }
+                <button type="submit">Speichern</button>
+            </form>
+        }
+
+
         <!-- Group Management -->
         <section class="groups-section">
             <div class="section-header">
@@ -131,7 +189,7 @@
                                                     <select class="player-select" name="doublePlayerId"
                                                             onchange="this.form.submit()">
                                                         <option value="">Spieler auswählen</option>
-                                                        @foreach (var registeredPlayer in Model.RegisteredCompetitionPlayers.Where(p => p.GroupPlayers.All(gp => gp.GroupId != group.Id)))
+                                                        @foreach (var registeredPlayer in Model.RegisteredCompetitionPlayers.Where(p => p.SinglePlayer.GroupPlayers.All(gp => gp.GroupId != group.Id)))
                                                         {
                                                             @if (Model.DoublePlayers.Any(x => x != null && x.Id == registeredPlayer.Id)) continue;
                                                             <option
@@ -148,10 +206,10 @@
                                                 <form method="post">
                                                     <input type="hidden" name="groupId" value="@group.Id"/>
                                                     <input type="hidden" name="playerId" value="@player.Id"/>
-                                                    <input type="hidden" name="doubleSinglePlayerId"
+                                                    <input type="hidden" name="doublePlayerId"
                                                            value="@doublePlayer?.Id"/>
                                                     <button class="icon-button delete"
-                                                            asp-page-handler="RemoveSinglePlayerFromGroup">❌
+                                                            asp-page-handler="RemovePlayerFromGroup">❌
                                                     </button>
                                                 </form>
                                             </td>
@@ -169,7 +227,7 @@
                                                 <select class="player-select" name="playerId"
                                                         onchange="this.form.submit()">
                                                     <option value="">Spieler auswählen</option>
-                                                    @foreach (var player in Model.RegisteredCompetitionPlayers.Where(p => p.GroupPlayers.All(gp => gp.GroupId != group.Id)))
+                                                    @foreach (var player in Model.RegisteredCompetitionPlayers.Where(p => p.SinglePlayer.GroupPlayers.All(gp => gp.GroupId != group.Id)))
                                                     {
                                                         @if (Model.DoublePlayers.Any(x => x != null && x.Id == player.Id)) continue;
                                                         <option value="@player.Id">@player.ToString()</option>
@@ -298,7 +356,7 @@
                                                         <span class="info">Match @match.BracketNo</span>
                                                         @* Select box for the first player in the k.o. pahse *@
                                                         <select name="Inputs[@index].Player1Id" class="teama">
-                                                            <option value="">-- SinglePlayer 1 --</option>
+                                                            <option value="">-- Player 1 --</option>
                                                             @foreach (var team in Model.RegisteredCompetitionPlayers)
                                                             {
                                                                 <option value="@team.Id"
@@ -309,7 +367,7 @@
                                                         </select>
 
                                                         <select name="Inputs[@index].Player2Id" class="teamb">
-                                                            <option value="">-- SinglePlayer 2 --</option>
+                                                            <option value="">-- Player 2 --</option>
                                                             @foreach (var team in Model.RegisteredCompetitionPlayers)
                                                             {
                                                                 <option value="@team.Id"

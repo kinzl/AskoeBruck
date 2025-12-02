@@ -8,4 +8,5 @@ public class PlayerCompetition
     public Player SinglePlayer { get; set; }
     public Player? DoublePlayer { get; set; }
     public Competition Competition { get; set; }
+    public Player Registered { get; set; }
 }
