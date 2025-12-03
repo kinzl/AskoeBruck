@@ -121,47 +121,52 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         db.SaveChanges();
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
+            Registered = db.Players.First(x => x.Username == "asmith"),
             SinglePlayer = db.Players.First(x => x.Username == "asmith"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
+            Registered = db.Players.First(x => x.Username == "kammerem"),
             SinglePlayer = db.Players.First(x => x.Username == "kammerem"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
+            Registered = db.Players.First(x => x.Username == "kinzle"),
             SinglePlayer = db.Players.First(x => x.Username == "kinzle"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            SinglePlayer = db.Players.First(x => x.Username == "EckerS"),
+            Registered = db.Players.First(x => x.Username == "EckerS"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            SinglePlayer = db.Players.First(x => x.Username == "WimmerG"),
+            Registered = db.Players.First(x => x.Username == "WimmerG"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            SinglePlayer = db.Players.First(x => x.Username == "ReppB"),
+            Registered = db.Players.First(x => x.Username == "ReppB"),
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
+            Registered = db.Players.First(x => x.Username == "WimmerG"),
             SinglePlayer = db.Players.First(x => x.Username == "WimmerG"),
             Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
+            Registered = db.Players.First(x => x.Username == "ReppB"),
             SinglePlayer = db.Players.First(x => x.Username == "ReppB"),
             Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
         });
         db.PlayerCompetitions.Add(new PlayerCompetition()
         {
-            SinglePlayer = db.Players.First(x => x.Username == "HoferS"),
+            Registered = db.Players.First(x => x.Username == "HoferS"),
             Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
         });
         db.SaveChanges();
@@ -184,30 +189,30 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
                 {
                     Player = db.Players.First(x => x.Username == "kinzle")
                 },
-                new()
-                {
-                    Player = db.Players.First(x => x.Username == "EckerS")
-                }
+                // new()
+                // {
+                //     Player = db.Players.First(x => x.Username == "EckerS")
+                // }
             }
         });
 
-        db.Groups.Add(new Group
-        {
-            GroupName = "Gruppe B",
-            MaxAmount = 4,
-            Competition = db.Competitions.First(x => x.Name == "Herren Einzel"),
-            GroupPlayers = new List<GroupPlayer>()
-            {
-                new()
-                {
-                    Player = db.Players.First(x => x.Username == "WimmerG")
-                },
-                new()
-                {
-                    Player = db.Players.First(x => x.Username == "ReppB")
-                }
-            }
-        });
+        // db.Groups.Add(new Group
+        // {
+        //     GroupName = "Gruppe B",
+        //     MaxAmount = 4,
+        //     Competition = db.Competitions.First(x => x.Name == "Herren Einzel"),
+        //     GroupPlayers = new List<GroupPlayer>()
+        //     {
+        //         new()
+        //         {
+        //             Player = db.Players.First(x => x.Username == "WimmerG")
+        //         },
+        //         new()
+        //         {
+        //             Player = db.Players.First(x => x.Username == "ReppB")
+        //         }
+        //     }
+        // });
 
         // db.Groups.Add(new Group
         // {

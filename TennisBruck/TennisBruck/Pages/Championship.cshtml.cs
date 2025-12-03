@@ -72,10 +72,13 @@ public class Championship : PageModel
 
             IsRegistered = _db.PlayerCompetitions.SingleOrDefault(x =>
                 (x.SinglePlayer.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId) ||
+                (x.Registered.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId) ||
                 (x.DoublePlayer.Id == CurrentPlayer.Id && x.Competition.Id == selectedCompetitionId)) != null;
 
 
             RegisteredCompetitionPlayers = _db.PlayerCompetitions
+                .Include(x => x.Registered)
+                .Include(x => x.Registered.GroupPlayers)
                 .Include(x => x.SinglePlayer.GroupPlayers)
                 .Where(x => x.Competition.Id == selectedCompetitionId)
                 .Select(x => x)
@@ -140,7 +143,7 @@ public class Championship : PageModel
         InitValues();
         _db.PlayerCompetitions.Add(new PlayerCompetition
         {
-            SinglePlayer = CurrentPlayer,
+            Registered = CurrentPlayer,
             Competition = SelectedCompetition!
         });
         _db.SaveChanges();
@@ -153,11 +156,11 @@ public class Championship : PageModel
         if (SelectedCompetition!.IsSingle)
         {
             var playerCompetition = _db.PlayerCompetitions.Single(x =>
-                x.SinglePlayer.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
+                x.Registered.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
             _db.PlayerCompetitions.Remove(playerCompetition);
 
             var groupPlayers = _db.GroupPlayers.SingleOrDefault(x =>
-                x.PlayerId == CurrentPlayer.Id && x.PlayerId == playerCompetition.SinglePlayer.Id);
+                x.PlayerId == CurrentPlayer.Id && x.PlayerId == playerCompetition.Registered.Id);
             if (groupPlayers != null) _db.GroupPlayers.Remove(groupPlayers);
         }
         else
@@ -166,7 +169,7 @@ public class Championship : PageModel
                 .Include(x => x.SinglePlayer)
                 .Include(x => x.DoublePlayer)
                 .SingleOrDefault(x =>
-                    x.SinglePlayer.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
+                    x.Registered.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
 
             if (playerCompetition != null)
             {
@@ -242,6 +245,9 @@ public class Championship : PageModel
         }
         else
         {
+            var player =
+                _db.PlayerCompetitions.Single(x => x.Registered.Id == playerId && x.Competition.Id == competitionId);
+            player.SinglePlayer = _db.Players.Single(x => x.Id == playerId);
             _db.GroupPlayers.Add(new GroupPlayer()
             {
                 GroupId = groupId,
@@ -331,6 +337,7 @@ public class Championship : PageModel
     public IActionResult OnPostDeleteGroup(int groupId)
     {
         var selectedGroup = _db.Groups.Single(x => x.Id == groupId);
+        _db.GroupPlayers = null!;
         _db.Groups.Remove(selectedGroup);
         _db.SaveChanges();
         return RedirectToPage();
@@ -371,9 +378,9 @@ public class Championship : PageModel
                 for (int j = i + 1; j < groupPlayers.Count; j++)
                 {
                     var team1 = groupPlayers[i].Group.Competition.PlayerCompetitions
-                        .Single(x => x.SinglePlayer.Id == groupPlayers[i].Player.Id);
+                        .Single(x => x.SinglePlayer?.Id == groupPlayers[i].Player.Id);
                     var team2 = groupPlayers[j].Group.Competition.PlayerCompetitions
-                        .Single(x => x.SinglePlayer.Id == groupPlayers[j].Player.Id);
+                        .Single(x => x.SinglePlayer?.Id == groupPlayers[j].Player.Id);
                     _db.Matches.Add(new Match
                     {
                         Player1 = team1.SinglePlayer,
