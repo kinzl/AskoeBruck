@@ -3,11 +3,9 @@ namespace TennisDb;
 public class Match
 {
     public int Id { get; set; }
-    public Player? Winner { get; set; }
-    public Player? Player1 { get; set; }
-    public Player? DoublePlayer1 { get; set; }
-    public Player? Player2 { get; set; }
-    public Player? DoublePlayer2 { get; set; }
+    public Team? Winner { get; set; }
+    public Team? Team1 { get; set; }
+    public Team? Team2 { get; set; }
     public List<Set>? Sets { get; set; }
     public Group? Group { get; set; }
 

@@ -6,5 +6,5 @@ public class Group
     public string GroupName { get; set; }
     public int MaxAmount { get; set; }
     public Competition Competition { get; set; }
-    public List<GroupPlayer> GroupPlayers { get; set; }
+    public List<GroupTeam> GroupTeams { get; set; }
 }

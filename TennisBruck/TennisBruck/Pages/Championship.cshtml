@@ -50,48 +50,44 @@
                     <h3>@Model.SelectedCompetition.Name</h3>
                     <form method="post">
                         <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
-                        @if (Model.IsRegistered)
-                        {
-                            <button class="registration-button unregister" asp-page-handler="Unregister">Abmelden
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="registration-button register" asp-page-handler="Register">Anmelden</button>
-                        }
+                        <button class="registration-button @(Model.IsRegistered ? "unregister" : "register")"
+                                asp-page-handler="@(Model.IsRegistered ? "Unregister" : "Register")">
+                            @(Model.IsRegistered ? "Abmelden" : "Anmelden")
+                        </button>
                     </form>
                 </div>
             }
         </section>
 
-        @* Paare konfigurieren *@
+
+        @* Pair configuration (Doppel) *@
         @if (Model.SelectedCompetition != null && !Model.SelectedCompetition.IsSingle)
         {
             <h2>Paare Konfigurieren</h2>
-            <form method="post">
+            <h4>Anzahl der angemeldeten Spieler: @Model.RegisteredCompetitionPlayers.Count</h4>
 
-                @foreach (var player in Model.RegisteredCompetitionPlayers)
+            <form method="post" asp-page-handler="SavePairs">
+                @for (int i = 0; i < Model.RegisteredCompetitionPlayers.Count / 2; i++)
                 {
+                    var firstPlayer = Model.RegisteredCompetitionPlayers[i * 2];
+                    var secondPlayer = Model.RegisteredCompetitionPlayers[i * 2 + 1];
+
                     <div class="double-assign-container">
                         <div class="double-assign-pair">
 
                             <div class="double-select-wrapper">
                                 <label class="double-label">Spieler A</label>
-                                <select class="double-select" name="singlePlayer">
-                                    @if (player.SinglePlayer == null)
+                                <select class="double-select" name="pairs[@i].Player1Id">
+                                    <option value="">Spieler auswählen</option>
+                                    @foreach (var player in Model.RegisteredCompetitionPlayers)
                                     {
-                                        <option value="">Spieler auswählen</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@player.Registered.Id">@player.Registered.ToString()</option>
-                                    }
-                                    @foreach (var otherPlayer in Model.RegisteredCompetitionPlayers)
-                                    {
-                                        if (otherPlayer.Id != player.Id)
+                                        @if (player.Id == firstPlayer.Id)
                                         {
-                                            <option
-                                                value="@otherPlayer.Id">@otherPlayer.Registered.ToString()</option>
+                                            <option selected="selected" value="@player.Id">@player.ToString()</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@player.Id">@player.ToString()</option>
                                         }
                                     }
                                 </select>
@@ -101,24 +97,22 @@
 
                             <div class="double-select-wrapper">
                                 <label class="double-label">Spieler B</label>
-                                <select class="double-select" name="doublePlayer">
-                                    @if (player.DoublePlayer == null)
+                                <select class="double-select" name="pairs[@i].Player2Id">
+                                    <option value="">Spieler auswählen</option>
+                                    @foreach (var player in Model.RegisteredCompetitionPlayers)
                                     {
-                                        <option value="">Spieler auswählen</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@player.DoublePlayer.Id">@player.DoublePlayer.ToString()</option>
-                                    }
-                                    @foreach (var otherPlayer in Model.RegisteredCompetitionPlayers)
-                                    {
-                                        if (otherPlayer.Id != player.Id)
+                                        @if (player.Id == secondPlayer.Id)
                                         {
-                                            <option value="@otherPlayer.Id">@otherPlayer.Registered.ToString()</option>
+                                            <option selected="selected" value="@player.Id">@player.ToString()</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@player.Id">@player.ToString()</option>
                                         }
                                     }
                                 </select>
                             </div>
+
                         </div>
                     </div>
                 }
@@ -129,16 +123,6 @@
 
         <!-- Group Management -->
         <section class="groups-section">
-            <div class="section-header">
-                <h2><i class="icon">👥</i> Gruppen</h2>
-                @if (Model.SelectedCompetition != null)
-                {
-                    <form method="post">
-                        <button class="add-group-button" asp-page-handler="CreateGroup">➕ Gruppe erstellen</button>
-                    </form>
-                }
-            </div>
-
             <div class="group-container">
                 @foreach (var group in Model.Groups)
                 {
@@ -149,11 +133,8 @@
                                 <form method="post">
                                     <input type="hidden" name="groupId" value="@group.Id"/>
                                     <button class="icon-button increase" asp-page-handler="IncreaseGroupSize">➕</button>
-                                    @if (group.MaxAmount > group.GroupPlayers.Count)
-                                    {
-                                        <button class="icon-button decrease" asp-page-handler="DecreaseGroupSize">⬇️
-                                        </button>
-                                    }
+                                    <button class="icon-button decrease" asp-page-handler="DecreaseGroupSize">⬇️
+                                    </button>
                                     <button class="icon-button delete" asp-page-handler="DeleteGroup">🗑️</button>
                                 </form>
                             </div>
@@ -167,101 +148,125 @@
                             </tr>
                             </thead>
                             <tbody>
+
                             @for (int i = 0; i < group.MaxAmount; i++)
                             {
-                                try
-                                {
-                                    var player = group.GroupPlayers[i].Player;
-                                    var doublePlayer = group.Competition.PlayerCompetitions
-                                        .FirstOrDefault(pc => pc.SinglePlayer?.Id == player.Id)?.DoublePlayer;
-                                    <tr>
-                                        @if (doublePlayer == null)
-                                        {
-                                            <td>@(i + 1). @player.ToString()</td>
-                                        }
-                                        else
-                                        {
-                                            <td>@(i + 1). @player.ToString() / @doublePlayer.ToString()</td>
-                                        }
-                                        @if (doublePlayer == null && !group.Competition.IsSingle)
-                                        {
-                                            <td colspan="3">
-                                                <form method="post" asp-page-handler="AddDoublePlayer">
-                                                    <input type="hidden" name="groupId" value="@group.Id"/>
-                                                    <input type="hidden" name="competitionId"
-                                                           value="@group.Competition.Id"/>
-                                                    <input type="hidden" name="playerId" value="@player.Id"/>
-                                                    <select class="player-select" name="doublePlayerId"
-                                                            onchange="this.form.submit()">
-                                                        <option value="">Spieler auswählen</option>
-                                                        @foreach (var registeredPlayer in Model.RegisteredCompetitionPlayers.Where(p => p.SinglePlayer.GroupPlayers.All(gp => gp.GroupId != group.Id)))
-                                                        {
-                                                            @if (Model.DoublePlayers.Any(x => x != null && x.Id == registeredPlayer.Id)) continue;
-                                                            <option
-                                                                value="@registeredPlayer.Id">@registeredPlayer.ToString()</option>
-                                                        }
-                                                    </select>
-                                                </form>
-                                            </td>
-                                        }
-                                        <td>@group.GroupPlayers[i].Points</td>
-                                        @if (Model.CurrentPlayer.IsAdmin)
-                                        {
-                                            <td>
-                                                <form method="post">
-                                                    <input type="hidden" name="groupId" value="@group.Id"/>
-                                                    <input type="hidden" name="playerId" value="@player.Id"/>
-                                                    <input type="hidden" name="doublePlayerId"
-                                                           value="@doublePlayer?.Id"/>
-                                                    <button class="icon-button delete"
-                                                            asp-page-handler="RemovePlayerFromGroup">❌
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        }
-                                    </tr>
-                                }
-                                catch (ArgumentOutOfRangeException)
-                                {
-                                    <tr>
-                                        <td colspan="3">
-                                            <form method="post" asp-page-handler="AddSinglePlayer">
-                                                <input type="hidden" name="groupId" value="@group.Id"/>
-                                                <input type="hidden" name="competitionId"
-                                                       value="@group.Competition.Id"/>
-                                                <select class="player-select" name="playerId"
-                                                        onchange="this.form.submit()">
+                                var groupTeam = group.GroupTeams.ElementAtOrDefault(i);
+
+
+                                <tr>
+                                    <td colspan="3">
+                                        <form method="post" asp-page-handler="AddSinglePlayer">
+                                            <input type="hidden" name="groupId" value="@group.Id"/>
+                                            <input type="hidden" name="competitionId"
+                                                   value="@group.Competition.Id"/>
+                                            <select class="player-select" name="playerId"
+                                                    onchange="this.form.submit()">
+                                                @if (groupTeam != null)
+                                                {
+                                                    <option selected="selected"
+                                                            value="@groupTeam.Team.Id">@groupTeam.Team.PlayersToString()</option>
+                                                }
+                                                else
+                                                {
                                                     <option value="">Spieler auswählen</option>
-                                                    @foreach (var player in Model.RegisteredCompetitionPlayers.Where(p => p.Registered.GroupPlayers.All(gp => gp.GroupId != group.Id)))
-                                                    {
-                                                        @if (Model.DoublePlayers.Any(x => x != null && x.Id == player.Id)) continue;
-                                                        <option
-                                                            value="@player.Registered.Id">@player.Registered.ToString()</option>
-                                                    }
-                                                </select>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                }
+                                                }
+                                                @foreach (var team in Model.RegisteredTeams)
+                                                {
+                                                    <option value="@team.Id"> @team.PlayersToString() </option>
+                                                }
+                                            </select>
+                                        </form>
+                                    </td>
+                                </tr>
+
+
+                                @* try *@
+                                @* { *@
+                                @*     var player = group.GroupTeams[i].Player; *@
+                                @*     var doublePlayer = group.Competition.PlayerCompetitions *@
+                                @*         .FirstOrDefault(pc => pc.SinglePlayer?.Id == player.Id)?.DoublePlayer; *@
+                                @*     <tr> *@
+                                @*         @if (doublePlayer == null) *@
+                                @*         { *@
+                                @*             <td>@(i + 1). @player.ToString()</td> *@
+                                @*         } *@
+                                @*         else *@
+                                @*         { *@
+                                @*             <td>@(i + 1). @player.ToString() / @doublePlayer.ToString()</td> *@
+                                @*         } *@
+                                @*         @if (doublePlayer == null && !group.Competition.IsSingle) *@
+                                @*         { *@
+                                @*             <td colspan="3"> *@
+                                @*                 <form method="post" asp-page-handler="AddDoublePlayer"> *@
+                                @*                     <input type="hidden" name="groupId" value="@group.Id"/> *@
+                                @*                     <input type="hidden" name="competitionId" *@
+                                @*                            value="@group.Competition.Id"/> *@
+                                @*                     <input type="hidden" name="playerId" value="@player.Id"/> *@
+                                @*                     <select class="player-select" name="doublePlayerId" *@
+                                @*                             onchange="this.form.submit()"> *@
+                                @*                         <option value="">Spieler auswählen</option> *@
+                                @*                         @foreach (var registeredPlayer in Model.RegisteredCompetitionPlayers.Where(p => p.SinglePlayer.GroupPlayers.All(gp => gp.GroupId != group.Id))) *@
+                                @*                         { *@
+                                @*                             @if (Model.DoublePlayers.Any(x => x != null && x.Id == registeredPlayer.Id)) continue; *@
+                                @*                             <option *@
+                                @*                                 value="@registeredPlayer.Id">@registeredPlayer.ToString()</option> *@
+                                @*                         } *@
+                                @*                     </select> *@
+                                @*                 </form> *@
+                                @*             </td> *@
+                                @*         } *@
+                                @*         <td>@group.GroupPlayers[i].Points</td> *@
+                                @*         @if (Model.CurrentPlayer.IsAdmin) *@
+                                @*         { *@
+                                @*             <td> *@
+                                @*                 <form method="post"> *@
+                                @*                     <input type="hidden" name="groupId" value="@group.Id"/> *@
+                                @*                     <input type="hidden" name="playerId" value="@player.Id"/> *@
+                                @*                     <input type="hidden" name="doublePlayerId" *@
+                                @*                            value="@doublePlayer?.Id"/> *@
+                                @*                     <button class="icon-button delete" *@
+                                @*                             asp-page-handler="RemovePlayerFromGroup">❌ *@
+                                @*                     </button> *@
+                                @*                 </form> *@
+                                @*             </td> *@
+                                @*         } *@
+                                @*     </tr> *@
+                                @* } *@
+                                @* catch (ArgumentOutOfRangeException) *@
+                                @* { *@
+                                @*     <tr> *@
+                                @*         <td colspan="3"> *@
+                                @*             <form method="post" asp-page-handler="AddSinglePlayer"> *@
+                                @*                 <input type="hidden" name="groupId" value="@group.Id"/> *@
+                                @*                 <input type="hidden" name="competitionId" *@
+                                @*                        value="@group.Competition.Id"/> *@
+                                @*                 <select class="player-select" name="playerId" *@
+                                @*                         onchange="this.form.submit()"> *@
+                                @*                     <option value="">Spieler auswählen</option> *@
+                                @*                     @foreach (var player in Model.RegisteredCompetitionPlayers.Where(p => p.Registered.GroupPlayers.All(gp => gp.GroupId != group.Id))) *@
+                                @*                     { *@
+                                @*                         @if (Model.DoublePlayers.Any(x => x != null && x.Id == player.Id)) continue; *@
+                                @*                         <option *@
+                                @*                             value="@player.Registered.Id">@player.Registered.ToString()</option> *@
+                                @*                     } *@
+                                @*                 </select> *@
+                                @*             </form> *@
+                                @*         </td> *@
+                                @*     </tr> *@
+                                @* } *@
                             }
                             </tbody>
                         </table>
                     </div>
                 }
             </div>
-
-            @if (Model.SelectedCompetition != null)
-            {
-                <form method="post" class="save-groups">
-                    <button class="save-button" asp-page-handler="SaveGroups">💾 Diese Gruppen Einteilung speichern
-                    </button>
-                </form>
-            }
         </section>
+
 
         <!-- Matches -->
         <section class="matches-section">
-            <h2><i class="icon">📅</i> Deine Spiele</h2>
+            <h2>Deine Spiele</h2>
             <div class="matches-list">
                 @foreach (var match in Model.PersonalMatches)
                 {
@@ -269,31 +274,20 @@
                         <form method="post">
                             <input type="hidden" name="matchId" value="@match.Id"/>
                             <div class="match-header">
-                                @if (match.DoublePlayer1 != null && match.DoublePlayer2 != null)
-                                {
-                                    <span
-                                        class="match-players">@match.Player1?.ToString() / @match.DoublePlayer1.ToString() vs @match.Player2?.ToString() / @match.DoublePlayer2.ToString()</span>
-                                }
-                                else
-                                {
-                                    <span
-                                        class="match-players">@match.Player1?.ToString() vs @match.Player2?.ToString()</span>
-                                }
-                                @if (match.Group == null)
-                                {
-                                    <span class="match-competition">K.O Phase</span>
-                                }
-                                else
-                                {
-                                    <span class="match-competition">@match.Group?.Competition.Name</span>
-                                }
+                                <span class="match-players">
+                                    @string.Join(" / ", match.Team1.Players.Select(tp => tp.Player.Username))
+                                    vs
+                                    @string.Join(" / ", match.Team2.Players.Select(tp => tp.Player.Username))
+                                </span>
+                                <span class="match-competition">
+                                    @(match.Group != null ? match.Group.Competition.Name : "K.O Phase")
+                                </span>
                             </div>
 
-                            @if (match.Sets?.Count == 0)
+                            @if (match.Sets == null || !match.Sets.Any())
                             {
                                 <div class="match-input">
-                                    <input type="text" name="score" class="score-input"
-                                           placeholder="Format x:x x:x usw."/>
+                                    <input type="text" name="score" placeholder="x:x x:x …"/>
                                     <button class="save-score" asp-page-handler="SaveMatch">Spielstand speichern
                                     </button>
                                 </div>
@@ -301,12 +295,7 @@
                             else
                             {
                                 <div class="match-result">
-                                    <span class="sets">@match.SetToString()</span>
-                                    @if (match.Player1?.Id == Model.CurrentPlayer.Id || match.Player2?.Id == Model.CurrentPlayer.Id || Model.CurrentPlayer.IsAdmin)
-                                    {
-                                        <button class="delete-result" asp-page-handler="DeleteMatch">Ergebnis löschen
-                                        </button>
-                                    }
+                                    <span>@match.SetToString()</span>
                                 </div>
                             }
                         </form>
@@ -314,6 +303,7 @@
                 }
             </div>
         </section>
+
 
         @{
             ViewData["Title"] = "Tournament Bracket";
@@ -338,7 +328,7 @@
                         <button type="submit" asp-page-handler="CreateBracket">Create / Update Bracket</button>
                     </div>
 
-                    @if (Model.Matches.Any() && Model.SelectedCompetition != null && Model.SelectedCompetition.Id != 0)
+                    @if (Model.Matches.Any() && Model.SelectedCompetition != null)
                     {
                         <div class="brackets">
                             <div class="group">
@@ -360,76 +350,50 @@
                                                         <input type="hidden" name="Inputs[@index].BracketNo"
                                                                value="@match.BracketNo"/>
                                                         <span class="info">Match @match.BracketNo</span>
-                                                        @* Select box for the first player in the k.o. pahse *@
-                                                        <select name="Inputs[@index].Player1Id" class="teama">
-                                                            <option value="">-- Player 1 --</option>
-                                                            @foreach (var team in Model.RegisteredCompetitionPlayers)
+
+                                                        @* Select box for Team1 *@
+                                                        <select name="Inputs[@index].Team1Id" class="teama">
+                                                            <option value="">-- Team 1 --</option>
+                                                            @foreach (var team in Model.RegisteredTeams) @* Alle Teams der Competition *@
                                                             {
-                                                                if (team.SinglePlayer != null)
-                                                                {
-                                                                    <option value="@team.Id"
-                                                                            selected="@(match.Player1?.Id == team.Id)">
-                                                                        @team.SinglePlayer.ToString()
-                                                                    </option>
-                                                                }
+                                                                <option value="@team.Id"
+                                                                        selected="@(match.Team1?.Id == team.Id)">
+                                                                    @string.Join(" / ", team.Players.Select(tp => tp.Player.Username))
+                                                                </option>
                                                             }
                                                         </select>
 
-                                                        <select name="Inputs[@index].Player2Id" class="teamb">
-                                                            <option value="">-- Player 2 --</option>
-                                                            @foreach (var team in Model.RegisteredCompetitionPlayers)
+                                                        @* Select box for Team2 *@
+                                                        <select name="Inputs[@index].Team2Id" class="teamb">
+                                                            <option value="">-- Team 2 --</option>
+                                                            @foreach (var team in Model.RegisteredTeams)
                                                             {
-                                                                if (team.SinglePlayer != null)
-                                                                {
-                                                                    <option value="@team.Id"
-                                                                            selected="@(match.Player2?.Id == team.Id)">
-                                                                        @team.SinglePlayer?.ToString()
-                                                                    </option>
-                                                                }
-                                                            }
-
-                                                            @if (match.Sets != null && !match.Sets.IsNullOrEmpty())
-                                                            {
-                                                                <div class="match-result"
-                                                                     style="margin-top: 0.5rem; font-weight: 600;">
-                                                                    Result:
-                                                                    <span style="color:#2563eb;">
-                                                                        @foreach (var item in match.Sets)
-                                                                        {
-                                                                            item.Player1GamesWon.ToString();
-                                                                            item.Player2GamesWon.ToString();
-                                                                        }
-                                                                    </span>
-
-                                                                    @* @if (!string.IsNullOrEmpty(match.Winner)) *@
-                                                                    @* { *@
-                                                                    @*     <span style="margin-left: 0.5rem; color:#16a34a;"> *@
-                                                                    @*         (Winner: @match.Winner) *@
-                                                                    @*     </span> *@
-                                                                    @* } *@
-                                                                </div>
+                                                                <option value="@team.Id"
+                                                                        selected="@(match.Team2?.Id == team.Id)">
+                                                                    @string.Join(" / ", team.Players.Select(tp => tp.Player.Username))
+                                                                </option>
                                                             }
                                                         </select>
 
-
-                                                        @* <input name="Inputs[@index].Score" *@
-                                                        @*        value="@(match.ScoreB ?? null)" placeholder="Score" *@
-                                                        @*        min="0" class="score-input" style="width: 80px;"/> *@
-                                                        @* *@
-                                                        @* @if (!string.IsNullOrEmpty(match.Winner)) *@
-                                                        @* { *@
-                                                        @*     <div *@
-                                                        @*         style="margin-top: 0.5rem; font-weight: bold; color: #16a34a;"> *@
-                                                        @*         Winner: @match.Winner *@
-                                                        @*     </div> *@
-                                                        @* } *@
+                                                        @if (match.Sets != null && match.Sets.Any())
+                                                        {
+                                                            <div class="match-result"
+                                                                 style="margin-top:0.5rem; font-weight:600;">
+                                                                Result:
+                                                                <span style="color:#2563eb;">
+                                                        @foreach (var set in match.Sets)
+                                                                    {
+                                                                        @($"{set.Player1GamesWon}:{set.Player2GamesWon} ")
+                                                                    }
+                                                    </span>
+                                                            </div>
+                                                        }
                                                     </div>
                                                 </div>
                                             }
                                         }
                                     </div>
                                 }
-
                             </div>
                         </div>
 
