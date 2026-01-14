@@ -173,7 +173,33 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         //     Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
         // });
         // db.SaveChanges();
-        // 1️⃣ Team erstellen und Competition zuweisen
+
+        var tournamentRegistration1 = new TournamentRegistration()
+        {
+            CompetitionId = 1,
+            PlayerId = 1,
+            RegisteredAt = DateTime.Now
+        };
+
+        var tournamentRegistration2 = new TournamentRegistration()
+        {
+            CompetitionId = 1,
+            PlayerId = 2,
+            RegisteredAt = DateTime.Now
+        };
+
+        var tournamentRegistration3 = new TournamentRegistration()
+        {
+            CompetitionId = 1,
+            PlayerId = 3,
+            RegisteredAt = DateTime.Now
+        };
+
+        db.TournamentRegistrations.Add(tournamentRegistration1);
+        db.TournamentRegistrations.Add(tournamentRegistration2);
+        db.TournamentRegistrations.Add(tournamentRegistration3);
+        db.SaveChanges();
+        // 1 Team erstellen und Competition zuweisen
         var team = new Team
         {
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
@@ -242,6 +268,5 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             Points = 0
         });
         db.SaveChanges();
-        
     }
 }
