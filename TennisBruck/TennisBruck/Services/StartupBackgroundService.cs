@@ -119,60 +119,7 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             Teams = []
         });
         db.SaveChanges();
-        // db.PlayerCompetitions.Add(new PlayerCompetition()
-        // {
-        //     Registered = db.Players.First(x => x.Username == "asmith"),
-        //     SinglePlayer = db.Players.First(x => x.Username == "asmith"),
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
-        // });
-        // db.PlayerCompetitions.Add(new PlayerCompetition()
-        // {
-        //     Registered = db.Players.First(x => x.Username == "kammerem"),
-        //     SinglePlayer = db.Players.First(x => x.Username == "kammerem"),
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
-        // });
-        // db.PlayerCompetitions.Add(new PlayerCompetition()
-        // {
-        //     Registered = db.Players.First(x => x.Username == "kinzle"),
-        //     SinglePlayer = db.Players.First(x => x.Username == "kinzle"),
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
-        // });
-        // db.PlayerCompetitions.Add(new PlayerCompetition()
-        // {
-        //     Registered = db.Players.First(x => x.Username == "EckerS"),
-        //     SinglePlayer = db.Players.First(x => x.Username == "EckerS"),
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
-        // });
-        // db.PlayerCompetitions.Add(new PlayerCompetition()
-        // {
-        //     Registered = db.Players.First(x => x.Username == "WimmerG"),
-        //     SinglePlayer = db.Players.First(x => x.Username == "WimmerG"),
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
-        // });
-        // db.PlayerCompetitions.Add(new PlayerCompetition()
-        // {
-        //     Registered = db.Players.First(x => x.Username == "ReppB"),
-        //     SinglePlayer = db.Players.First(x => x.Username == "ReppB"),
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
-        // });
-        // db.PlayerCompetitions.Add(new PlayerCompetition()
-        // {
-        //     Registered = db.Players.First(x => x.Username == "WimmerG"),
-        //     // SinglePlayer = db.Players.First(x => x.Username == "WimmerG"),
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
-        // });
-        // db.PlayerCompetitions.Add(new PlayerCompetition()
-        // {
-        //     Registered = db.Players.First(x => x.Username == "ReppB"),
-        //     // SinglePlayer = db.Players.First(x => x.Username == "ReppB"),
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
-        // });
-        // db.PlayerCompetitions.Add(new PlayerCompetition()
-        // {
-        //     Registered = db.Players.First(x => x.Username == "HoferS"),
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
-        // });
-        // db.SaveChanges();
+        
 
         var tournamentRegistration1 = new TournamentRegistration()
         {
@@ -212,9 +159,14 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         db.Teams.Add(team1);
         var team2 = new Team
         {
-            Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
+            Competition = db.Competitions.First(x => x.Name == "Herren Einzel"),
         };
         db.Teams.Add(team2);
+        var team3 = new Team
+        {
+            Competition = db.Competitions.First(x => x.Name == "Herren Doppel"),
+        };
+        db.Teams.Add(team3);
         db.SaveChanges(); // TeamId wird benötigt für TeamPlayer FK
 
 // Spieler zu Team zuweisen
@@ -227,6 +179,8 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             new TeamPlayer { Player = player1, Team = team },
             new TeamPlayer { Player = player2, Team = team1 },
             new TeamPlayer { Player = player3, Team = team2 },
+            new TeamPlayer { Player = player1, Team = team3 },
+            new TeamPlayer { Player = player3, Team = team3 },
         });
         db.SaveChanges();
 
@@ -246,6 +200,14 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
         };
         db.Groups.Add(groupb);
+
+        var groupc = new Group
+        {
+            GroupName = "Gruppe A",
+            MaxAmount = 4,
+            Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
+        };
+        db.Groups.Add(groupc);
         db.SaveChanges(); // GroupId wird benötigt
 
 //  GroupTeam erstellen
@@ -265,6 +227,12 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         {
             Group = groupb,
             Team = team2,
+            Points = 0
+        });
+        db.GroupTeams.Add(new GroupTeam
+        {
+            Group = groupc,
+            Team = team3,
             Points = 0
         });
         db.SaveChanges();

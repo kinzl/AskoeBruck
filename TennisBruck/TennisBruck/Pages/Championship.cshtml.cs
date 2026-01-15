@@ -343,7 +343,6 @@ public class Championship : PageModel
     public IActionResult OnPostDeleteGroup(int groupId)
     {
         var selectedGroup = _db.Groups.Single(x => x.Id == groupId);
-        _db.GroupPlayers = null!;
         _db.Groups.Remove(selectedGroup);
         _db.SaveChanges();
         return RedirectToPage();
@@ -430,8 +429,8 @@ public class Championship : PageModel
             var winner = setsWonPlayer1 > setsWonPlayer2 ? match.Team1 : match.Team2;
             if (match is not KnockoutMatch)
             {
-                var groupPlayer = _db.GroupPlayers
-                    .Single(x => x.Group.Id == match.Group!.Id && x.Player.Id == winner.Id);
+                var groupPlayer = _db.GroupTeams
+                    .Single(x => x.Group.Id == match.Group!.Id && x.Team.Id == winner.Id);
                 groupPlayer.Points += 3;
             }
 
@@ -459,9 +458,9 @@ public class Championship : PageModel
         match.Sets?.Clear();
         if (match is not KnockoutMatch)
         {
-            var groupPlayer = _db.GroupPlayers
-                .Single(x => x.Group.Id == match.Group!.Id && x.Player.Id == match.Winner!.Id);
-            groupPlayer.Points -= 3;
+            var groupTeam = _db.GroupTeams
+                .Single(x => x.Group.Id == match.Group!.Id && x.Team.Id == match.Winner!.Id);
+            groupTeam.Points -= 3;
         }
 
         match.Winner = null;

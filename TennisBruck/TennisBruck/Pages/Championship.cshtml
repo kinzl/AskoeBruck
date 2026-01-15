@@ -1,6 +1,4 @@
 @page
-@using Microsoft.IdentityModel.Tokens
-@using TennisDb
 @model TennisBruck.Pages.Championship
 
 @{
@@ -240,7 +238,12 @@
                             else
                             {
                                 <div class="match-result">
-                                    <span>@match.SetToString()</span>
+                                    <span class="sets">@match.SetToString()</span>
+                                    @if (match.Team1.Id == Model.CurrentPlayer.Id || match.Team2?.Id == Model.CurrentPlayer.Id || Model.CurrentPlayer.IsAdmin)
+                                    {
+                                        <button class="delete-result" asp-page-handler="DeleteMatch">Ergebnis löschen
+                                        </button>
+                                    }
                                 </div>
                             }
                         </form>
