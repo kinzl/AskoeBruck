@@ -21,7 +21,6 @@ public class TennisContext : DbContext
     public DbSet<RegistrationVerification> RegistrationVerifications { get; set; }
     public DbSet<Competition> Competitions { get; set; }
     public DbSet<Group> Groups { get; set; }
-    public DbSet<GroupPlayer> GroupPlayers { get; set; }
     public DbSet<Match> Matches { get; set; }
     public DbSet<Set> Sets { get; set; }
     public DbSet<KnockoutMatch> KnockoutMatch { get; set; }

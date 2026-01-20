@@ -4,6 +4,6 @@ public partial class Team
 {
     public string PlayersToString()
     {
-        return $"{string.Join("/", Players.Select(x => x.Player.Username))}";
+        return $"{string.Join("/", Players.Select(x => x.Player.ToString()))}";
     }
 }
