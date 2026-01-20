@@ -150,7 +150,7 @@ public class Championship : PageModel
                 CompetitionId = SelectedCompetition.Id,
                 Players = new List<TeamPlayer>
                 {
-                    new TeamPlayer { PlayerId = CurrentPlayer.Id }
+                    new() { PlayerId = CurrentPlayer.Id }
                 }
             };
             _db.Teams.Add(team);

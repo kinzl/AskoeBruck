@@ -123,6 +123,16 @@
 
         <!-- Group Management -->
         <section class="groups-section">
+            <div class="section-header">
+                <h2><i class="icon">👥</i> Gruppen</h2>
+                @if (Model.SelectedCompetition != null)
+                {
+                    <form method="post">
+                        <button class="add-group-button" asp-page-handler="CreateGroup">➕ Gruppe erstellen</button>
+                    </form>
+                }
+            </div>
+            
             <div class="group-container">
                 @foreach (var group in Model.Groups)
                 {
@@ -261,7 +271,7 @@
         @if (Model.SelectedCompetition != null)
         {
             <section class="tournament-section">
-                <h2 class="bracket-title">K.O Phase</h2>
+                <h2 class="bracket-title">K.O. Phase</h2>
 
                 <form method="post">
                     <div class="tournament-controls">
