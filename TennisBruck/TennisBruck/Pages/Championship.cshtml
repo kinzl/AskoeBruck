@@ -67,8 +67,8 @@
             <form method="post" asp-page-handler="SavePairs">
                 @for (int i = 0; i < Model.RegisteredCompetitionPlayers.Count / 2; i++)
                 {
-                    var firstPlayer = Model.RegisteredCompetitionPlayers[i * 2];
-                    var secondPlayer = Model.RegisteredCompetitionPlayers[i * 2 + 1];
+                    var firstPlayer = Model.RegisteredCompetitionPlayers[i * 2].Player;
+                    var secondPlayer = Model.RegisteredCompetitionPlayers[i * 2 + 1].Player;
 
                     <div class="double-assign-container">
                         <div class="double-assign-pair">
@@ -79,14 +79,17 @@
                                     <option value="">Spieler auswählen</option>
                                     @foreach (var registration in Model.RegisteredCompetitionPlayers)
                                     {
-                                        if (registration.Id == firstPlayer.Id)
+                                        if (registration.Player.Id == firstPlayer.Id)
                                         {
-                                            <option value="@registration.Id"
-                                                    selected="selected">@registration.Player.ToString()</option>
+                                            <option value="@registration.Player.Id" selected="selected">
+                                                @registration.Player.ToString()
+                                            </option>
                                         }
                                         else
                                         {
-                                            <option value="@registration.Id">@registration.Player.ToString()</option>
+                                            <option value="@registration.Player.Id">
+                                                @registration.Player.ToString()
+                                            </option>
                                         }
                                     }
                                 </select>
@@ -100,14 +103,17 @@
                                     <option value="">Spieler auswählen</option>
                                     @foreach (var registration in Model.RegisteredCompetitionPlayers)
                                     {
-                                        if (registration.Id == secondPlayer.Id)
+                                        if (registration.Player.Id == secondPlayer.Id)
                                         {
-                                            <option value="@registration.Id"
-                                                    selected="selected">@registration.Player.ToString()</option>
+                                            <option value="@registration.Player.Id" selected="selected">
+                                                @registration.Player.ToString()
+                                            </option>
                                         }
                                         else
                                         {
-                                            <option value="@registration.Id">@registration.Player.ToString()</option>
+                                            <option value="@registration.Player.Id">
+                                                @registration.Player.ToString()
+                                            </option>
                                         }
                                     }
                                 </select>
@@ -116,6 +122,7 @@
                         </div>
                     </div>
                 }
+
                 <button type="submit">Speichern</button>
             </form>
         }
@@ -132,7 +139,7 @@
                     </form>
                 }
             </div>
-            
+
             <div class="group-container">
                 @foreach (var group in Model.Groups)
                 {

@@ -84,6 +84,7 @@ public class Championship : PageModel
                 .Include(x => x.Player)
                 .Where(x => x.Competition.Id == selectedCompetitionId)
                 .ToList();
+            
             Groups = _db.Groups
                 .Where(g => g.Competition.Id == selectedCompetitionId)
                 .Include(g => g.GroupTeams)
