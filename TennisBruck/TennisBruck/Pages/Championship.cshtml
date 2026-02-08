@@ -149,10 +149,15 @@
                             <div class="group-actions">
                                 <form method="post">
                                     <input type="hidden" name="groupId" value="@group.Id"/>
-                                    <button class="icon-button increase" asp-page-handler="IncreaseGroupSize">➕</button>
-                                    <button class="icon-button decrease" asp-page-handler="DecreaseGroupSize">⬇️
+                                    <button class="icon-button increase" title="Gruppengröße vergrößern"
+                                            asp-page-handler="IncreaseGroupSize">➕
                                     </button>
-                                    <button class="icon-button delete" asp-page-handler="DeleteGroup">🗑️</button>
+                                    <button class="icon-button decrease" title="Gruppengröße verringern"
+                                            asp-page-handler="DecreaseGroupSize">➖
+                                    </button>
+                                    <button class="icon-button delete" title="Gruppe löschen"
+                                            asp-page-handler="DeleteGroup">🗑️
+                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -194,15 +199,15 @@
                                         </form>
                                     </td>
                                     <td>@groupTeam?.Points</td>
-                                    @if (Model.CurrentPlayer.IsAdmin)
+                                    @if (Model.CurrentPlayer.IsAdmin && groupTeam != null)
                                     {
                                         <td>
                                             <form method="post">
                                                 <input type="hidden" name="groupId" value="@group.Id"/>
-                                                <input type="hidden" name="playerId"
-                                                       value="@if (groupTeam != null) { @groupTeam.Team.Id }"/>
+                                                <input type="hidden" name="teamId"
+                                                       value="@groupTeam.Team.Id"/>
                                                 <button class="icon-button delete"
-                                                        asp-page-handler="RemovePlayerFromGroup">❌
+                                                        asp-page-handler="RemoveTeamFromGroup">❌
                                                 </button>
                                             </form>
                                         </td>
@@ -290,7 +295,7 @@
                             <option value="16">16</option>
                             <option value="32">32</option>
                         </select>
-                        <button type="submit" asp-page-handler="CreateBracket">Create / Update Bracket</button>
+                        <button type="submit" asp-page-handler="CreateBracket">Spiele erstellen</button>
                     </div>
 
                     @if (Model.Matches.Any() && Model.SelectedCompetition != null)
@@ -363,7 +368,7 @@
                         </div>
 
                         <div class="tournament-controls">
-                            <button type="submit" asp-page-handler="ApplyUserInputs">Update Results</button>
+                            <button type="submit" asp-page-handler="ApplyUserInputs">Zuteilung aktualiesieren</button>
                         </div>
                     }
                 </form>
@@ -373,28 +378,77 @@
         <section class="info-section">
             <button type="button" class="info-toggle" onclick="toggleInfo()">⬇️ Mehr Infos</button>
             <div id="infoBox" class="info-content" style="display: none;">
-                <div class="registered-players">
-                    <h3><i class="icon">👤</i> Angemeldete Spieler</h3>
-                    <table class="players-table">
-                        @foreach (var player in Model.RegisteredCompetitionPlayers)
+                @if (Model.SelectedCompetition != null)
+                {
+                    <div class="registered-players">
+                        <h3><i class="icon">👤</i> Angemeldete Spieler</h3>
+                        <table class="players-table">
+                            @foreach (var team in Model.RegisteredTeams)
+                            {
+                                <tr>
+                                    <td>@team.PlayersToString()</td>
+                                    @if (Model.CurrentPlayer.IsAdmin)
+                                    {
+                                        <td>
+                                            <form method="post">
+                                                <input type="hidden" name="playerId" value="@team.Id"/>
+                                                <button class="icon-button delete"
+                                                        title="Vom angemeldeten Bewerb entfernen"
+                                                        asp-page-handler="RemoveSinglePlayerFromCompetition">🗑️
+                                                </button>
+                                            </form>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </table>
+                        <h3><i class="icon">👤</i> Alle Spiele</h3>
+
+                        @foreach (var match in Model.AllMatches)
                         {
-                            <tr>
-                                <td>@player.ToString()</td>
-                                @if (Model.CurrentPlayer.IsAdmin)
-                                {
-                                    <td>
-                                        <form method="post">
-                                            <input type="hidden" name="playerId" value="@player.Id"/>
-                                            <button class="icon-button delete"
-                                                    asp-page-handler="RemoveSinglePlayerFromCompetition">🗑️
-                                            </button>
-                                        </form>
-                                    </td>
-                                }
-                            </tr>
+                            <div class="match-card">
+                                <form method="post">
+                                    <input type="hidden" name="matchId" value="@match.Id"/>
+                                    <div class="match-header">
+                                        <span class="match-players">
+                                            @string.Join(" / ", match.Team1.Players.Select(tp => tp.Player.ToString()))
+                                            vs
+                                            @string.Join(" / ", match.Team2.Players.Select(tp => tp.Player.ToString()))
+                                        </span>
+                                        <span class="match-competition">
+                                            @(match.Group != null ? match.Group.Competition.Name : "K.O Phase")
+                                        </span>
+                                    </div>
+
+                                    @if (Model.CurrentPlayer.IsAdmin)
+                                    {
+                                        @if (match.Sets == null || !match.Sets.Any())
+                                        {
+                                            <div class="match-input">
+                                                <input type="text" name="score" placeholder="x:x x:x …"/>
+                                                <button class="save-score" asp-page-handler="SaveMatch">Spielstand
+                                                    speichern
+                                                </button>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="match-result">
+                                                <span class="sets">@match.SetToString()</span>
+                                                @if (match.Team1.Id == Model.CurrentPlayer.Id || match.Team2?.Id == Model.CurrentPlayer.Id || Model.CurrentPlayer.IsAdmin)
+                                                {
+                                                    <button class="delete-result" asp-page-handler="DeleteMatch">
+                                                        Ergebnis löschen
+                                                    </button>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                </form>
+                            </div>
                         }
-                    </table>
-                </div>
+                    </div>
+                }
 
                 @if (Model.CurrentPlayer.IsAdmin)
                 {

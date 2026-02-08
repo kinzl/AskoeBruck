@@ -24,6 +24,7 @@ public class Championship : PageModel
     public List<TournamentRegistration> RegisteredCompetitionPlayers { get; set; } = [];
     public List<Group> Groups { get; set; } = [];
     public List<Match> PersonalMatches { get; set; }
+    public List<Match> AllMatches { get; set; }
     public List<Team> RegisteredTeams { get; set; }
     [BindProperty] public int SelectedSize { get; set; }
 
@@ -84,7 +85,7 @@ public class Championship : PageModel
                 .Include(x => x.Player)
                 .Where(x => x.Competition.Id == selectedCompetitionId)
                 .ToList();
-            
+
             Groups = _db.Groups
                 .Where(g => g.Competition.Id == selectedCompetitionId)
                 .Include(g => g.GroupTeams)
@@ -94,6 +95,12 @@ public class Championship : PageModel
                 .Include(g => g.Competition)
                 .ThenInclude(c => c.Teams)
                 .ToList();
+
+            AllMatches = _db.Matches
+                .Include(x => x.Group)
+                .Where(x => x.Group.Competition.Id == SelectedCompetition!.Id)
+                .ToList();
+            AllMatches.AddRange(_db.KnockoutMatch.Where(x => x.Competition.Id == SelectedCompetition!.Id));
 
 // Sort teams within each group by their points
             foreach (var group in Groups)
@@ -510,6 +517,7 @@ public class Championship : PageModel
 
             _db.KnockoutMatch.Add(new KnockoutMatch()
             {
+                CompetitionId = SelectedCompetition!.Id,
                 BracketNo = matchId++,
                 RoundNo = round,
                 IsBye = isBye,
