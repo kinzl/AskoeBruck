@@ -110,16 +110,18 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         {
             Name = "Herren Einzel",
             IsSingle = true,
+            RegistrationUntil = DateTime.Now.AddMinutes(1),
             Teams = []
         });
         db.Competitions.Add(new Competition
         {
             Name = "Herren Doppel",
             IsSingle = false,
+            RegistrationUntil = DateTime.Now.AddMinutes(1),
             Teams = []
         });
         db.SaveChanges();
-        
+
 
         var tournamentRegistration1 = new TournamentRegistration()
         {
@@ -141,21 +143,21 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             PlayerId = 3,
             RegisteredAt = DateTime.Now
         };
-        
+
         var tournamentRegistration4 = new TournamentRegistration()
         {
             CompetitionId = 2,
             PlayerId = 1,
             RegisteredAt = DateTime.Now
         };
-        
+
         var tournamentRegistration5 = new TournamentRegistration()
         {
             CompetitionId = 2,
             PlayerId = 2,
             RegisteredAt = DateTime.Now
         };
-        
+
         var tournamentRegistration6 = new TournamentRegistration()
         {
             CompetitionId = 2,

@@ -44,17 +44,54 @@
 
             @if (Model.SelectedCompetition != null)
             {
-                <div class="competition-actions">
-                    <h3>@Model.SelectedCompetition.Name</h3>
-                    <form method="post">
+                <div class="competition-card">
+                    <h3 class="competition-title">@Model.SelectedCompetition.Name</h3>
+
+                    <form method="post" class="competition-form">
                         <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
-                        <button class="registration-button @(Model.IsRegistered ? "unregister" : "register")"
-                                asp-page-handler="@(Model.IsRegistered ? "Unregister" : "Register")">
-                            @(Model.IsRegistered ? "Abmelden" : "Anmelden")
-                        </button>
+
+                        <div class="row">
+                            <label class="label">Anmeldeschluss:</label>
+
+                            @if (Model.CurrentPlayer.IsAdmin)
+                            {
+                                <div class="datetime-group">
+                                    <input type="date" name="newDate"
+                                           value="@Model.SelectedCompetition.RegistrationUntil.ToString("yyyy-MM-dd")"/>
+
+                                    <input type="time" name="newTime"
+                                           value="@Model.SelectedCompetition.RegistrationUntil.ToString("HH:mm")"/>
+
+                                    <button asp-page-handler="SaveNewDate" class="btn btn-save">
+                                        Speichern
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="date-text">
+                                    @Model.SelectedCompetition.RegistrationUntil.ToString("dd.MM.yyyy HH:mm")
+                                </span>
+                            }
+                        </div>
+
+                        <div class="actions">
+                            @if (Model.SelectedCompetition.RegistrationUntil >= DateTime.Now)
+                            {
+                                <button class="btn @(Model.IsRegistered ? "btn-danger" : "btn-primary")"
+                                        asp-page-handler="@(Model.IsRegistered ? "Unregister" : "Register")">
+                                    @(Model.IsRegistered ? "Abmelden" : "Anmelden")
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="closed">Anmeldung geschlossen</span>
+                            }
+                        </div>
                     </form>
                 </div>
             }
+
         </section>
 
 
@@ -381,20 +418,24 @@
                 @if (Model.SelectedCompetition != null)
                 {
                     <div class="registered-players">
+                        @* Angemeldete Spieler *@
                         <h3><i class="icon">👤</i> Angemeldete Spieler</h3>
                         <table class="players-table">
-                            @foreach (var team in Model.RegisteredTeams)
+                            <thead>
+                            <th>Name</th>
+                            </thead>
+                            @foreach (var registered in Model.RegisteredCompetitionPlayers)
                             {
                                 <tr>
-                                    <td>@team.PlayersToString()</td>
+                                    <td>@registered.Player.ToString()</td>
                                     @if (Model.CurrentPlayer.IsAdmin)
                                     {
                                         <td>
                                             <form method="post">
-                                                <input type="hidden" name="playerId" value="@team.Id"/>
+                                                <input type="hidden" name="playerId" value="@registered.Id"/>
                                                 <button class="icon-button delete"
                                                         title="Vom angemeldeten Bewerb entfernen"
-                                                        asp-page-handler="RemoveSinglePlayerFromCompetition">🗑️
+                                                        asp-page-handler="RemovePlayerFromCompetition">🗑️
                                                 </button>
                                             </form>
                                         </td>
@@ -402,6 +443,17 @@
                                 </tr>
                             }
                         </table>
+                        <form method="post">
+                            <select class="competition-select" name="playerId">
+                                <option value="">Spieler auswählen</option>
+                                @foreach (var player in Model.UnregisteredPlayers)
+                                {
+                                    <option value="@player.Id">@player.ToString()</option>
+                                }
+                            </select>
+                            <button asp-page-handler="Register">Hinzufügen</button>
+                        </form>
+                        @* Alle Spiele *@
                         <h3><i class="icon">👤</i> Alle Spiele</h3>
 
                         @foreach (var match in Model.AllMatches)

@@ -34,6 +34,7 @@ public class Championship : PageModel
 
     private readonly List<int> _knownBrackets = new() { 2, 4, 8, 16, 32 };
     public string? Message { get; set; }
+    public List<Player> UnregisteredPlayers { get; set; }
 
     public Championship(CurrentPlayerService currentPlayerService, TennisContext db)
     {
@@ -84,6 +85,10 @@ public class Championship : PageModel
                 .Include(x => x.Competition)
                 .Include(x => x.Player)
                 .Where(x => x.Competition.Id == selectedCompetitionId)
+                .ToList();
+
+            UnregisteredPlayers = _db.Players
+                .Where(p => p.TournamentRegistrations.All(r => r.CompetitionId != SelectedCompetition!.Id))
                 .ToList();
 
             Groups = _db.Groups
@@ -142,13 +147,13 @@ public class Championship : PageModel
         return RedirectToPage();
     }
 
-    public IActionResult OnPostRegister()
+    public IActionResult OnPostRegister(int? playerId = null)
     {
         InitValues();
         _db.TournamentRegistrations.Add(new TournamentRegistration()
         {
             Competition = SelectedCompetition!,
-            Player = CurrentPlayer,
+            PlayerId = playerId ?? CurrentPlayer.Id,
             RegisteredAt = DateTime.Now
         });
         if (SelectedCompetition!.IsSingle)
@@ -158,7 +163,7 @@ public class Championship : PageModel
                 CompetitionId = SelectedCompetition.Id,
                 Players = new List<TeamPlayer>
                 {
-                    new() { PlayerId = CurrentPlayer.Id }
+                    new() { PlayerId = playerId ?? CurrentPlayer.Id }
                 }
             };
             _db.Teams.Add(team);
@@ -317,11 +322,7 @@ public class Championship : PageModel
             .ThenInclude(t => t.Players)
             .Single(gt => gt.GroupId == groupId && gt.TeamId == teamId);
 
-        // Team aus Gruppe entfernen
         _db.GroupTeams.Remove(groupTeam);
-
-        // Optional: Team löschen
-        _db.Teams.Remove(groupTeam.Team);
 
         _db.SaveChanges();
         return RedirectToPage();
@@ -599,7 +600,28 @@ public class Championship : PageModel
             _db.Teams.Add(team);
         }
 
-        _db.SaveChanges(); // Save all teams at once
+        _db.SaveChanges();
         return RedirectToPage();
+    }
+
+    public IActionResult OnPostSaveNewDate(string newDate, string newTime)
+    {
+        InitValues();
+
+        var selectedCompetition = _db.Competitions.Single(x => x.Id == SelectedCompetition!.Id);
+
+        var date = DateOnly.Parse(newDate);
+        var time = TimeOnly.Parse(newTime);
+
+        selectedCompetition.RegistrationUntil = date.ToDateTime(time);
+
+        _db.SaveChanges();
+        return RedirectToPage(new { Message = "Neues Datum wurde gespeichert" });
+    }
+
+    public IActionResult OnPostRemovePlayerFromCompetition(int playerId)
+    {
+        //ToDO: what happens if you remove the player when he already played group matches
+        return RedirectToPage(new { Message = "Spieler wurde entfernt" });
     }
 }
