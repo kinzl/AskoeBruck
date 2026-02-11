@@ -103,9 +103,20 @@ public class Championship : PageModel
 
             AllMatches = _db.Matches
                 .Include(x => x.Group)
-                .Where(x => x.Group.Competition.Id == SelectedCompetition!.Id)
+                .ThenInclude(x => x.Competition)
+                .Include(x => x.Team1)
+                .Include(x => x.Team2)
+                .Include(x => x.Sets)
+                .Where(x => x.Group != null && x.Group.Competition.Id == SelectedCompetition!.Id)
                 .ToList();
-            AllMatches.AddRange(_db.KnockoutMatch.Where(x => x.Competition.Id == SelectedCompetition!.Id));
+            
+            AllMatches.AddRange(_db.KnockoutMatch
+                .Include(x => x.Group)
+                .ThenInclude(x => x.Competition)
+                .Include(x => x.Team1)
+                .Include(x => x.Team2)
+                .Include(x => x.Sets)
+                .Where(x => x.Competition.Id == SelectedCompetition!.Id));
 
 // Sort teams within each group by their points
             foreach (var group in Groups)
@@ -135,6 +146,7 @@ public class Championship : PageModel
         {
             Name = competitionName,
             IsSingle = isSingle.Value,
+            RegistrationUntil = DateTime.Now.AddDays(14),
             Teams = []
         });
         _db.SaveChanges();

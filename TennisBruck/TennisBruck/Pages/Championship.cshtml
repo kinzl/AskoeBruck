@@ -458,46 +458,49 @@
 
                         @foreach (var match in Model.AllMatches)
                         {
-                            <div class="match-card">
-                                <form method="post">
-                                    <input type="hidden" name="matchId" value="@match.Id"/>
-                                    <div class="match-header">
-                                        <span class="match-players">
-                                            @string.Join(" / ", match.Team1.Players.Select(tp => tp.Player.ToString()))
-                                            vs
-                                            @string.Join(" / ", match.Team2.Players.Select(tp => tp.Player.ToString()))
-                                        </span>
-                                        <span class="match-competition">
-                                            @(match.Group != null ? match.Group.Competition.Name : "K.O Phase")
-                                        </span>
-                                    </div>
+                            @if (match.Team1 != null && match.Team2 != null)
+                            {
+                                <div class="match-card">
+                                    <form method="post">
+                                        <input type="hidden" name="matchId" value="@match.Id"/>
+                                        <div class="match-header">
+                                            <span class="match-players">
+                                                @string.Join(" / ", match.Team1!.Players.Select(tp => tp.Player.ToString()))
+                                                vs
+                                                @string.Join(" / ", match.Team2?.Players.Select(tp => tp.Player.ToString()))
+                                            </span>
+                                            <span class="match-competition">
+                                                @(match.Group != null ? match.Group.Competition.Name : "K.O Phase")
+                                            </span>
+                                        </div>
 
-                                    @if (Model.CurrentPlayer.IsAdmin)
-                                    {
-                                        @if (match.Sets == null || !match.Sets.Any())
+                                        @if (Model.CurrentPlayer.IsAdmin)
                                         {
-                                            <div class="match-input">
-                                                <input type="text" name="score" placeholder="x:x x:x …"/>
-                                                <button class="save-score" asp-page-handler="SaveMatch">Spielstand
-                                                    speichern
-                                                </button>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <div class="match-result">
-                                                <span class="sets">@match.SetToString()</span>
-                                                @if (match.Team1.Id == Model.CurrentPlayer.Id || match.Team2?.Id == Model.CurrentPlayer.Id || Model.CurrentPlayer.IsAdmin)
-                                                {
-                                                    <button class="delete-result" asp-page-handler="DeleteMatch">
-                                                        Ergebnis löschen
+                                            @if (match.Sets == null || !match.Sets.Any())
+                                            {
+                                                <div class="match-input">
+                                                    <input type="text" name="score" placeholder="x:x x:x …"/>
+                                                    <button class="save-score" asp-page-handler="SaveMatch">Spielstand
+                                                        speichern
                                                     </button>
-                                                }
-                                            </div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="match-result">
+                                                    <span class="sets">@match.SetToString()</span>
+                                                    @if (match.Team1.Id == Model.CurrentPlayer.Id || match.Team2?.Id == Model.CurrentPlayer.Id || Model.CurrentPlayer.IsAdmin)
+                                                    {
+                                                        <button class="delete-result" asp-page-handler="DeleteMatch">
+                                                            Ergebnis löschen
+                                                        </button>
+                                                    }
+                                                </div>
+                                            }
                                         }
-                                    }
-                                </form>
-                            </div>
+                                    </form>
+                                </div>
+                            }
                         }
                     </div>
                 }
