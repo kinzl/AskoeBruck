@@ -50,7 +50,7 @@ public class IndexModel : PageModel
     public IActionResult OnPostCourtPlanGrieskirchen()
     {
         _logger.LogInformation("OnPostCourtPlanGrieskirchen");
-        return new RedirectToPageResult(nameof(CourtGrieskirchen));
+        return new RedirectToPageResult(nameof(Hallplan));
     }
 
     public IActionResult OnPostShowSettings()

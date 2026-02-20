@@ -11,17 +11,17 @@ using TennisDb;
 namespace TennisBruck.Pages;
 
 [Authorize]
-public class CourtGrieskirchen : PageModel
+public class Hallplan : PageModel
 {
     private readonly CurrentPlayerService _currentPlayerService;
     private TennisContext _db;
     private PlanService _planService;
-    private ILogger<CourtGrieskirchen> _logger;
+    private ILogger<Hallplan> _logger;
     public Player LoggedInPlayer { get; set; }
     [BindProperty] public List<Court> Courts { get; set; }
 
-    public CourtGrieskirchen(CurrentPlayerService currentPlayerService, TennisContext db, PlanService planService,
-        ILogger<CourtGrieskirchen> logger)
+    public Hallplan(CurrentPlayerService currentPlayerService, TennisContext db, PlanService planService,
+        ILogger<Hallplan> logger)
     {
         _currentPlayerService = currentPlayerService;
         _db = db;
@@ -54,7 +54,7 @@ public class CourtGrieskirchen : PageModel
         _logger.LogInformation("Starting plan generation");
         _planService.GeneratePlanGrieskirchen(startDate, endDate);
         _logger.LogInformation("Plan generation complete");
-        return new RedirectToPageResult(nameof(CourtGrieskirchen));
+        return new RedirectToPageResult(nameof(Hallplan));
     }
 
     public IActionResult OnPostChangePlayingState()
@@ -63,7 +63,7 @@ public class CourtGrieskirchen : PageModel
         player.IsPlayingGrieskirchen = !player.IsPlayingGrieskirchen;
         _db.SaveChanges();
 
-        return new RedirectToPageResult(nameof(CourtGrieskirchen));
+        return new RedirectToPageResult(nameof(Hallplan));
     }
 
     public IActionResult OnPostBack()
