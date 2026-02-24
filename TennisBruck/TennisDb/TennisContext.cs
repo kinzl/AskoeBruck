@@ -15,9 +15,9 @@ public class TennisContext : DbContext
     }
 
     public DbSet<Player> Players { get; set; }
-    public DbSet<PlayerCourtGrieskirchen> PlayerCourtGrieskirchen { get; set; }
+    public DbSet<HallEntity> PlayerCourtGrieskirchen { get; set; }
     public DbSet<Reservation> Reservations { get; set; }
-    public DbSet<Court> Court { get; set; }
+    public DbSet<HallPlanDay> Court { get; set; }
     public DbSet<RegistrationVerification> RegistrationVerifications { get; set; }
     public DbSet<Competition> Competitions { get; set; }
     public DbSet<Group> Groups { get; set; }
@@ -28,4 +28,21 @@ public class TennisContext : DbContext
     public DbSet<TeamPlayer> TeamPlayer { get; set; }
     public DbSet<TournamentRegistration> TournamentRegistrations { get; set; }
     public DbSet<GroupTeam> GroupTeams { get; set; }
+    public DbSet<HallPlanEntity> HallPlans { get; set; }
+    public DbSet<HallPlanDay> HallPlanDays { get; set; }
+    public DbSet<HallPlanRegistration> HallPlanRegistrations { get; set; }
+    
+    //ToDO: comment in?
+    // protected override void OnModelCreating(ModelBuilder modelBuilder)
+    // {
+    //     // Registrierung unique
+    //     modelBuilder.Entity<HallPlanRegistration>()
+    //         .HasIndex(x => new { x.PlayerId, x.HallPlanId })
+    //         .IsUnique();
+    //
+    //     // Spieler nur einmal pro Tag
+    //     modelBuilder.Entity<HallPlanDayPlayer>()
+    //         .HasIndex(x => new { x.HallPlanDayId, x.PlayerId })
+    //         .IsUnique();
+    // }
 }

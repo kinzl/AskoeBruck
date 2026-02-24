@@ -47,9 +47,9 @@ public class IndexModel : PageModel
         return new RedirectToPageResult(nameof(Members));
     }
 
-    public IActionResult OnPostCourtPlanGrieskirchen()
+    public IActionResult OnPostHallplan()
     {
-        _logger.LogInformation("OnPostCourtPlanGrieskirchen");
+        _logger.LogInformation("OnPostHallplan");
         return new RedirectToPageResult(nameof(Hallplan));
     }
 

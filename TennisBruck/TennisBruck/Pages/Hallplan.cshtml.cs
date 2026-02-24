@@ -1,7 +1,5 @@
 using System.Security.Claims;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -14,60 +12,216 @@ namespace TennisBruck.Pages;
 public class Hallplan : PageModel
 {
     private readonly CurrentPlayerService _currentPlayerService;
-    private TennisContext _db;
-    private PlanService _planService;
-    private ILogger<Hallplan> _logger;
-    public Player LoggedInPlayer { get; set; }
-    [BindProperty] public List<Court> Courts { get; set; }
+    private readonly TennisContext _db;
+    private readonly ILogger<Hallplan> _logger;
 
-    public Hallplan(CurrentPlayerService currentPlayerService, TennisContext db, PlanService planService,
+    public Hallplan(CurrentPlayerService currentPlayerService, TennisContext db,
         ILogger<Hallplan> logger)
     {
         _currentPlayerService = currentPlayerService;
         _db = db;
-        _planService = planService;
         _logger = logger;
+    }
+
+    public Player LoggedInPlayer { get; set; } = null!;
+
+    [BindProperty] public List<HallPlanDay> HallPlanDays { get; set; } = new();
+
+    public IEnumerable<Player> NotRegisteredPlayers { get; set; } = new List<Player>();
+    public IEnumerable<Player> RegisteredPlayers { get; set; } = new List<Player>();
+    public IEnumerable<HallPlanEntity> HallPlanEntity { get; set; }
+    [BindProperty] public int HallPlanId { get; set; }
+
+    public HallPlanEntity? SelectedHallPlanEntity { get; set; }
+
+    public IActionResult OnPost()
+    {
+        return InitValues();
     }
 
     public IActionResult OnGet()
     {
-        LoggedInPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
-        Courts = _db.Court
-            .Include(x => x.PlayerCourtGrieskirchens)
+        return InitValues();
+    }
+
+    private IActionResult InitValues()
+    {
+        HallPlanId = HttpContext.Session.GetInt32("selectedHallPlanId") ?? 0;
+
+        LoggedInPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identity!.Name!)!;
+
+        HallPlanEntity = _db.HallPlans.ToList();
+        SelectedHallPlanEntity = _db.HallPlans.SingleOrDefault(x => x.Id == HallPlanId);
+
+        HallPlanDays = _db.HallPlanDays
+            .Where(x => x.HallPlanId == HallPlanId)
+            .Include(x => x.Players)
             .ThenInclude(x => x.Player)
-            .OrderBy(x => x.MatchDay)
+            .OrderBy(x => x.PlayDate)
             .ToList();
 
-        foreach (var court in Courts)
+        NotRegisteredPlayers = _db.Players
+            .Where(p => !_db.HallPlanRegistrations
+                .Any(r => r.PlayerId == p.Id && r.HallPlanId == HallPlanId))
+            .ToList();
+
+        RegisteredPlayers = _db.Players
+            .Where(p => _db.HallPlanRegistrations
+                .Any(r => r.PlayerId == p.Id && r.HallPlanId == HallPlanId))
+            .ToList();
+
+        foreach (var court in HallPlanDays)
         {
-            court.PlayerCourtGrieskirchens = court.PlayerCourtGrieskirchens
-                .OrderBy(pcg => pcg.Player.ToString()) // or use .Name if there's a dedicated property
-                .ToList();
+            court.Players = court.Players.OrderBy(p => p.Player.ToString()).ToList();
         }
 
-
         return Page();
+    }
+
+    public IActionResult OnPostCreateCompetition(string? competitionName)
+    {
+        if (string.IsNullOrWhiteSpace(competitionName))
+            return RedirectToPage(nameof(Hallplan));
+
+        var plan = new HallPlanEntity
+        {
+            Name = competitionName
+        };
+
+        _db.HallPlans.Add(plan);
+        _db.SaveChanges();
+
+        return RedirectToPage(nameof(Hallplan));
     }
 
     public IActionResult OnPostGeneratePlan(DateTime startDate, DateTime endDate)
     {
         _logger.LogInformation("Starting plan generation");
-        _planService.GeneratePlanGrieskirchen(startDate, endDate);
+        GeneratePlan(startDate, endDate, HallPlanId);
         _logger.LogInformation("Plan generation complete");
-        return new RedirectToPageResult(nameof(Hallplan));
+        return RedirectToPage(nameof(Hallplan));
     }
 
     public IActionResult OnPostChangePlayingState()
     {
-        var player = _db.Players.Single(x => x.Id == int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value));
+        var playerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var player = _db.Players.Single(x => x.Id == playerId);
+
         player.IsPlayingGrieskirchen = !player.IsPlayingGrieskirchen;
         _db.SaveChanges();
 
-        return new RedirectToPageResult(nameof(Hallplan));
+        return RedirectToPage(nameof(Hallplan));
+    }
+
+    public IActionResult OnPostAddPlayerToHallplan(int playerId)
+    {
+        if (playerId == 0) return RedirectToPage(nameof(Hallplan), new { HallPlanId });
+
+        var exists = _db.HallPlanRegistrations.Any(x => x.PlayerId == playerId && x.HallPlanId == HallPlanId);
+
+        if (!exists)
+        {
+            _db.HallPlanRegistrations.Add(new HallPlanRegistration
+            {
+                PlayerId = playerId,
+                HallPlanId = HallPlanId
+            });
+
+            _db.SaveChanges();
+        }
+
+        return RedirectToPage(nameof(Hallplan));
     }
 
     public IActionResult OnPostBack()
     {
-        return new RedirectToPageResult(nameof(Index));
+        return RedirectToPage(nameof(Index));
+    }
+
+    private void GeneratePlan(DateTime startDate, DateTime endDate, int hallPlanId)
+    {
+        InitValues();
+        // 1️⃣ Alle bestehenden HallPlanDays & Spieler für diesen HallPlan löschen
+        var existingDays = _db.HallPlanDays
+            .Include(d => d.Players)
+            .Where(d => d.HallPlanId == hallPlanId)
+            .ToList();
+
+        _db.HallPlanDays.RemoveRange(existingDays);
+        _db.SaveChanges();
+
+        // 2️⃣ Spieler, die in Grieskirchen spielen möchten
+        var players = _db.Players
+            .Where(p => p.IsPlayingGrieskirchen)
+            .ToList();
+
+        if (players.Count < 4)
+        {
+            Console.WriteLine("Nicht genug Spieler für den Plan.");
+            return;
+        }
+
+        // 3️⃣ Generiere Spieltage (jeden Freitag zwischen Start und Ende)
+        var matchDays = new List<DateTime>();
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            if (date.DayOfWeek == DayOfWeek.Friday)
+                matchDays.Add(date);
+        }
+
+        if (!matchDays.Any())
+        {
+            Console.WriteLine("Keine Spieltage gefunden.");
+            return;
+        }
+
+        // 4️⃣ Zähle, wie oft jeder Spieler schon zugewiesen wurde
+        var playerCounts = players.ToDictionary(p => p.Id, p => 0);
+
+        var random = new Random();
+
+        foreach (var day in matchDays)
+        {
+            // Spieler zufällig mischen
+            var shuffled = players.OrderBy(p => random.Next()).ToList();
+
+            // 4 Spieler mit den wenigsten Spielen auswählen
+            var selectedPlayers = shuffled
+                .OrderBy(p => playerCounts[p.Id])
+                .Take(4)
+                .ToList();
+
+            // HallPlanDay erstellen
+            var hallDay = new HallPlanDay
+            {
+                HallPlanId = hallPlanId,
+                PlayDate = day,
+                Players = new List<HallPlanDayPlayer>(),
+                HallPlanEntity = SelectedHallPlanEntity!
+            };
+
+            foreach (var player in selectedPlayers)
+            {
+                hallDay.Players.Add(new HallPlanDayPlayer
+                {
+                    Player = player,
+                    HallPlanDay = hallDay
+                });
+
+                // Spielanzahl erhöhen
+                playerCounts[player.Id]++;
+            }
+
+            _db.HallPlanDays.Add(hallDay);
+        }
+
+        _db.SaveChanges();
+        Console.WriteLine("Balanced HallPlan erfolgreich generiert.");
+    }
+
+    public IActionResult OnPostSelectHallPlan()
+    {
+        HttpContext.Session.SetInt32("selectedHallPlanId", HallPlanId);
+        return RedirectToPage(nameof(Hallplan));
     }
 }

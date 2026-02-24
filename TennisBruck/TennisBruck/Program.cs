@@ -66,7 +66,6 @@ builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddScoped<EmailService>();
 // builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CurrentPlayerService>();
-builder.Services.AddScoped<PlanService>();
 builder.Services.AddSingleton<PasswordEncryption>();
 
 builder.Services.AddDistributedMemoryCache();
