@@ -5,10 +5,10 @@ namespace TennisBruck.Services;
 
 public class EmailService
 {
-    private readonly string _smtpServer = Environment.GetEnvironmentVariable("SmtpServer")!; // Your SMTP server
+    private readonly string _smtpServer = Environment.GetEnvironmentVariable("SMTPSERVER")!; // Your SMTP server
     private readonly int _smtpPort = 587;
-    private readonly string _smtpUser = Environment.GetEnvironmentVariable("Email")!; // Your Gmail address
-    private readonly string _smtpPass = Environment.GetEnvironmentVariable("Password")!; // Your Gmail password
+    private readonly string _smtpUser = Environment.GetEnvironmentVariable("EMAIL")!; // Your Gmail address
+    private readonly string _smtpPass = Environment.GetEnvironmentVariable("PASSWORD")!; // Your Gmail password
 
     public async Task SendVerificationCodeAsync(string toEmail, string subject, string verificationCode)
     {

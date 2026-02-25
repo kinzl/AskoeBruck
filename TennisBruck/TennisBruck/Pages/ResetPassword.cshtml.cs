@@ -17,7 +17,7 @@ public class ResetPassword : PageModel
         _pe = pe;
     }
 
-    [BindProperty] public ResetPasswordDto Input { get; set; }
+    [BindProperty] public required ResetPasswordDto Input { get; set; }
 
     public string ErrorText { get; private set; }
 

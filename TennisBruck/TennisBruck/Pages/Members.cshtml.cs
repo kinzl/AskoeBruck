@@ -14,8 +14,8 @@ public class Members : PageModel
     private TennisContext _db;
     private CurrentPlayerService CurrentPlayerService { get; set; }
     private readonly ILogger<IndexModel> _logger;
-    public Player LoggedInPlayer { get; set; }
-    public List<Player> AllPlayers { get; set; }
+    public required Player LoggedInPlayer { get; set; }
+    public required List<Player> AllPlayers { get; set; }
     public string? InfoBox { get; set; }
     private PasswordEncryption _pe;
 

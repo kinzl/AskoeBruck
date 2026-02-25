@@ -17,15 +17,15 @@ public class Championship : PageModel
     private TennisContext _db;
     public bool IsRegistered { get; set; }
     private CurrentPlayerService _currentPlayerService;
-    public Player CurrentPlayer { get; set; }
+    public required Player CurrentPlayer { get; set; }
 
-    public List<Competition> Competitions { get; set; }
+    public required List<Competition> Competitions { get; set; }
     public Competition? SelectedCompetition { get; set; }
     public List<TournamentRegistration> RegisteredCompetitionPlayers { get; set; } = [];
     public List<Group> Groups { get; set; } = [];
-    public List<Match> PersonalMatches { get; set; }
-    public List<Match> AllMatches { get; set; }
-    public List<Team> RegisteredTeams { get; set; }
+    public required List<Match> PersonalMatches { get; set; }
+    public required List<Match> AllMatches { get; set; }
+    public required List<Team> RegisteredTeams { get; set; }
     [BindProperty] public int SelectedSize { get; set; }
 
     [BindProperty] public List<BracketInput> Inputs { get; set; } = new();
@@ -34,7 +34,7 @@ public class Championship : PageModel
 
     private readonly List<int> _knownBrackets = new() { 2, 4, 8, 16, 32 };
     public string? Message { get; set; }
-    public List<Player> UnregisteredPlayers { get; set; }
+    public required List<Player> UnregisteredPlayers { get; set; }
 
     public Championship(CurrentPlayerService currentPlayerService, TennisContext db)
     {
@@ -109,7 +109,7 @@ public class Championship : PageModel
                 .Include(x => x.Sets)
                 .Where(x => x.Group != null && x.Group.Competition.Id == SelectedCompetition!.Id)
                 .ToList();
-            
+
             AllMatches.AddRange(_db.KnockoutMatch
                 .Include(x => x.Group)
                 .ThenInclude(x => x.Competition)

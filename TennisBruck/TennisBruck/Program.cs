@@ -9,7 +9,7 @@ using TennisDb;
 
 string corsKey = "_myCorsKey";
 string swaggerVersion = "v1";
-string swaggerTitle = "MinApiDemo";
+string swaggerTitle = "TennisBruck";
 string restClientFolder = Environment.CurrentDirectory;
 string restClientFilename = "_requests.http";
 

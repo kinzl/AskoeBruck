@@ -29,7 +29,7 @@ public class Hallplan : PageModel
 
     public IEnumerable<Player> NotRegisteredPlayers { get; set; } = new List<Player>();
     public IEnumerable<Player> RegisteredPlayers { get; set; } = new List<Player>();
-    public IEnumerable<HallPlanEntity> HallPlanEntity { get; set; }
+    public required IEnumerable<HallPlanEntity> HallPlanEntity { get; set; }
     [BindProperty] public int HallPlanId { get; set; }
 
     public HallPlanEntity? SelectedHallPlanEntity { get; set; }

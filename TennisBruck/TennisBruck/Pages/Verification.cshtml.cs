@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TennisBruck.Extensions;
-using TennisBruck.Services;
 using TennisDb;
 
 namespace TennisBruck.Pages;
@@ -66,11 +65,11 @@ public class Verification : PageModel
 
             var user = new Player
             {
-                Firstname = entry.Firstname,
-                Lastname = entry.Lastname,
+                Firstname = entry.Firstname!,
+                Lastname = entry.Lastname!,
                 EmailOrPhone = entry.EmailOrPhone,
-                Username = entry.Username,
-                PasswordHash = entry.PasswordHash,
+                Username = entry.Username!,
+                PasswordHash = entry.PasswordHash!,
                 IsAdmin = false,
                 IsPlayingGrieskirchen = false,
             };

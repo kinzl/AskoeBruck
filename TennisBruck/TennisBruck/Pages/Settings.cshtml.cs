@@ -16,7 +16,7 @@ public class Settings : PageModel
     private TennisContext _db;
     private PasswordEncryption _pe;
     public string? InfoText { get; set; }
-    [BindProperty] public Player Player { get; set; }
+    [BindProperty] public required Player Player { get; set; }
 
     public Settings(CurrentPlayerService currentPlayerService, TennisContext db, PasswordEncryption pe)
     {
