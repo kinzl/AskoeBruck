@@ -25,8 +25,15 @@ public class EmailService
         var client = new SmtpClient();
         try
         {
+            // 1. Increase timeout to 30 seconds to give the handshake more time
+            client.Timeout = 30000;
+            client.LocalDomain = "localhost";
+            
             // Connect to the SMTP server
-            await client.ConnectAsync(_smtpServer, _smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
+            // await client.ConnectAsync(_smtpServer, _smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
+
+            // Port 465 requires SslOnConnect
+            await client.ConnectAsync("smtp.gmail.com", 465, MailKit.Security.SecureSocketOptions.SslOnConnect);
 
             // Authenticate
             await client.AuthenticateAsync(_smtpUser, _smtpPass);
