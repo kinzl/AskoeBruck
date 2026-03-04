@@ -15,7 +15,7 @@ public class TennisContext : DbContext
     }
 
     public DbSet<Player> Players { get; set; }
-    public DbSet<HallEntity> PlayerCourtGrieskirchen { get; set; }
+    public DbSet<HallEntity> HallEntities { get; set; }
     public DbSet<Reservation> Reservations { get; set; }
     public DbSet<HallPlanDay> Court { get; set; }
     public DbSet<RegistrationVerification> RegistrationVerifications { get; set; }
@@ -28,7 +28,7 @@ public class TennisContext : DbContext
     public DbSet<TeamPlayer> TeamPlayer { get; set; }
     public DbSet<TournamentRegistration> TournamentRegistrations { get; set; }
     public DbSet<GroupTeam> GroupTeams { get; set; }
-    public DbSet<HallPlanEntity> HallPlans { get; set; }
+    public DbSet<HallPlanEntity> HallPlanEntities { get; set; }
     public DbSet<HallPlanDay> HallPlanDays { get; set; }
     public DbSet<HallPlanRegistration> HallPlanRegistrations { get; set; }
     

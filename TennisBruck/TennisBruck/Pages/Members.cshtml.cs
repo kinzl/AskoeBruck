@@ -47,8 +47,7 @@ public class Members : PageModel
             EmailOrPhone = body.EmailOrPhone,
             PasswordHash = _pe.HashPassword(password),
             Username = body.Username,
-            IsAdmin = false,
-            IsPlayingGrieskirchen = false
+            IsAdmin = false
         };
         _db.Players.Add(player);
         _db.SaveChanges();

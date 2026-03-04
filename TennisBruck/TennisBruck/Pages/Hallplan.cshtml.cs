@@ -31,6 +31,7 @@ public class Hallplan : PageModel
     public IEnumerable<Player> RegisteredPlayers { get; set; } = new List<Player>();
     public required IEnumerable<HallPlanEntity> HallPlanEntity { get; set; }
     [BindProperty] public int HallPlanId { get; set; }
+    public bool IsLoggedInPlayerPlaying { get; set; }
 
     public HallPlanEntity? SelectedHallPlanEntity { get; set; }
 
@@ -50,8 +51,8 @@ public class Hallplan : PageModel
 
         LoggedInPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identity!.Name!)!;
 
-        HallPlanEntity = _db.HallPlans.ToList();
-        SelectedHallPlanEntity = _db.HallPlans.SingleOrDefault(x => x.Id == HallPlanId);
+        HallPlanEntity = _db.HallPlanEntities.ToList();
+        SelectedHallPlanEntity = _db.HallPlanEntities.SingleOrDefault(x => x.Id == HallPlanId);
 
         HallPlanDays = _db.HallPlanDays
             .Where(x => x.HallPlanId == HallPlanId)
@@ -75,6 +76,14 @@ public class Hallplan : PageModel
             court.Players = court.Players.OrderBy(p => p.Player.ToString()).ToList();
         }
 
+        if (SelectedHallPlanEntity != null)
+        {
+            IsLoggedInPlayerPlaying = _db.HallPlanEntities
+                .Include(hallPlanEntity => hallPlanEntity.Registrations)
+                .Single(x => x.Id == SelectedHallPlanEntity.Id)
+                .Registrations.Any(x => x.Player.Id == LoggedInPlayer.Id);
+        }
+
         return Page();
     }
 
@@ -88,7 +97,7 @@ public class Hallplan : PageModel
             Name = competitionName
         };
 
-        _db.HallPlans.Add(plan);
+        _db.HallPlanEntities.Add(plan);
         _db.SaveChanges();
 
         return RedirectToPage(nameof(Hallplan));
@@ -104,10 +113,30 @@ public class Hallplan : PageModel
 
     public IActionResult OnPostChangePlayingState()
     {
+        InitValues();
         var playerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-        var player = _db.Players.Single(x => x.Id == playerId);
 
-        player.IsPlayingGrieskirchen = !player.IsPlayingGrieskirchen;
+        var player = _db.Players.Single(x => x.Id == playerId);
+        var hallPlanEntity = _db.HallPlanEntities
+            .Include(hallPlanEntity => hallPlanEntity.Registrations)
+            .ThenInclude(hallPlanRegistration => hallPlanRegistration.Player)
+            .Single(x => x.Id == SelectedHallPlanEntity!.Id);
+        var isRegistered = hallPlanEntity.Registrations.SingleOrDefault(x => x.Player.Id == playerId);
+
+        if (isRegistered == null)
+        {
+            hallPlanEntity.Registrations.Add(new HallPlanRegistration()
+            {
+                Player = player,
+                RegisteredAt = DateTime.Now
+            });
+        }
+        else
+        {
+            var hallplanRegistration = hallPlanEntity.Registrations.Single(x => x.Player.Id == playerId);
+            hallPlanEntity.Registrations.Remove(hallplanRegistration);
+        }
+
         _db.SaveChanges();
 
         return RedirectToPage(nameof(Hallplan));
@@ -115,20 +144,25 @@ public class Hallplan : PageModel
 
     public IActionResult OnPostAddPlayerToHallplan(int playerId)
     {
+        InitValues();
         if (playerId == 0) return RedirectToPage(nameof(Hallplan), new { HallPlanId });
 
         var exists = _db.HallPlanRegistrations.Any(x => x.PlayerId == playerId && x.HallPlanId == HallPlanId);
 
-        if (!exists)
-        {
-            _db.HallPlanRegistrations.Add(new HallPlanRegistration
-            {
-                PlayerId = playerId,
-                HallPlanId = HallPlanId
-            });
+        if (exists) return RedirectToPage(nameof(Hallplan));
 
-            _db.SaveChanges();
-        }
+        var player = _db.Players.Single(x => x.Id == playerId);
+        var hallPlanEntity = _db.HallPlanEntities.Single(x => x.Id == HallPlanId);
+        _db.HallPlanRegistrations.Add(new HallPlanRegistration
+        {
+            PlayerId = playerId,
+            HallPlanId = HallPlanId,
+            Player = player,
+            HallPlanEntity = hallPlanEntity
+        });
+
+        _db.SaveChanges();
+
 
         return RedirectToPage(nameof(Hallplan));
     }
@@ -150,9 +184,12 @@ public class Hallplan : PageModel
         _db.HallPlanDays.RemoveRange(existingDays);
         _db.SaveChanges();
 
-        // 2️⃣ Spieler, die in Grieskirchen spielen möchten
-        var players = _db.Players
-            .Where(p => p.IsPlayingGrieskirchen)
+
+        var players = _db.HallPlanEntities.Include(hallPlanEntity => hallPlanEntity.Registrations)
+            .ThenInclude(hallPlanRegistration => hallPlanRegistration.Player)
+            .Single(x => x.Id == SelectedHallPlanEntity!.Id)
+            .Registrations
+            .Select(x => x.Player)
             .ToList();
 
         if (players.Count < 4)

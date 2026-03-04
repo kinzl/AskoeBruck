@@ -19,152 +19,159 @@
 </head>
 <body class="app-container">
 
-    <header class="navbar">
-        <div class="container nav-content">
-            <div class="brand">
-                <div class="logo-icon">🎾</div>
-                <h1 class="nav-title">@(Model.SelectedHallPlanEntity?.Name ?? "Hallenplan")</h1>
-            </div>
-            
-            <div class="nav-actions">
-                <form method="post" asp-page-handler="Back">
-                    <button class="btn-text">← Zurück</button>
-                </form>
-            </div>
+<header class="navbar">
+    <div class="container nav-content">
+        <div class="brand">
+            <div class="logo-icon">🎾</div>
+            <h1 class="nav-title">@(Model.SelectedHallPlanEntity?.Name ?? "Hallenplan")</h1>
         </div>
-    </header>
 
-    <main class="container main-layout">
-        
-        <div class="top-grid">
-            <section class="card selection-card">
-                <label class="label-hint">Gewählter Platz</label>
-                <form method="post" asp-page-handler="SelectHallPlan">
-                    <select asp-for="HallPlanId" class="custom-select" onchange="this.form.submit()">
-                        <option value="">Platz auswählen...</option>
-                        @foreach (var item in Model.HallPlanEntity)
-                        {
-                            <option value="@item.Id">@item.Name</option>
-                        }
-                    </select>
-                </form>
-            </section>
+        <div class="nav-actions">
+            <form method="post" asp-page-handler="Back">
+                <button class="btn-text">← Zurück</button>
+            </form>
+        </div>
+    </div>
+</header>
 
+<main class="container main-layout">
+
+    <div class="top-grid">
+        <section class="card selection-card">
+            <label class="label-hint">Gewählter Platz</label>
+            <form method="post" asp-page-handler="SelectHallPlan">
+                <select asp-for="HallPlanId" class="custom-select" onchange="this.form.submit()">
+                    <option value="">Platz auswählen...</option>
+                    @foreach (var item in Model.HallPlanEntity)
+                    {
+                        <option value="@item.Id">@item.Name</option>
+                    }
+                </select>
+            </form>
+        </section>
+
+        @if (Model.SelectedHallPlanEntity != null)
+        {
             <section class="card status-card">
                 <div class="status-info">
                     <span class="label-hint">Mein Status</span>
-                    <h3 class="@(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "text-active" : "text-inactive")">
-                        @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "Eingeteilt" : "Pausiert")
+                    <h3 class="@(Model.IsLoggedInPlayerPlaying ? "text-active" : "text-inactive")">
+                        @(Model.IsLoggedInPlayerPlaying ? "Eingeteilt" : "Pausiert")
                     </h3>
                 </div>
                 <form method="post" asp-page-handler="ChangePlayingState" id="statusForm">
                     <label class="switch">
-                        <input type="checkbox" onchange="this.form.submit()" @(Model.LoggedInPlayer.IsPlayingGrieskirchen ? "checked" : "")>
+                        <input type="checkbox" onchange="this.form.submit()"
+                               @(Model.IsLoggedInPlayerPlaying ? "checked" : "")>
                         <span class="slider round"></span>
                     </label>
                 </form>
             </section>
+        }
+    </div>
+
+    <section class="card table-card">
+        <div class="card-header">
+            <h2 class="section-title">Spielplan Übersicht</h2>
+            @* <span class="badge">Saison 2024/25</span> *@
         </div>
 
-        <section class="card table-card">
-            <div class="card-header">
-                <h2 class="section-title">Spielplan Übersicht</h2>
-                @* <span class="badge">Saison 2024/25</span> *@
-            </div>
-
-            <div class="table-responsive">
-                <table class="modern-table">
-                    <thead>
-                        <tr>
-                            <th>Datum</th>
-                            <th>Position 1</th>
-                            <th>Position 2</th>
-                            <th>Position 3</th>
-                            <th>Position 4</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var court in Model.HallPlanDays)
+        <div class="table-responsive">
+            <table class="modern-table">
+                <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Position 1</th>
+                    <th>Position 2</th>
+                    <th>Position 3</th>
+                    <th>Position 4</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var court in Model.HallPlanDays)
+                {
+                    <tr>
+                        <td class="date-col">
+                            <span class="date-day">@court.PlayDate.ToString("dd")</span>
+                            <span class="date-month">@court.PlayDate.ToString("MMM")</span>
+                        </td>
+                        @foreach (var playerEntry in court.Players)
                         {
-                            <tr>
-                                <td class="date-col">
-                                    <span class="date-day">@court.PlayDate.ToString("dd")</span>
-                                    <span class="date-month">@court.PlayDate.ToString("MMM")</span>
-                                </td>
-                                @foreach (var playerEntry in court.Players)
-                                {
-                                    <td>
-                                        <div class="player-slot draggable-player" 
-                                             draggable="true" 
-                                             data-player-id="@playerEntry.Player.Id" 
-                                             data-court-id="@court.Id">
-                                            <div class="avatar-mini">@playerEntry.Player.ToString().Substring(0,1)</div>
-                                            <span class="player-name">@playerEntry.Player</span>
-                                        </div>
-                                    </td>
-                                }
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        @if (Model.LoggedInPlayer.IsAdmin)
-        {
-            <section class="card admin-card">
-                <div class="card-header border-none">
-                    <h2 class="section-title admin-title">Administrator Werkzeuge</h2>
-                </div>
-                
-                <div class="admin-grid">
-                    @if (Model.SelectedHallPlanEntity != null)
-                    {
-                        <div class="admin-box">
-                            <h4>Zeitraum generieren</h4>
-                            <form method="post" class="admin-form">
-                                <input type="hidden" name="HallPlanId" value="@Model.HallPlanId"/>
-                                <div class="input-group">
-                                    <input type="date" name="startDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" class="input-field" />
-                                    <input type="date" name="endDate" value="@DateTime.Today.AddMonths(6).ToString("yyyy-MM-dd")" class="input-field" />
+                            <td>
+                                <div class="player-slot draggable-player"
+                                     draggable="true"
+                                     data-player-id="@playerEntry.Player.Id"
+                                     data-court-id="@court.Id">
+                                    <div class="avatar-mini">@playerEntry.Player.ToString().Substring(0, 1)</div>
+                                    <span class="player-name">@playerEntry.Player</span>
                                 </div>
-                                <button asp-page-handler="GeneratePlan" class="btn-action">Plan erstellen</button>
-                            </form>
-                        </div>
+                            </td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
 
-                        <div class="admin-box">
-                            <h4>Spieler hinzufügen</h4>
-                            <form method="post" asp-page-handler="AddPlayerToHallplan" class="admin-form">
-                                <input type="hidden" name="HallPlanId" value="@Model.HallPlanId"/>
-                                <select name="playerId" class="input-field">
-                                    <option value="">Spieler wählen...</option>
-                                    @foreach (var player in Model.NotRegisteredPlayers)
-                                    {
-                                        <option value="@player.Id">@player</option>
-                                    }
-                                </select>
-                                <button class="btn-action">Hinzufügen</button>
-                            </form>
-                        </div>
-                    }
+    @if (Model.LoggedInPlayer.IsAdmin)
+    {
+        <section class="card admin-card">
+            <div class="card-header border-none">
+                <h2 class="section-title admin-title">Administrator Werkzeuge</h2>
+            </div>
 
-                    <div class="admin-box full-width">
-                        <h4>Neuen Bewerb/Platz anlegen</h4>
-                        <form method="post" asp-page-handler="CreateCompetition" class="admin-form inline">
-                            <input type="text" name="competitionName" placeholder="Name (z.B. Halle West)" class="input-field" />
-                            <button class="btn-action">Erstellen</button>
+            <div class="admin-grid">
+                @if (Model.SelectedHallPlanEntity != null)
+                {
+                    <div class="admin-box">
+                        <h4>Zeitraum generieren</h4>
+                        <form method="post" class="admin-form">
+                            <input type="hidden" name="HallPlanId" value="@Model.HallPlanId"/>
+                            <div class="input-group">
+                                <input type="date" name="startDate" value="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                       class="input-field"/>
+                                <input type="date" name="endDate"
+                                       value="@DateTime.Today.AddMonths(6).ToString("yyyy-MM-dd")" class="input-field"/>
+                            </div>
+                            <button asp-page-handler="GeneratePlan" class="btn-action">Plan erstellen</button>
                         </form>
                     </div>
-                </div>
-            </section>
-        }
-    </main>
 
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 TennisBruck Management System</p>
-        </div>
-    </footer>
+                    <div class="admin-box">
+                        <h4>Spieler hinzufügen</h4>
+                        <form method="post" asp-page-handler="AddPlayerToHallplan" class="admin-form">
+                            <input type="hidden" name="HallPlanId" value="@Model.HallPlanId"/>
+                            <select name="playerId" class="input-field">
+                                <option value="">Spieler wählen...</option>
+                                @foreach (var player in Model.NotRegisteredPlayers)
+                                {
+                                    <option value="@player.Id">@player</option>
+                                }
+                            </select>
+                            <button class="btn-action">Hinzufügen</button>
+                        </form>
+                    </div>
+                }
+
+                <div class="admin-box full-width">
+                    <h4>Neuen Bewerb/Platz anlegen</h4>
+                    <form method="post" asp-page-handler="CreateCompetition" class="admin-form inline">
+                        <input type="text" name="competitionName" placeholder="Name (z.B. Halle West)"
+                               class="input-field"/>
+                        <button class="btn-action">Erstellen</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    }
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <p>&copy; 2024 TennisBruck Management System</p>
+    </div>
+</footer>
 
 </body>
 </html>

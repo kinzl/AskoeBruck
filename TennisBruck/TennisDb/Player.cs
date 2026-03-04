@@ -11,7 +11,6 @@ public partial class Player
     public bool IsAdmin { get; set; }
     public string? PasswordResetToken { get; set; }
     public DateTime? TokenExpiry { get; set; }
-    public bool IsPlayingGrieskirchen { get; set; }
     public List<HallEntity> HallEntities { get; set; }
     public List<TournamentRegistration> TournamentRegistrations { get; set; }
 }

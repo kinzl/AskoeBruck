@@ -32,7 +32,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "asmi@gmail.com",
             Username = "asmith",
-            IsPlayingGrieskirchen = false,
             IsAdmin = false
         });
 
@@ -43,7 +42,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "kammerem@gmail.com",
             Username = "kammerem",
-            IsPlayingGrieskirchen = false,
             IsAdmin = false
         });
 
@@ -54,7 +52,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "ekin@gmail.com",
             Username = "kinzle",
-            IsPlayingGrieskirchen = true,
             IsAdmin = true
         });
 
@@ -65,7 +62,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "EckerStefan@gmail.com",
             Username = "EckerS",
-            IsPlayingGrieskirchen = true,
             IsAdmin = true
         });
 
@@ -76,7 +72,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "WimmerGerald@gmail.com",
             Username = "WimmerG",
-            IsPlayingGrieskirchen = true,
             IsAdmin = true
         });
 
@@ -87,7 +82,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "ReppB@gmail.com",
             Username = "ReppB",
-            IsPlayingGrieskirchen = true,
             IsAdmin = false
         });
 
@@ -98,7 +92,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
             PasswordHash = pe.HashPassword("1234"),
             EmailOrPhone = "HoferS@gmail.com",
             Username = "HoferS",
-            IsPlayingGrieskirchen = true,
             IsAdmin = true
         });
         db.SaveChanges();

@@ -5,10 +5,10 @@ namespace TennisBruck.Services;
 
 public class EmailService
 {
-    private readonly string _smtpServer = Environment.GetEnvironmentVariable("SMTPSERVER")!; // Your SMTP server
+    private readonly string _smtpServer = Environment.GetEnvironmentVariable("SMTPSERVER")!;
     private readonly int _smtpPort = 587;
-    private readonly string _smtpUser = Environment.GetEnvironmentVariable("EMAIL")!; // Your Gmail address
-    private readonly string _smtpPass = Environment.GetEnvironmentVariable("PASSWORD")!; // Your Gmail password
+    private readonly string _smtpUser = Environment.GetEnvironmentVariable("EMAIL")!;
+    private readonly string _smtpPass = Environment.GetEnvironmentVariable("PASSWORD")!;
 
     public async Task SendVerificationCodeAsync(string toEmail, string subject, string verificationCode)
     {
@@ -25,16 +25,10 @@ public class EmailService
         var client = new SmtpClient();
         try
         {
-            // 1. Increase timeout to 30 seconds to give the handshake more time
-            client.Timeout = 30000;
-            client.LocalDomain = "localhost";
-            
             // Connect to the SMTP server
-            // await client.ConnectAsync(_smtpServer, _smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
-
-            // Port 465 requires SslOnConnect
-            await client.ConnectAsync("smtp.gmail.com", 465, MailKit.Security.SecureSocketOptions.SslOnConnect);
-
+            Console.WriteLine("Connecting to smtp server");
+            await client.ConnectAsync(_smtpServer, _smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
+            Console.WriteLine("Connected");
             // Authenticate
             await client.AuthenticateAsync(_smtpUser, _smtpPass);
 

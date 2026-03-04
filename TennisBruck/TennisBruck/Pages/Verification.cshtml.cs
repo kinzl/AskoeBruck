@@ -70,8 +70,7 @@ public class Verification : PageModel
                 EmailOrPhone = entry.EmailOrPhone,
                 Username = entry.Username!,
                 PasswordHash = entry.PasswordHash!,
-                IsAdmin = false,
-                IsPlayingGrieskirchen = false,
+                IsAdmin = false
             };
 
             _db.Players.Add(user);

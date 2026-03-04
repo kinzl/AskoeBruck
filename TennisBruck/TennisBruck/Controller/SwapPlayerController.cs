@@ -37,13 +37,13 @@ public class SwapPlayerController : ControllerBase
         }
 
         // Find the first court and player association
-        var playerCourt1 = await _db.PlayerCourtGrieskirchen
+        var playerCourt1 = await _db.HallEntities
             .Include(pc => pc.Player)
             .Include(pc => pc.HallPlanDay)
             .FirstOrDefaultAsync(pc => pc.Player.Id == player1Id && pc.HallPlanDay.Id == court1Id);
 
         // Find the second court and player association
-        var playerCourt2 = await _db.PlayerCourtGrieskirchen
+        var playerCourt2 = await _db.HallEntities
             .Include(pc => pc.Player)
             .Include(pc => pc.HallPlanDay)
             .FirstOrDefaultAsync(pc => pc.Player.Id == player2Id && pc.HallPlanDay.Id == court2Id);
@@ -54,18 +54,18 @@ public class SwapPlayerController : ControllerBase
         }
 
         // Remove both entries from the database
-        _db.PlayerCourtGrieskirchen.Remove(playerCourt1);
-        _db.PlayerCourtGrieskirchen.Remove(playerCourt2);
+        _db.HallEntities.Remove(playerCourt1);
+        _db.HallEntities.Remove(playerCourt2);
         await _db.SaveChangesAsync();
 
         // Re-add entries with swapped court and player assignments
-        _db.PlayerCourtGrieskirchen.Add(new HallEntity
+        _db.HallEntities.Add(new HallEntity
         {
             Player = _db.Players.Single(x => x.Id == player2Id),
             HallPlanDay = _db.Court.Single(x => x.Id == court1Id)
         });
 
-        _db.PlayerCourtGrieskirchen.Add(new HallEntity
+        _db.HallEntities.Add(new HallEntity
         {
             Player = _db.Players.Single(x => x.Id == player1Id),
             HallPlanDay = _db.Court.Single(x => x.Id == court2Id)

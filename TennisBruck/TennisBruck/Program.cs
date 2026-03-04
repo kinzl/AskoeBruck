@@ -49,6 +49,9 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/tmp/dpkeys"));
+
 // string connectionString = builder.Configuration.GetConnectionString("PostgresSql")!;
 // connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("POSTGRES_DATABASE"))
 //     .Replace("myUsername", Environment.GetEnvironmentVariable("POSTGRES_USER"))
