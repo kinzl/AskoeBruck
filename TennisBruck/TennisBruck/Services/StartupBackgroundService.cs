@@ -12,7 +12,7 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         Console.WriteLine("ExecuteAsync STARTUP SERVICE");
         var db = _scope.ServiceProvider.GetRequiredService<TennisContext>();
 
-        db.Database.EnsureDeleted();
+        // db.Database.EnsureDeleted();
         db.Database.EnsureCreated();
 
         SeedPlayer(db);
