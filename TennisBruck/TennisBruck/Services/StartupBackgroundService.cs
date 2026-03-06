@@ -1,4 +1,5 @@
-﻿using TennisBruck.Extensions;
+﻿using Microsoft.EntityFrameworkCore;
+using TennisBruck.Extensions;
 using TennisDb;
 
 namespace TennisBruck.Services;
@@ -13,6 +14,7 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         var db = _scope.ServiceProvider.GetRequiredService<TennisContext>();
 
         // db.Database.EnsureDeleted();
+        DropAllTables(db);
         db.Database.EnsureCreated();
 
         SeedPlayer(db);
@@ -21,6 +23,21 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         db.SaveChanges();
 
         return Task.CompletedTask;
+    }
+
+    private void DropAllTables(TennisContext db)
+    {
+        var sql = @"
+    DO $$
+    DECLARE
+        r RECORD;
+    BEGIN
+        FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+            EXECUTE 'DROP TABLE IF EXISTS ""' || r.tablename || '"" CASCADE';
+        END LOOP;
+    END $$;";
+
+        db.Database.ExecuteSqlRaw(sql);
     }
 
     private void SeedPlayer(TennisContext db)
