@@ -1,6 +1,6 @@
 namespace TennisBruck.Dto;
 
-public class PlayerCompetitionPairs
+public abstract class PlayerCompetitionPairs
 {
     public int Id { get; set; }
     public int? SinglePlayerId { get; set; }

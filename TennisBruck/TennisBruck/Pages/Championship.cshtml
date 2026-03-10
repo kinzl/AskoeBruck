@@ -466,7 +466,7 @@
                                             <span class="match-players">
                                                 @string.Join(" / ", match.Team1!.Players.Select(tp => tp.Player.ToString()))
                                                 vs
-                                                @string.Join(" / ", match.Team2?.Players.Select(tp => tp.Player.ToString()))
+                                                @string.Join(" / ", match.Team2!.Players.Select(tp => tp.Player.ToString()))
                                             </span>
                                             <span class="match-competition">
                                                 @(match.Group != null ? match.Group.Competition.Name : "K.O Phase")

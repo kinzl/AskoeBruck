@@ -1,12 +1,5 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using TennisBruck.Dto;
-using TennisBruck.Extensions;
-using TennisBruck.Services;
-using TennisDb;
+using Group = TennisDb.Group;
+using Match = TennisDb.Match;
 
 namespace TennisBruck.Pages;
 
@@ -453,7 +446,7 @@ public class Championship : PageModel
             if (match is not KnockoutMatch)
             {
                 var groupPlayer = _db.GroupTeams
-                    .Single(x => x.Group.Id == match.Group!.Id && x.Team.Id == winner.Id);
+                    .Single(x => x.Group.Id == match.Group!.Id && x.Team.Id == winner!.Id);
                 groupPlayer.Points += 3;
             }
 
@@ -516,8 +509,8 @@ public class Championship : PageModel
         if (byes > 0) size = closest;
 
         int round = 1;
-        double baseT = size / 2;
-        double baseC = size / 2;
+        double baseT = (double) size / 2;
+        double baseC = (double) size / 2;
         int matchId = 1;
         int nextInc = size / 2;
 

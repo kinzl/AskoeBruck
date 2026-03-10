@@ -1,11 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using TennisBruck.Extensions;
-using TennisBruck.Services;
-using TennisBruck.wwwroot.Dto;
-using TennisDb;
-
 namespace TennisBruck.Pages;
 
 [Authorize]

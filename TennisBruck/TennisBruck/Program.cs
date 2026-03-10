@@ -130,6 +130,7 @@ app.MapRazorPages();
 app.MapControllers();
 
 app.Run();
+return;
 
 void ConnectToPostgresDb()
 {
@@ -158,13 +159,11 @@ void ConnectToNeonDb()
 
 void ConnectToSqliteDb()
 {
-    string? connectionString = builder.Configuration.GetConnectionString("TennisDbSqlite")!;
-    string location = System.Reflection.Assembly.GetEntryAssembly()!.Location;
-    string dataDirectory = Path.GetDirectoryName(location)!;
-    connectionString = connectionString?.Replace("|DataDirectory|", dataDirectory + Path.DirectorySeparatorChar);
+    var connectionString = builder.Configuration.GetConnectionString("TennisDbSqlite")!;
+    var location = System.Reflection.Assembly.GetEntryAssembly()!.Location;
+    var dataDirectory = Path.GetDirectoryName(location)!;
+    connectionString = connectionString.Replace("|DataDirectory|", dataDirectory + Path.DirectorySeparatorChar);
     Console.WriteLine($"******** ConnectionString: {connectionString}");
-    Console.ForegroundColor = ConsoleColor.Yellow;
-    Console.WriteLine($"******** Don't forget to comment out NorthwindContext.OnConfiguring !");
     Console.ResetColor();
     builder.Services.AddDbContext<TennisContext>(options => options.UseSqlite(connectionString));
 }

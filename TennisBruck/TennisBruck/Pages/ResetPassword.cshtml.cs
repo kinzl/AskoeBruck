@@ -1,9 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using TennisBruck.Dto;
-using TennisBruck.Extensions;
-using TennisDb;
-
 namespace TennisBruck.Pages;
 
 public class ResetPassword : PageModel
@@ -19,7 +13,7 @@ public class ResetPassword : PageModel
 
     [BindProperty] public required ResetPasswordDto Input { get; set; }
 
-    public string ErrorText { get; private set; }
+    public string? ErrorText { get; private set; }
 
     public IActionResult OnGet(string token)
     {

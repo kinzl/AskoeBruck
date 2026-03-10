@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using TennisBruck.Extensions;
-using TennisDb;
+﻿using Group = TennisDb.Group;
 
 namespace TennisBruck.Services;
 

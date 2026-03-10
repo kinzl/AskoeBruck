@@ -1,24 +1,10 @@
-using System.Security.Claims;
-using TennisDb;
-
 namespace TennisBruck.Services;
 
-public class CurrentPlayerService
+public class CurrentPlayerService(IHttpContextAccessor httpContextAccessor, TennisContext db)
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly TennisContext _db;
-
-    public CurrentPlayerService(IHttpContextAccessor httpContextAccessor, TennisContext db)
-    {
-        _httpContextAccessor = httpContextAccessor;
-        _db = db;
-    }
-
     public Player? GetCurrentUser(string? sessionName)
     {
-        var userId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return null;
-
-        return _db.Players.Find(int.Parse(userId));
+        var userId = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return userId == null ? null : db.Players.Find(int.Parse(userId));
     }
 }

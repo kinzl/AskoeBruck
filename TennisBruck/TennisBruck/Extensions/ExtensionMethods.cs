@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Runtime.CompilerServices;
+﻿namespace TennisBruck.Extensions;
 
 public static class ExtensionMethods
 {

@@ -1,12 +1,3 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using TennisBruck.Services;
-using TennisBruck.wwwroot.Dto;
-using TennisDb;
-
 namespace TennisBruck.Pages;
 
 public class IndexModel : PageModel

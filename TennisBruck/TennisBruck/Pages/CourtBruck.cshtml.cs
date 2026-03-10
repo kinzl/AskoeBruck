@@ -1,10 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using TennisBruck.Services;
-using TennisDb;
-
 namespace TennisBruck.Pages;
 
 public class CourtBruck : PageModel

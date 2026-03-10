@@ -1,11 +1,3 @@
-using System.Text.RegularExpressions;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using TennisBruck.Extensions;
-using TennisBruck.Services;
-using TennisBruck.wwwroot.Dto;
-using TennisDb;
-
 namespace TennisBruck.Pages;
 
 public class Registration : PageModel

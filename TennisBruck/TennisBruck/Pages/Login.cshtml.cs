@@ -1,13 +1,3 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using TennisBruck.Extensions;
-using TennisBruck.Services;
-using TennisBruck.wwwroot.Dto;
-using TennisDb;
-
 namespace TennisBruck.Pages;
 
 public class Login : PageModel
