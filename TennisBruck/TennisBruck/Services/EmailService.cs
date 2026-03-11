@@ -1,3 +1,4 @@
+using System.Text;
 using MimeKit;
 using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
@@ -5,6 +6,8 @@ namespace TennisBruck.Services;
 
 public class EmailService
 {
+    #region Email Service via SMTP
+
     private readonly string _smtpServer = Environment.GetEnvironmentVariable("SMTPSERVER")!;
     private readonly int _smtpPort = 587;
     private readonly string _smtpUser = Environment.GetEnvironmentVariable("EMAIL")!;
@@ -45,4 +48,46 @@ public class EmailService
             await client.DisconnectAsync(true);
         }
     }
+
+    #endregion
+
+    #region Email Service via Resend
+
+    private readonly HttpClient _httpClient;
+    private readonly string _apiKey = Environment.GetEnvironmentVariable("RESEND__APIKEY")!;
+    private readonly string _from = Environment.GetEnvironmentVariable("RESEND_FROM")!;
+
+    public EmailService(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+        _httpClient.DefaultRequestHeaders.Clear();
+        _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
+    }
+
+    public async Task SendEmailWithResendAsync(string to, string subject, string code)
+    {
+        var payload = new
+        {
+            from = _from,
+            to = new[] { to },
+            subject,
+            html = "Ihr code lautet: " + code
+        };
+
+        var json = JsonSerializer.Serialize(payload);
+
+        var response = await _httpClient.PostAsync(
+            "https://api.resend.com/emails",
+            new StringContent(json, Encoding.UTF8, "application/json")
+        );
+
+        var body = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"Email sending failed: {body}");
+        }
+    }
+
+    #endregion
 }

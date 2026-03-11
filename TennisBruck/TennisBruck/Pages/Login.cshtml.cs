@@ -97,7 +97,8 @@ public class Login : PageModel
         };
         _db.RegistrationVerifications.Add(verification);
         await _db.SaveChangesAsync();
-        await _emailService.SendVerificationCodeAsync(player.EmailOrPhone, "Passwort zurücksetzen", code);
+        // await _emailService.SendVerificationCodeAsync(player.EmailOrPhone, "Passwort zurücksetzen", code);
+        await _emailService.SendEmailWithResendAsync(player.EmailOrPhone, "Passwort zurücksetzen", code);
 
         TempData["EmailOrPhone"] = emailOrPhone;
 

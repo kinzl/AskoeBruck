@@ -1,6 +1,6 @@
 namespace TennisBruck.wwwroot.Dto;
 
-public abstract class RegistrationDto
+public class RegistrationDto
 {
     public required string Firstname { get; set; }
     public required string Lastname { get; set; }

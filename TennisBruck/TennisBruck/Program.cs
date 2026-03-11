@@ -1,11 +1,17 @@
 using GrueneisR.RestClientGenerator;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Resend;
 using TennisBruck.Extensions;
 using TennisBruck.Services;
 using TennisDb;
+using TennisBruck.Areas.Identity.Data;
+using TennisBruck;
+using TennisContext = TennisDb.TennisContext;
 
 string corsKey = "_myCorsKey";
 string swaggerVersion = "v1";
@@ -48,19 +54,25 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
+// Identity
+builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = true; // Email-Bestätigung
+        options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider; // 2FA
+    })
+    .AddEntityFrameworkStores<TennisContext>();
+
+// Resend Client via Options
+builder.Services.Configure<ResendClientOptions>(
+    builder.Configuration.GetSection("Resend")
+);
+builder.Services.AddScoped<ResendClient>();
+
+// Email Sender
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo("/tmp/dpkeys"));
-
-// string connectionString = builder.Configuration.GetConnectionString("PostgresSql")!;
-// connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("POSTGRES_DATABASE"))
-//     .Replace("myUsername", Environment.GetEnvironmentVariable("POSTGRES_USER"))
-//     .Replace("myPassword", Environment.GetEnvironmentVariable("POSTGRES_PASSWORD"));
-// Console.WriteLine($"Connection string: {connectionString}");
-// // connectionString = "Host=localhost;Port=5432;Database=mydatabase;Username=myuser;Password=mypassword";
-// builder.Services.AddDbContext<TennisContext>(options =>
-//     options.UseNpgsql(connectionString));
-
 
 // ConnectToPostgresDb();
 // ConnectToSqliteDb();
@@ -68,7 +80,7 @@ ConnectToNeonDb();
 
 builder.Services.AddLogging();
 builder.Services.AddHostedService<StartupBackgroundService>();
-builder.Services.AddScoped<EmailService>();
+builder.Services.AddHttpClient<EmailService>();
 // builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CurrentPlayerService>();
 builder.Services.AddSingleton<PasswordEncryption>();
@@ -114,7 +126,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors(corsKey);
-app.UseHttpsRedirection();
 
 #endregion
 

@@ -1,3 +1,5 @@
+using TennisDb;
+
 namespace TennisBruck.Pages;
 
 public class Registration : PageModel
@@ -59,7 +61,8 @@ public class Registration : PageModel
         }
         else
         {
-            await _emailService.SendVerificationCodeAsync(body.EmailOrPhone, "Verifizierungs Code", code);
+            // await _emailService.SendVerificationCodeAsync(body.EmailOrPhone, "Verifizierungs Code", code);
+            await _emailService.SendEmailWithResendAsync(body.EmailOrPhone, "Verifizierungs Code", code);
         }
 
         TempData["EmailOrPhone"] = body.EmailOrPhone;

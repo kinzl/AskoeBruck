@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace TennisDb;
 
-public class TennisContext : DbContext
+public class TennisContext : IdentityDbContext<IdentityUser>
 {
     public TennisContext(DbContextOptions<TennisContext> options)
         : base(options)
@@ -31,7 +33,7 @@ public class TennisContext : DbContext
     public DbSet<HallPlanEntity> HallPlanEntities { get; set; }
     public DbSet<HallPlanDay> HallPlanDays { get; set; }
     public DbSet<HallPlanRegistration> HallPlanRegistrations { get; set; }
-    
+
     //ToDO: comment in?
     // protected override void OnModelCreating(ModelBuilder modelBuilder)
     // {
