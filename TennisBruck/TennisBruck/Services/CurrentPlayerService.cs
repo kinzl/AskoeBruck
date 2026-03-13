@@ -2,9 +2,14 @@ namespace TennisBruck.Services;
 
 public class CurrentPlayerService(IHttpContextAccessor httpContextAccessor, TennisContext db)
 {
-    public Player? GetCurrentUser(string? sessionName)
+    public Player? GetCurrentUser()
     {
         var userId = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return userId == null ? null : db.Players.SingleOrDefault(x => x.IdentityUserId == sessionName);
+
+        return string.IsNullOrEmpty(userId)
+            ? null
+            : db.Players
+                .Include(x => x.IdentityUser)
+                .SingleOrDefault(x => x.IdentityUserId == userId);
     }
 }

@@ -22,7 +22,7 @@ public class CourtBruck : PageModel
 
     public IActionResult OnGet(string? date)
     {
-        CurrentPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identity?.Name);
+        CurrentPlayer = _currentPlayerService.GetCurrentUser();
         // Parse the date or default to today
         CurrentDate = string.IsNullOrEmpty(date) ? DateTime.Today : DateTime.Parse(date);
 
@@ -51,7 +51,7 @@ public class CourtBruck : PageModel
 
     public IActionResult OnPostCreateReservation()
     {
-        CurrentPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identity?.Name);
+        CurrentPlayer = _currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null) return RedirectToPage(nameof(Login));
 
         // Check if the reservation already exists
@@ -81,7 +81,7 @@ public class CourtBruck : PageModel
 
     public IActionResult OnPostDeleteReservation()
     {
-        CurrentPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identity?.Name);
+        CurrentPlayer = _currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null) return RedirectToPage(nameof(Login));
 
         Console.WriteLine(StartTime);

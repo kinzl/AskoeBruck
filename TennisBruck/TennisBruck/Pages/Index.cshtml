@@ -25,6 +25,7 @@
         }
     </header>
 
+    @* <!--#region Login/Logout  --> *@
     @if (User.Identity!.IsAuthenticated)
     {
         <section id="logout" class="category">
@@ -47,27 +48,6 @@
             </form>
         </section>
     }
-    @* <!--#region Login/Logout  --> *@
-    @* @if (Model.Player == null) *@
-    @* { *@
-    @*     <form method="post" asp-page-handler="Login"> *@
-    @*         <section id="login" class="category"> *@
-    @*             <h2>Login</h2> *@
-    @*             <p>Melden Sie sich an, um persönliche Infos zu sehen</p> *@
-    @*             <button type="submit">Login</button> *@
-    @*         </section> *@
-    @*     </form> *@
-    @* } *@
-    @* else *@
-    @* { *@
-    @*     <form method="post" asp-page-handler="Logout"> *@
-    @*         <section id="logout" class="category"> *@
-    @*             <h2>Logout</h2> *@
-    @*             <p>Logge dich aus, um die Privatsphäre deines Accounts zu schützen</p> *@
-    @*             <button type="submit">Ausloggen</button> *@
-    @*         </section> *@
-    @*     </form> *@
-    @* } *@
     @* <!--#endregion --> *@
 
     <!--#region Court Reservation  -->

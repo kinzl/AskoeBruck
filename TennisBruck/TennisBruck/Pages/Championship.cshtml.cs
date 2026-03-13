@@ -43,7 +43,7 @@ public class Championship : PageModel
     private void InitValues(string? message = null)
     {
         int? selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
-        CurrentPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
+        CurrentPlayer = _currentPlayerService.GetCurrentUser()!;
         Message = message;
         Competitions = _db.Competitions.ToList();
 

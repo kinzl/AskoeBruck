@@ -1,36 +1,27 @@
 namespace TennisBruck.Pages;
 
 [Authorize]
-public class Members : PageModel
+public class Members(
+    TennisContext db,
+    ILogger<Members> logger,
+    CurrentPlayerService currentPlayerService)
+    : PageModel
 {
-    private TennisContext _db;
-    private CurrentPlayerService CurrentPlayerService { get; set; }
-    private readonly ILogger<IndexModel> _logger;
     public required Player LoggedInPlayer { get; set; }
     public required List<Player> AllPlayers { get; set; }
     public string? InfoBox { get; set; }
-    private PasswordEncryption _pe;
-
-    public Members(TennisContext db, ILogger<IndexModel> logger, CurrentPlayerService currentPlayerService,
-        PasswordEncryption pe)
-    {
-        _db = db;
-        _logger = logger;
-        CurrentPlayerService = currentPlayerService;
-        _pe = pe;
-    }
 
     public RedirectToPageResult? OnGet(string? infoBox)
     {
         InfoBox = infoBox;
-        LoggedInPlayer = CurrentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
-        AllPlayers = _db.Players.ToList();
+        LoggedInPlayer = currentPlayerService.GetCurrentUser()!;
+        AllPlayers = db.Players.ToList();
         return null;
     }
 
     public IActionResult OnPostCreateUser(RegistrationDto body)
     {
-        _logger.LogInformation("OnPostCreateUser");
+        logger.LogInformation("OnPostCreateUser");
         string password = "askoebruck";
         var player = new Player
         {
@@ -39,8 +30,8 @@ public class Members : PageModel
             Username = body.Username,
             IsAdmin = false
         };
-        _db.Players.Add(player);
-        _db.SaveChanges();
+        db.Players.Add(player);
+        db.SaveChanges();
 
         return new RedirectToPageResult(nameof(Members),
             new { infoBox = $"Benutzer wurde erstellt, das Passwort ist {password}" });
@@ -48,10 +39,10 @@ public class Members : PageModel
 
     public IActionResult OnPostDeleteUser(int playerId)
     {
-        _logger.LogInformation("OnPostDeleteUser");
-        var player = _db.Players.Single(x => x.Id == playerId);
-        _db.Players.Remove(player);
-        _db.SaveChanges();
+        logger.LogInformation("OnPostDeleteUser");
+        var player = db.Players.Single(x => x.Id == playerId);
+        db.Players.Remove(player);
+        db.SaveChanges();
         return RedirectToPage(nameof(Members),
             new { InfoBox = $"Benutzer {player.Firstname} {player.Lastname} wurde gelöscht." });
     }
@@ -63,13 +54,13 @@ public class Members : PageModel
 
     public IActionResult OnPostChangeAdmin(int user)
     {
-        _logger.LogInformation($"Toggling admin status for User ID: {user}");
+        logger.LogInformation("Toggling admin status for User ID: {User}", user);
 
-        var player = _db.Players.FirstOrDefault(p => p.Id == user);
+        var player = db.Players.FirstOrDefault(p => p.Id == user);
         if (player != null)
         {
             player.IsAdmin = !player.IsAdmin; // Toggle admin status
-            _db.SaveChanges();
+            db.SaveChanges();
         }
 
         return RedirectToPage();

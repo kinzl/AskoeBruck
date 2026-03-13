@@ -125,13 +125,15 @@ namespace TennisBruck.Areas.Identity.Pages.Account
                     _logger.LogInformation("User created a new account with password.");
 
                     var userId = await _userManager.GetUserIdAsync(user);
-                    var newPlayer = new TennisDb.Player
+                    var newPlayer = new Player
                     {
-                        Firstname = Input.Firstname, // Zieht den Vornamen aus dem Formular
-                        Lastname = Input.Lastname, // Zieht den Nachnamen aus dem Formular
-                        IdentityUserId = userId
+                        Firstname = Input.Firstname,
+                        Lastname = Input.Lastname,
+                        IdentityUserId = userId,
+                        Username = $"{Input.Lastname}{Input.Firstname}"
                     };
                     _db.Players.Add(newPlayer);
+                    await _db.SaveChangesAsync();
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                     var callbackUrl = Url.Page(

@@ -19,14 +19,14 @@ public class Settings : PageModel
     public IActionResult OnGet(string? infoText)
     {
         InfoText = infoText;
-        Player = _currentPlayerService.GetCurrentUser(HttpContext.User.Identities.ToList().First().Name)!;
+        Player = _currentPlayerService.GetCurrentUser()!;
         return Page();
     }
 
     public IActionResult OnPostChangeSettings(RegistrationDto body)
     {
         var player = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-        Player = _currentPlayerService.GetCurrentUser(player)!;
+        Player = _currentPlayerService.GetCurrentUser()!;
         Player.Firstname = body.Firstname;
         Player.Lastname = body.Lastname;
         Player.Username = body.Username;
@@ -43,7 +43,7 @@ public class Settings : PageModel
             return RedirectToPage(nameof(Settings),
                 new { infoText = "Neues Passwort darf nicht gleich dem alten sein" });
         var player = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-        Player = _currentPlayerService.GetCurrentUser(player)!;
+        Player = _currentPlayerService.GetCurrentUser()!;
         //ToDo: change password in new Database
         // if (!_pe.VerifyPassword(oldPassword, Player.PasswordHash))
         //     return RedirectToPage(nameof(Settings), new { infoText = "Altes Passwort ist falsch" });

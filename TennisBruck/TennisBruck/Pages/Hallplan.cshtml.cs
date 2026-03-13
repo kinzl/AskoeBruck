@@ -41,7 +41,7 @@ public class Hallplan : PageModel
     {
         HallPlanId = HttpContext.Session.GetInt32("selectedHallPlanId") ?? 0;
 
-        LoggedInPlayer = _currentPlayerService.GetCurrentUser(HttpContext.User.Identity!.Name!)!;
+        LoggedInPlayer = _currentPlayerService.GetCurrentUser()!;
 
         HallPlanEntity = _db.HallPlanEntities.ToList();
         SelectedHallPlanEntity = _db.HallPlanEntities.SingleOrDefault(x => x.Id == HallPlanId);
