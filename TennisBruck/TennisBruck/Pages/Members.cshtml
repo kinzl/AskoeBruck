@@ -59,7 +59,7 @@
                         @if (Model.LoggedInPlayer.IsAdmin)
                         {
                             <td>@player.Username</td>
-                            <td>@player.EmailOrPhone</td>
+                            <td>@player.IdentityUser?.Email</td>
                             <td>
                                 <form method="post" asp-page-handler="ChangeAdmin">
                                     <input type="hidden" name="user" value="@player.Id"/>
@@ -73,7 +73,8 @@
                             <td>
                                 <form method="post">
                                     <button class="delete" name="playerId" value="@player.Id" type="submit"
-                                            asp-page-handler="DeleteUser">🗑️</button>
+                                            asp-page-handler="DeleteUser">🗑️
+                                    </button>
                                 </form>
                             </td>
                         }

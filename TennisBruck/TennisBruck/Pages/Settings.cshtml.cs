@@ -29,7 +29,6 @@ public class Settings : PageModel
         Player = _currentPlayerService.GetCurrentUser(player)!;
         Player.Firstname = body.Firstname;
         Player.Lastname = body.Lastname;
-        Player.EmailOrPhone = body.EmailOrPhone;
         Player.Username = body.Username;
         _db.SaveChanges();
 
@@ -45,13 +44,14 @@ public class Settings : PageModel
                 new { infoText = "Neues Passwort darf nicht gleich dem alten sein" });
         var player = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
         Player = _currentPlayerService.GetCurrentUser(player)!;
-        if (!_pe.VerifyPassword(oldPassword, Player.PasswordHash))
-            return RedirectToPage(nameof(Settings), new { infoText = "Altes Passwort ist falsch" });
-        Player.PasswordHash = _pe.HashPassword(newPassword);
+        //ToDo: change password in new Database
+        // if (!_pe.VerifyPassword(oldPassword, Player.PasswordHash))
+        //     return RedirectToPage(nameof(Settings), new { infoText = "Altes Passwort ist falsch" });
+        // Player.PasswordHash = _pe.HashPassword(newPassword);
         _db.SaveChanges();
         return RedirectToPage(nameof(Settings), new { infoText = "Neues Passwort gespeichert" });
     }
-    
+
     public IActionResult OnPostBack()
     {
         return RedirectToPage(nameof(Index));

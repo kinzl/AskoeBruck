@@ -5,6 +5,6 @@ public class CurrentPlayerService(IHttpContextAccessor httpContextAccessor, Tenn
     public Player? GetCurrentUser(string? sessionName)
     {
         var userId = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return userId == null ? null : db.Players.Find(int.Parse(userId));
+        return userId == null ? null : db.Players.SingleOrDefault(x => x.IdentityUserId == sessionName);
     }
 }

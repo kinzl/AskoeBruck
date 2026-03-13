@@ -36,8 +36,6 @@ public class Members : PageModel
         {
             Firstname = body.Firstname,
             Lastname = body.Lastname,
-            EmailOrPhone = body.EmailOrPhone,
-            PasswordHash = _pe.HashPassword(password),
             Username = body.Username,
             IsAdmin = false
         };

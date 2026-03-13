@@ -2,40 +2,48 @@
 
 namespace TennisBruck.Services;
 
-public class StartupBackgroundService(IServiceProvider provider, PasswordEncryption pe) : BackgroundService
+public class StartupBackgroundService(IServiceProvider provider, PasswordEncryption pe) : IHostedService
 {
     private readonly IServiceScope _scope = provider.CreateScope();
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         Console.WriteLine("ExecuteAsync STARTUP SERVICE");
         var db = _scope.ServiceProvider.GetRequiredService<TennisContext>();
 
         // db.Database.EnsureDeleted();
-        DropAllTables(db);
-        db.Database.EnsureCreated();
+        await DropAllTables(db);
+        await db.Database.EnsureCreatedAsync(cancellationToken);
 
         SeedPlayer(db);
         SeedCompetition(db);
 
-        db.SaveChanges();
-
-        return Task.CompletedTask;
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    private void DropAllTables(TennisContext db)
+    public Task StopAsync(CancellationToken cancellationToken)
     {
-        var sql = @"
-    DO $$
-    DECLARE
-        r RECORD;
-    BEGIN
-        FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
-            EXECUTE 'DROP TABLE IF EXISTS ""' || r.tablename || '"" CASCADE';
-        END LOOP;
-    END $$;";
+        throw new NotImplementedException();
+    }
 
-        db.Database.ExecuteSqlRaw(sql);
+    private async Task DropAllTables(TennisContext db)
+    {
+            var sql = @"
+        DO $$
+        DECLARE
+            r RECORD;
+        BEGIN
+            FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+                EXECUTE 'DROP TABLE IF EXISTS ""' || r.tablename || '"" CASCADE';
+            END LOOP;
+        END $$;";
+        await db.Database.ExecuteSqlRawAsync(sql);
+
+//         var resetSql = @"
+//     DROP SCHEMA public CASCADE;
+//     CREATE SCHEMA public;
+// ";
+//         await db.Database.ExecuteSqlRawAsync(resetSql);
     }
 
     private void SeedPlayer(TennisContext db)
@@ -44,8 +52,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         {
             Firstname = "Alice",
             Lastname = "Smith",
-            PasswordHash = pe.HashPassword("1234"),
-            EmailOrPhone = "asmi@gmail.com",
             Username = "asmith",
             IsAdmin = false
         });
@@ -54,8 +60,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         {
             Firstname = "Max",
             Lastname = "Kammerer",
-            PasswordHash = pe.HashPassword("1234"),
-            EmailOrPhone = "kammerem@gmail.com",
             Username = "kammerem",
             IsAdmin = false
         });
@@ -64,8 +68,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         {
             Firstname = "Emil",
             Lastname = "Kinzl",
-            PasswordHash = pe.HashPassword("1234"),
-            EmailOrPhone = "ekin@gmail.com",
             Username = "kinzle",
             IsAdmin = true
         });
@@ -74,8 +76,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         {
             Firstname = "Stefan",
             Lastname = "Ecker",
-            PasswordHash = pe.HashPassword("1234"),
-            EmailOrPhone = "EckerStefan@gmail.com",
             Username = "EckerS",
             IsAdmin = true
         });
@@ -84,8 +84,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         {
             Firstname = "Gerald",
             Lastname = "Wimmer",
-            PasswordHash = pe.HashPassword("1234"),
-            EmailOrPhone = "WimmerGerald@gmail.com",
             Username = "WimmerG",
             IsAdmin = true
         });
@@ -94,8 +92,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         {
             Firstname = "Bernhard",
             Lastname = "Repp",
-            PasswordHash = pe.HashPassword("1234"),
-            EmailOrPhone = "ReppB@gmail.com",
             Username = "ReppB",
             IsAdmin = false
         });
@@ -104,8 +100,6 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
         {
             Firstname = "Stefan",
             Lastname = "Hofer",
-            PasswordHash = pe.HashPassword("1234"),
-            EmailOrPhone = "HoferS@gmail.com",
             Username = "HoferS",
             IsAdmin = true
         });

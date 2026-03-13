@@ -1,53 +1,53 @@
-@page
-@model TennisBruck.Pages.Login
-
-@{
-    Layout = null;
-}
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tennis Login</title>
-    <link rel="stylesheet" href="css/login.css">
-    <script src="js/toggleVisibility.js"></script>
-</head>
-<body>
-<div class="login-container">
-    <div id="login-section" class="login-box">
-        <h2>Login</h2>
-        <form method="post" asp-page-handler="Login">
-            <div class="input-group">
-                <input id="username" type="text" name="username" required>
-                <label for="username">Benutzername oder E-Mail/Telefonnummer</label>
-            </div>
-            <div class="input-group">
-                <input id="password" type="password" name="password" required>
-                <label for="password">Passwort</label>
-            </div>
-            <div id="message">@Model.Message</div>
-            <button type="submit">Login</button>
-        </form>
-        <div class="register-link">
-            <button type="button" class="register-button" onclick="location.href='@Url.Page(nameof(Registration))'">
-                Registrieren
-            </button>
-        </div>
-        <a href="javascript:void(0)" onclick="toggleForgotPassword()" class="toggle-link">Passwort vergessen?</a>
-    </div>
-    <div id="forgotPassword" class="login-box" style="display: none;">
-        <h2>Passwort vergessen</h2>
-        <form method="post" asp-page-handler="ForgotPassword">
-            <div class="input-group">
-                <input id="emailOrPhone" name="emailOrPhone" required>
-                <label for="emailOrPhone">Email oder Telefonnummer</label>
-            </div>
-            <button type="submit">Passwort zurücksetzen</button>
-        </form>
-        <a href="javascript:void(0)" onclick="toggleForgotPassword()" class="toggle-link">Einloggen</a>
-    </div>
-</div>
-</body>
-</html>
+@* @page *@
+@* @model TennisBruck.Pages.Login *@
+@* *@
+@* @{ *@
+@*     Layout = null; *@
+@* } *@
+@* *@
+@* <!DOCTYPE html> *@
+@* <html lang="en"> *@
+@* <head> *@
+@*     <meta charset="UTF-8"> *@
+@*     <meta name="viewport" content="width=device-width, initial-scale=1.0"> *@
+@*     <title>Tennis Login</title> *@
+@*     <link rel="stylesheet" href="css/login.css"> *@
+@*     <script src="js/toggleVisibility.js"></script> *@
+@* </head> *@
+@* <body> *@
+@* <div class="login-container"> *@
+@*     <div id="login-section" class="login-box"> *@
+@*         <h2>Login</h2> *@
+@*         <form method="post" asp-page-handler="Login"> *@
+@*             <div class="input-group"> *@
+@*                 <input id="username" type="text" name="username" required> *@
+@*                 <label for="username">Benutzername oder E-Mail/Telefonnummer</label> *@
+@*             </div> *@
+@*             <div class="input-group"> *@
+@*                 <input id="password" type="password" name="password" required> *@
+@*                 <label for="password">Passwort</label> *@
+@*             </div> *@
+@*             <div id="message">@Model.Message</div> *@
+@*             <button type="submit">Login</button> *@
+@*         </form> *@
+@*         $1$ <div class="register-link"> #1# *@
+@*         $1$     <button type="button" class="register-button" onclick="location.href='@Url.Page(nameof(Registration))'"> #1# *@
+@*         $1$         Registrieren #1# *@
+@*         $1$     </button> #1# *@
+@*         $1$ </div> #1# *@
+@*         <a href="javascript:void(0)" onclick="toggleForgotPassword()" class="toggle-link">Passwort vergessen?</a> *@
+@*     </div> *@
+@*     <div id="forgotPassword" class="login-box" style="display: none;"> *@
+@*         <h2>Passwort vergessen</h2> *@
+@*         <form method="post" asp-page-handler="ForgotPassword"> *@
+@*             <div class="input-group"> *@
+@*                 <input id="emailOrPhone" name="emailOrPhone" required> *@
+@*                 <label for="emailOrPhone">Email oder Telefonnummer</label> *@
+@*             </div> *@
+@*             <button type="submit">Passwort zurücksetzen</button> *@
+@*         </form> *@
+@*         <a href="javascript:void(0)" onclick="toggleForgotPassword()" class="toggle-link">Einloggen</a> *@
+@*     </div> *@
+@* </div> *@
+@* </body> *@
+@* </html> *@

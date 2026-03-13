@@ -25,28 +25,48 @@
         }
     </header>
 
-    <!--#region Login/Logout  -->
-    @if (Model.Player == null)
+    @if (User.Identity!.IsAuthenticated)
     {
-        <form method="post" asp-page-handler="Login">
-            <section id="login" class="category">
-                <h2>Login</h2>
-                <p>Melden Sie sich an, um persönliche Infos zu sehen</p>
-                <button type="submit">Login</button>
-            </section>
-        </form>
+        <section id="logout" class="category">
+            <form asp-area="Identity" asp-page="/Account/Logout" method="post">
+                <button type="submit">Logout</button>
+            </form>
+        </section>
     }
     else
     {
-        <form method="post" asp-page-handler="Logout">
-            <section id="logout" class="category">
-                <h2>Logout</h2>
-                <p>Logge dich aus, um die Privatsphäre deines Accounts zu schützen</p>
-                <button type="submit">Ausloggen</button>
-            </section>
-        </form>
+        <section id="login" class="category">
+            <h2>Login</h2>
+            <form asp-area="Identity" asp-page="/Account/Login" method="get" style="display:inline">
+                <button type="submit">Login</button>
+            </form>
+            <form asp-area="Identity" asp-page="/Account/Register" method="get" style="display:inline">
+                <button type="submit">Registrieren</button>
+            </form>
+        </section>
     }
-    <!--#endregion -->
+    @* <!--#region Login/Logout  --> *@
+    @* @if (Model.Player == null) *@
+    @* { *@
+    @*     <form method="post" asp-page-handler="Login"> *@
+    @*         <section id="login" class="category"> *@
+    @*             <h2>Login</h2> *@
+    @*             <p>Melden Sie sich an, um persönliche Infos zu sehen</p> *@
+    @*             <button type="submit">Login</button> *@
+    @*         </section> *@
+    @*     </form> *@
+    @* } *@
+    @* else *@
+    @* { *@
+    @*     <form method="post" asp-page-handler="Logout"> *@
+    @*         <section id="logout" class="category"> *@
+    @*             <h2>Logout</h2> *@
+    @*             <p>Logge dich aus, um die Privatsphäre deines Accounts zu schützen</p> *@
+    @*             <button type="submit">Ausloggen</button> *@
+    @*         </section> *@
+    @*     </form> *@
+    @* } *@
+    @* <!--#endregion --> *@
 
     <!--#region Court Reservation  -->
     <form method="post" asp-page-handler="ReserveCourt">
@@ -58,9 +78,10 @@
     </form>
     <!--#endregion -->
 
-    <!--#region Hallplan  -->
-    @if (Model.Player != null)
+
+    @if (User.Identity!.IsAuthenticated)
     {
+        <!--#region Hallplan  -->
         <form method="post" asp-page-handler="Hallplan">
             <section id="members" class="category">
                 <h2>Hallenplan</h2>
@@ -68,12 +89,9 @@
                 <button type="submit">Hallenplan zeigen</button>
             </section>
         </form>
-    }
-    <!--#endregion -->
+        <!--#endregion -->
 
-    <!--#region Championship  -->
-    @if (Model.Player != null)
-    {
+        <!--#region Championship  -->
         <form method="post" asp-page-handler="Championship">
             <section id="championship" class="category">
                 <h2>Vereinsmeisterschaft</h2>
@@ -81,12 +99,9 @@
                 <button type="submit">Zur Vereinsmeisterschaft</button>
             </section>
         </form>
-    }
-    <!--#endregion -->
+        <!--#endregion -->
 
-    <!--#region Members  -->
-    @if (Model.Player != null)
-    {
+        <!--#region Members  -->
         <form method="post" asp-page-handler="ShowMembers">
             <section id="members" class="category">
                 <h2>Mitglieder</h2>
@@ -94,12 +109,9 @@
                 <button type="submit">Mitglieder ansehen</button>
             </section>
         </form>
-    }
-    <!--#endregion -->
+        <!--#endregion -->
 
-    <!--#region Settings  -->
-    @if (Model.Player != null)
-    {
+        <!--#region Settings  -->
         <form method="post" asp-page-handler="ShowSettings">
             <section id="members" class="category">
                 <h2>Einstellungen</h2>

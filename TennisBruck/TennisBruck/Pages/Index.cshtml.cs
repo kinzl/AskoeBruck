@@ -1,3 +1,5 @@
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
+
 namespace TennisBruck.Pages;
 
 public class IndexModel : PageModel

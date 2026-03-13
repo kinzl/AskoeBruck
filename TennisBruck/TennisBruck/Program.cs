@@ -1,17 +1,12 @@
 using GrueneisR.RestClientGenerator;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Resend;
-using TennisBruck.Extensions;
-using TennisBruck.Services;
-using TennisDb;
-using TennisBruck.Areas.Identity.Data;
-using TennisBruck;
 using TennisContext = TennisDb.TennisContext;
+using Microsoft.EntityFrameworkCore;
+using TennisDb;
 
 string corsKey = "_myCorsKey";
 string swaggerVersion = "v1";
@@ -53,23 +48,31 @@ builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
+builder.Configuration.AddEnvironmentVariables();
 
-// Identity
+//Resend service (Email)
+builder.Services.AddOptions();
+builder.Services.AddHttpClient<ResendClient>(); // Registriert den ResendClient als typisierten HttpClient
+builder.Services.Configure<ResendClientOptions>(options =>
+{
+    // API Key ausgeben und bei Fehlen direkt einen sauberen Fehler werfen
+    var apiKey = Environment.GetEnvironmentVariable("RESEND_API_KEY");
+    options.ApiToken = apiKey ?? throw new InvalidOperationException("RESEND_API_KEY fehlt in der .env Datei!");
+});
+
+// 3. IResend Interface mappen (Best Practice für den offiziellen Client)
+builder.Services.AddTransient<IResend, ResendClient>();
+
+// 4. Deinen eigenen EmailSender registrieren
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = true; // Email-Bestätigung
-        options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider; // 2FA
+        // Hier stellst du ein, ob man die Email bestätigen muss, um sich einzuloggen
+        options.SignIn.RequireConfirmedAccount = true;
     })
     .AddEntityFrameworkStores<TennisContext>();
-
-// Resend Client via Options
-builder.Services.Configure<ResendClientOptions>(
-    builder.Configuration.GetSection("Resend")
-);
-builder.Services.AddScoped<ResendClient>();
-
-// Email Sender
-builder.Services.AddTransient<IEmailSender, EmailSender>();
+//end resend service
 
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo("/tmp/dpkeys"));
@@ -100,13 +103,6 @@ builder.Services.AddDataProtection()
 // builder.Services.AddHttpLogging();
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/Login"; // Path to the login page
-        options.ExpireTimeSpan = TimeSpan.FromHours(2); // Expire authentication after 20 minutes
-        options.SlidingExpiration = true; // Renew expiration if user is active
-    });
 
 #endregion
 
