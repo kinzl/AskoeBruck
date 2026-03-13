@@ -20,7 +20,6 @@ public class TennisContext : IdentityDbContext<IdentityUser>
     public DbSet<HallEntity> HallEntities { get; set; }
     public DbSet<Reservation> Reservations { get; set; }
     public DbSet<HallPlanDay> Court { get; set; }
-    public DbSet<RegistrationVerification> RegistrationVerifications { get; set; }
     public DbSet<Competition> Competitions { get; set; }
     public DbSet<Group> Groups { get; set; }
     public DbSet<Match> Matches { get; set; }
