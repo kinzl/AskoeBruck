@@ -1,0 +1,230 @@
+/* --- Base Layout & Card --- */
+.auth-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 20px;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+.auth-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 900px;
+    padding: 40px;
+    box-sizing: border-box;
+}
+
+/* --- Typography --- */
+.auth-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #212529;
+    margin-top: 0;
+    margin-bottom: 30px;
+}
+
+.auth-subtitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 20px;
+    margin-top: 0;
+}
+
+/* --- Two-Column Layout --- */
+.auth-layout {
+    display: flex;
+    gap: 40px;
+}
+
+.auth-local, .auth-external {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-local {
+    padding-right: 40px;
+    border-right: 1px solid #e9ecef;
+}
+
+/* --- Form Elements --- */
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.form-input {
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.form-input:focus {
+    outline: none;
+    background-color: #ffffff;
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+}
+
+/* --- Checkbox --- */
+.checkbox-group {
+    margin-bottom: 25px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    color: #495057;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* --- Buttons --- */
+.btn-submit {
+    width: 100%;
+    padding: 14px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #0d6efd;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    margin-bottom: 20px;
+}
+
+.btn-submit:hover {
+    background-color: #0b5ed7;
+}
+
+.btn-submit:active {
+    transform: scale(0.98);
+}
+
+/* --- Links below local login --- */
+.auth-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.auth-links a {
+    color: #0d6efd;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.auth-links a:hover {
+    color: #0a58ca;
+    text-decoration: underline;
+}
+
+.auth-links a#resend-confirmation {
+    color: #6c757d;
+}
+
+/* --- External Login Styles --- */
+.external-empty {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.external-empty a {
+    color: #0d6efd;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.external-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.btn-external {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #212529;
+    background-color: transparent;
+    border: 2px solid #212529;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-external:hover {
+    background-color: #212529;
+    color: #ffffff;
+}
+
+/* --- Validation Errors --- */
+.validation-error {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+.validation-summary {
+    background-color: #f8d7da;
+    color: #842029;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+/* --- Responsive Design (Mobile) --- */
+@media (max-width: 768px) {
+    .auth-layout {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .auth-local {
+        padding-right: 0;
+        border-right: none;
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 30px;
+    }
+
+    .auth-card {
+        padding: 25px;
+    }
+}
