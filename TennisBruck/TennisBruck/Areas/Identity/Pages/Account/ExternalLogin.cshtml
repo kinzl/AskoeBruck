@@ -1,0 +1,101 @@
+﻿@page
+@model ExternalLoginModel
+@{
+    ViewData["Title"] = "Konto verknüpfen";
+}
+
+<div class="auth-card-container">
+    <div class="auth-card">
+        
+        <div class="status-icon">
+            🤝
+        </div>
+
+        <h1>@ViewData["Title"]</h1>
+        
+        <div class="status-message-wrapper">
+            <p>
+                Du hast dich erfolgreich mit <strong>@Model.ProviderDisplayName</strong> authentifiziert.<br /><br />
+                Bitte bestätige oder ändere die E-Mail-Adresse für dein lokales Profil und klicke auf Registrieren, um den Vorgang abzuschließen.
+            </p>
+        </div>
+
+        <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+            
+            <div class="form-floating mb-4 text-start">
+                <input asp-for="Input.Email" class="form-control" autocomplete="email" placeholder="Bitte gib deine E-Mail ein." />
+                <label asp-for="Input.Email" class="text-muted">E-Mail-Adresse</label>
+                <span asp-validation-for="Input.Email" class="text-danger small"></span>
+            </div>
+            
+            <button type="submit" class="btn-primary w-100 border-0">Registrierung abschließen</button>
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<style>
+    /* Das exakt gleiche Design wie bei den Bestätigungs-Seiten */
+    .auth-card-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 60vh;
+        font-family: Arial, sans-serif;
+    }
+
+    .auth-card {
+        background: #ffffff;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 450px;
+        width: 100%;
+        /* Eine blaue Linie oben, passend zum Google-Gefühl oder deinem Standard-Theme */
+        border-top: 5px solid #4285F4; 
+    }
+
+    .status-icon {
+        font-size: 52px;
+        margin-bottom: 15px;
+    }
+
+    .auth-card h1 {
+        font-size: 22px;
+        color: #333333;
+        margin-bottom: 15px;
+        margin-top: 0;
+        line-height: 1.4;
+    }
+
+    .status-message-wrapper {
+        margin-bottom: 25px;
+        font-size: 15px;
+        color: #555555;
+        line-height: 1.5;
+    }
+
+    .btn-primary {
+        display: inline-block;
+        padding: 14px 24px;
+        background-color: #4285F4; /* Google Blau */
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+        cursor: pointer;
+    }
+
+    .btn-primary:hover {
+        background-color: #3367d6;
+        color: #ffffff;
+    }
+</style>

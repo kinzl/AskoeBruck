@@ -103,6 +103,13 @@ builder.Services.AddDataProtection()
 // builder.Services.AddHttpLogging();
 builder.Services.AddHttpContextAccessor();
 
+// Den Google-Login registrieren
+builder.Services.AddAuthentication()
+    .AddGoogle(googleOptions =>
+    {
+        googleOptions.ClientId = Environment.GetEnvironmentVariable("AUTHENTICATION_GOOGLE_CLIENTID")!;
+        googleOptions.ClientSecret = Environment.GetEnvironmentVariable("AUTHENTICATION_GOOGLE_CLIENTSECRET")!;
+    });
 
 #endregion
 
