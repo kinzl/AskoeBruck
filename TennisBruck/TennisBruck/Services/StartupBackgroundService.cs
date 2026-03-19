@@ -1,8 +1,9 @@
-﻿using Group = TennisDb.Group;
+﻿using Microsoft.AspNetCore.Identity;
+using Group = TennisDb.Group;
 
 namespace TennisBruck.Services;
 
-public class StartupBackgroundService(IServiceProvider provider, PasswordEncryption pe) : IHostedService
+public class StartupBackgroundService(IServiceProvider provider) : IHostedService
 {
     private readonly IServiceScope _scope = provider.CreateScope();
 
@@ -10,15 +11,75 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
     {
         Console.WriteLine("ExecuteAsync STARTUP SERVICE");
         var db = _scope.ServiceProvider.GetRequiredService<TennisContext>();
+        var roleManager = _scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = _scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-        // db.Database.EnsureDeleted();
         await DropAllTables(db);
         await db.Database.EnsureCreatedAsync(cancellationToken);
 
-        SeedPlayer(db);
+        await SeedAdminUserAndPlayer(db, userManager, roleManager);
+        await SeedPlayer(db);
         SeedCompetition(db);
-
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SeedAdminUserAndPlayer(TennisContext db, UserManager<IdentityUser> userManager,
+        RoleManager<IdentityRole> roleManager)
+    {
+        string adminRole = "Admin";
+        string myAdminEmail = "kinzl.emil@eclipso.at";
+
+        // 1. Rolle "Admin" anlegen, falls sie nicht existiert
+        if (!await roleManager.RoleExistsAsync(adminRole))
+        {
+            await roleManager.CreateAsync(new IdentityRole(adminRole));
+        }
+
+        // 2. Prüfen ob User existiert (ist bei DropAllTables leer, aber sicher ist sicher)
+        var adminUser = await userManager.FindByEmailAsync(myAdminEmail);
+
+        if (adminUser == null)
+        {
+            // 3. IdentityUser SAUBER über den UserManager anlegen
+            adminUser = new IdentityUser
+            {
+                UserName = myAdminEmail,
+                Email = myAdminEmail,
+                EmailConfirmed = true // E-Mail direkt als bestätigt markieren
+            };
+
+            // Hier hasht Microsoft das Passwort sicher im Hintergrund!
+            var createResult = await userManager.CreateAsync(adminUser, "AdminPasswort123!");
+
+            if (createResult.Succeeded)
+            {
+                // 4. Dem frischen User die Admin-Rolle geben
+                await userManager.AddToRoleAsync(adminUser, adminRole);
+
+                var player = new Player
+                {
+                    Firstname = "Emil",
+                    Lastname = "Kinzl",
+                    Username = "kinzle",
+                    IdentityUserId = adminUser.Id
+                };
+
+                db.Players.Add(player);
+                // Wir speichern den Player direkt, damit er sicher in der DB ist
+                await db.SaveChangesAsync();
+
+                Console.WriteLine("ERFOLG: Admin Emil wurde inkl. Rolle komplett angelegt!");
+            }
+            else
+            {
+                // Falls das Passwort z.B. zu schwach ist, sehen wir hier warum!
+                Console.WriteLine("FEHLER BEIM USER ERSTELLEN:");
+                foreach (var error in createResult.Errors)
+                {
+                    Console.WriteLine($"- {error.Code}: {error.Description}");
+                }
+            }
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
@@ -28,7 +89,7 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
 
     private async Task DropAllTables(TennisContext db)
     {
-            var sql = @"
+        var sql = @"
         DO $$
         DECLARE
             r RECORD;
@@ -46,64 +107,51 @@ public class StartupBackgroundService(IServiceProvider provider, PasswordEncrypt
 //         await db.Database.ExecuteSqlRawAsync(resetSql);
     }
 
-    private void SeedPlayer(TennisContext db)
+    private Task SeedPlayer(TennisContext db)
     {
         db.Players.Add(new Player()
         {
             Firstname = "Alice",
             Lastname = "Smith",
-            Username = "asmith",
-            IsAdmin = false
+            Username = "asmith"
         });
 
         db.Players.Add(new Player()
         {
             Firstname = "Max",
             Lastname = "Kammerer",
-            Username = "kammerem",
-            IsAdmin = false
-        });
-
-        db.Players.Add(new Player()
-        {
-            Firstname = "Emil",
-            Lastname = "Kinzl",
-            Username = "kinzle",
-            IsAdmin = true
+            Username = "kammerem"
         });
 
         db.Players.Add(new Player()
         {
             Firstname = "Stefan",
             Lastname = "Ecker",
-            Username = "EckerS",
-            IsAdmin = true
+            Username = "EckerS"
         });
 
         db.Players.Add(new Player()
         {
             Firstname = "Gerald",
             Lastname = "Wimmer",
-            Username = "WimmerG",
-            IsAdmin = true
+            Username = "WimmerG"
         });
 
         db.Players.Add(new Player()
         {
             Firstname = "Bernhard",
             Lastname = "Repp",
-            Username = "ReppB",
-            IsAdmin = false
+            Username = "ReppB"
         });
 
         db.Players.Add(new Player()
         {
             Firstname = "Stefan",
             Lastname = "Hofer",
-            Username = "HoferS",
-            IsAdmin = true
+            Username = "HoferS"
         });
         db.SaveChanges();
+        return Task.CompletedTask;
     }
 
     private void SeedCompetition(TennisContext db)

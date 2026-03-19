@@ -27,8 +27,7 @@ public class Members(
         {
             Firstname = body.Firstname,
             Lastname = body.Lastname,
-            Username = body.Username,
-            IsAdmin = false
+            Username = body.Username
         };
         db.Players.Add(player);
         db.SaveChanges();
@@ -59,7 +58,8 @@ public class Members(
         var player = db.Players.FirstOrDefault(p => p.Id == user);
         if (player != null)
         {
-            player.IsAdmin = !player.IsAdmin; // Toggle admin status
+            //ToDO: Change admin state
+            // player.IsAdmin = !player.IsAdmin; // Toggle admin status
             db.SaveChanges();
         }
 

@@ -71,6 +71,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
         // Hier stellst du ein, ob man die Email bestätigen muss, um sich einzuloggen
         options.SignIn.RequireConfirmedAccount = true;
     })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<TennisContext>();
 //end resend service
 
@@ -82,11 +83,10 @@ builder.Services.AddDataProtection()
 ConnectToNeonDb();
 
 builder.Services.AddLogging();
-builder.Services.AddHostedService<StartupBackgroundService>();
+// builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddHttpClient<EmailService>();
 // builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CurrentPlayerService>();
-builder.Services.AddSingleton<PasswordEncryption>();
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>

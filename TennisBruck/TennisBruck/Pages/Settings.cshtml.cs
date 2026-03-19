@@ -5,15 +5,13 @@ public class Settings : PageModel
 {
     private CurrentPlayerService _currentPlayerService;
     private TennisContext _db;
-    private PasswordEncryption _pe;
     public string? InfoText { get; set; }
     [BindProperty] public required Player Player { get; set; }
 
-    public Settings(CurrentPlayerService currentPlayerService, TennisContext db, PasswordEncryption pe)
+    public Settings(CurrentPlayerService currentPlayerService, TennisContext db)
     {
         _currentPlayerService = currentPlayerService;
         _db = db;
-        _pe = pe;
     }
 
     public IActionResult OnGet(string? infoText)

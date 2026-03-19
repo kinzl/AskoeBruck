@@ -58,7 +58,6 @@ public class Championship : PageModel
                         m.Team2.Players.Any(tp => tp.PlayerId == CurrentPlayer.Id))
             .ToList();
 
-
         Matches = _db.KnockoutMatch.ToList();
         if (selectedCompetitionId != 0)
         {
@@ -123,6 +122,8 @@ public class Championship : PageModel
 
     public IActionResult OnPostDeleteCompetition(int competitionId)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
+
         var competition = _db.Competitions.Find(competitionId);
         if (competition == null) return RedirectToPage(new { Message = "Ein Fehler ist aufgetreten" });
 
@@ -133,6 +134,7 @@ public class Championship : PageModel
 
     public IActionResult OnPostCreateCompetition(string competitionName, bool? isSingle)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         if (competitionName.IsNullOrEmpty() || !isSingle.HasValue)
             return RedirectToPage(new { Message = "Bitte geben Sie einen Namen ein oder Wählen Sie einen Bewerb" });
         _db.Competitions.Add(new Competition
@@ -209,6 +211,7 @@ public class Championship : PageModel
 
     public IActionResult OnPostIncreaseGroupSize(int groupId)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         var group = _db.Groups.Single(x => x.Id == groupId);
         group.MaxAmount++;
         _db.SaveChanges();
@@ -217,6 +220,7 @@ public class Championship : PageModel
 
     public IActionResult OnPostDecreaseGroupSize(int groupId)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         var group = _db.Groups.Single(x => x.Id == groupId);
         if (group.MaxAmount == 1) return RedirectToPage();
         group.MaxAmount--;
@@ -254,59 +258,8 @@ public class Championship : PageModel
             return RedirectToPage();
         }
 
-        // var team = new Team
-        // {
-        //     CompetitionId = group.Competition.Id,
-        //     Players = new List<TeamPlayer>
-        //     {
-        //         new TeamPlayer { PlayerId = teamId }
-        //     }
-        // };
-        // _db.Teams.Add(team);
-        // _db.SaveChanges();
         var team = _db.Teams.SingleOrDefault(x => x.Id == teamId);
         if (team == null) return RedirectToPage();
-
-        var groupTeam = new GroupTeam
-        {
-            GroupId = groupId,
-            TeamId = team.Id,
-            Points = 0
-        };
-        _db.GroupTeams.Add(groupTeam);
-        _db.SaveChanges();
-
-        return RedirectToPage();
-    }
-
-
-    public IActionResult OnPostAddDoubleTeam(int player1Id, int player2Id, int groupId)
-    {
-        var group = _db.Groups
-            .Include(g => g.GroupTeams)
-            .ThenInclude(gt => gt.Team)
-            .ThenInclude(team => team.Players)
-            .Include(group => group.Competition)
-            .Single(g => g.Id == groupId);
-
-        // Prüfen, ob Spieler schon in einer Gruppe sind
-        bool exists = group.GroupTeams.Any(gt =>
-            gt.Team.Players.Any(tp => tp.PlayerId == player1Id || tp.PlayerId == player2Id));
-        if (exists)
-            return RedirectToPage();
-
-        // Neues Doppel-Team
-        var team = new Team
-        {
-            CompetitionId = group.Competition.Id,
-            Players = new List<TeamPlayer>
-            {
-                new() { PlayerId = player1Id },
-                new() { PlayerId = player2Id }
-            }
-        };
-        _db.Teams.Add(team);
-        _db.SaveChanges();
 
         var groupTeam = new GroupTeam
         {
@@ -368,7 +321,7 @@ public class Championship : PageModel
     {
         InitValues();
 
-        // Alte Matches löschen
+        // Delete old matches
         var removedMatches = _db.Matches
             .Where(m => m.Group.Competition.Id == SelectedCompetition!.Id)
             .ToList();
@@ -376,7 +329,7 @@ public class Championship : PageModel
         _db.Matches.RemoveRange(removedMatches);
         _db.SaveChanges();
 
-        // Gruppen mit Teams laden
+        // load groups with teams
         var groups = _db.Groups
             .Where(g => g.Competition.Id == SelectedCompetition!.Id)
             .Include(g => g.GroupTeams)
@@ -385,7 +338,7 @@ public class Championship : PageModel
             .ThenInclude(tp => tp.Player)
             .ToList();
 
-        // Matches erzeugen (Round-Robin)
+        // create matches (Robin round)
         foreach (var group in groups)
         {
             var teams = group.GroupTeams
@@ -410,7 +363,6 @@ public class Championship : PageModel
 
         return RedirectToPage(new { Message = "Spiele wurden erstellt" });
     }
-
 
     public IActionResult OnPostSaveMatch(string score, int matchId)
     {
@@ -509,8 +461,8 @@ public class Championship : PageModel
         if (byes > 0) size = closest;
 
         int round = 1;
-        double baseT = (double) size / 2;
-        double baseC = (double) size / 2;
+        double baseT = (double)size / 2;
+        double baseC = (double)size / 2;
         int matchId = 1;
         int nextInc = size / 2;
 

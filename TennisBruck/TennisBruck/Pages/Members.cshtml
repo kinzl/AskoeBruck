@@ -41,7 +41,7 @@
                 <tr>
                     <th>Vorname</th>
                     <th>Nachname</th>
-                    @if (Model.LoggedInPlayer.IsAdmin)
+                    @if (User.IsInRole("Admin"))
                     {
                         <th>Benutzername</th>
                         <th>Email</th>
@@ -53,10 +53,10 @@
                 <tbody>
                 @foreach (var player in Model.AllPlayers)
                 {
-                    <tr class="@(player.IsAdmin ? "admin-row" : null)">
+                    <tr class="@(User.IsInRole("Admin") ? "admin-row" : null)">
                         <td>@player.Firstname</td>
                         <td>@player.Lastname</td>
-                        @if (Model.LoggedInPlayer.IsAdmin)
+                        @if (User.IsInRole("Admin"))
                         {
                             <td>@player.Username</td>
                             <td>@player.IdentityUser?.Email</td>
@@ -65,7 +65,7 @@
                                     <input type="hidden" name="user" value="@player.Id"/>
                                     <label class="switch">
                                         <input type="checkbox" onclick="this.form.submit()"
-                                               @(player.IsAdmin ? "checked" : null)/>
+                                               @(User.IsInRole("Admin") ? "checked" : null)/>
                                         <span class="slider"></span>
                                     </label>
                                 </form>
@@ -85,7 +85,7 @@
         </form>
     </div>
 
-    @if (Model.LoggedInPlayer.IsAdmin)
+    @if (User.IsInRole("Admin"))
     {
         <form method="post">
             <div class="actions">

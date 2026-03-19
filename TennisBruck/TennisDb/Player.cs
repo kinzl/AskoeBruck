@@ -8,7 +8,6 @@ public partial class Player
     public string Firstname { get; set; }
     public string Lastname { get; set; }
     public string Username { get; set; }
-    public bool IsAdmin { get; set; }
     public List<HallEntity> HallEntities { get; set; }
     public List<TournamentRegistration> TournamentRegistrations { get; set; }
     public IdentityUser? IdentityUser { get; set; }
