@@ -6,37 +6,84 @@
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Members</title>
-    <link rel="stylesheet" href="/css/members.css">
+    <title>Mitglieder | TennisBruck</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/members.css" asp-append-version="true">
+    
     <script src="/js/toggleVisibility.js"></script>
 </head>
 <body>
-<div class="header">
-    <div class="logo">
-        <svg width="24" height="24" fill="white" style="margin-right: 8px;" viewBox="0 0 24 24">
-            <path
-                d="M12 2C8.13 2 5 5.13 5 9v5c0 1.47.81 2.75 2 3.45V22h10v-4.55c1.19-.7 2-1.98 2-3.45V9c0-3.87-3.13-7-7-7z"/>
-        </svg>
-        Tennis<span>Bruck</span>
-    </div>
-    <div class="user">
-        <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
-            <path d="M12 12c2.7 0 5.5 1.3 6 4v2H6v-2c.5-2.7 3.3-4 6-4zm0-2a3 3 0 100-6 3 3 0 000 6z"/>
-        </svg>
-        @Model.LoggedInPlayer.ToString()
-    </div>
-</div>
 
-<div class="members-container">
-    <div class="members-box">
-        <h2>Mitglieder Liste</h2>
+<header class="app-header">
+    <div class="header-top-bar">
+        <form method="post" style="margin: 0;">
+            <button type="submit" asp-page-handler="Back" class="btn-back-header">
+                ← Übersicht
+            </button>
+        </form>
+    </div>
 
-        <form method="post">
-            <table>
+    <h1 class="app-title">👥 Mitgliederverzeichnis</h1>
+    <p style="color: var(--text-muted); margin-top: 10px;">Eingeloggt als: <strong>@Model.LoggedInPlayer.ToString()</strong></p>
+</header>
+
+<main class="main-container">
+
+    @if (User.IsInRole("Admin"))
+    {
+        <section class="modern-card" style="border-left: 4px solid var(--accent-color);">
+            <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+                <h2 style="font-size: 1.2rem;">🛠️ Admin-Tools</h2>
+                <button id="createUserButton" class="btn-action btn-accent" onclick="toggleCreateUser()" type="button">
+                    + Benutzer erstellen
+                </button>
+            </div>
+
+            <div id="createUser" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <form method="post">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="firstnameInput">Vorname</label>
+                            <input id="firstnameInput" name="firstname" class="form-input" required/>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastnameInput">Nachname</label>
+                            <input id="lastnameInput" name="lastname" class="form-input" required/>
+                        </div>
+                        <div class="form-group">
+                            <label for="usernameInput">Benutzername</label>
+                            <input id="usernameInput" name="username" class="form-input" required/>
+                        </div>
+                        <div class="form-group">
+                            <label for="emailOrPhoneInput">Email</label>
+                            <input id="emailOrPhoneInput" name="emailOrPhone" class="form-input" required type="email"/>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <button type="submit" class="btn-action" asp-page-handler="CreateUser">Benutzer in DB anlegen</button>
+                    </div>
+                </form>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.InfoBox))
+            {
+                <div class="info-alert">@Model.InfoBox</div>
+            }
+        </section>
+    }
+
+    <section class="modern-card">
+        <div class="card-header">
+            <h2>Aktive Mitglieder</h2>
+        </div>
+
+        <div class="table-responsive">
+            <table class="members-table">
                 <thead>
                 <tr>
                     <th>Vorname</th>
@@ -45,35 +92,38 @@
                     {
                         <th>Benutzername</th>
                         <th>Email</th>
-                        <th>Admin</th>
-                        <th>Löschen</th>
+                        <th style="text-align: center;">Admin</th>
+                        <th style="text-align: center;">Löschen</th>
                     }
                 </tr>
                 </thead>
                 <tbody>
                 @foreach (var player in Model.AllPlayers)
                 {
-                    <tr class="@(User.IsInRole("Admin") ? "admin-row" : null)">
-                        <td>@player.Firstname</td>
-                        <td>@player.Lastname</td>
+                    <tr>
+                        <td style="font-weight: 500;">@player.Firstname</td>
+                        <td style="font-weight: 500;">@player.Lastname</td>
+                        
                         @if (User.IsInRole("Admin"))
                         {
-                            <td>@player.Username</td>
-                            <td>@player.IdentityUser?.Email</td>
-                            <td>
-                                <form method="post" asp-page-handler="ChangeAdmin">
+                            <td style="color: var(--text-muted);">@player.Username</td>
+                            <td style="color: var(--text-muted);">@player.IdentityUser?.Email</td>
+                            
+                            <td style="text-align: center;">
+                                <form method="post" asp-page-handler="ChangeAdmin" style="margin: 0;">
                                     <input type="hidden" name="user" value="@player.Id"/>
-                                    <label class="switch">
-                                        <input type="checkbox" onclick="this.form.submit()"
-                                               @(User.IsInRole("Admin") ? "checked" : null)/>
+                                    <label class="switch" title="Admin-Rechte umschalten">
+                                        <input type="checkbox" onclick="this.form.submit()" @(User.IsInRole("Admin") ? "checked" : null) />
                                         <span class="slider"></span>
                                     </label>
                                 </form>
                             </td>
-                            <td>
-                                <form method="post">
-                                    <button class="delete" name="playerId" value="@player.Id" type="submit"
-                                            asp-page-handler="DeleteUser">🗑️
+                            
+                            <td style="text-align: center;">
+                                <form method="post" style="margin: 0; display: inline-block;">
+                                    <button class="btn-danger-icon" name="playerId" value="@player.Id" type="submit"
+                                            asp-page-handler="DeleteUser" onclick="return confirm('Möchtest du @player.Firstname wirklich komplett aus dem System löschen?');" title="User löschen">
+                                        🗑️
                                     </button>
                                 </form>
                             </td>
@@ -82,43 +132,9 @@
                 }
                 </tbody>
             </table>
-        </form>
-    </div>
-
-    @if (User.IsInRole("Admin"))
-    {
-        <form method="post">
-            <div class="actions">
-                <button id="createUserButton" class="action-button create" onclick="toggleCreateUser()" type="button">
-                    Benutzer erstellen
-                </button>
-                <button class="action-button" asp-page-handler="Back" type="submit">Back</button>
-            </div>
-        </form>
-
-        <div id="createUser" class="expandable-section" style="display: none;">
-            <form method="post">
-                <div class="form-group">
-                    <label for="firstnameInput">Vorname</label>
-                    <input id="firstnameInput" name="firstname" class="form-input" required/>
-                </div>
-                <div class="form-group">
-                    <label for="lastnameInput">Nachname</label>
-                    <input id="lastnameInput" name="lastname" class="form-input" required/>
-                </div>
-                <div class="form-group">
-                    <label for="usernameInput">Benutzername</label>
-                    <input id="usernameInput" name="username" class="form-input" required/>
-                </div>
-                <div class="form-group">
-                    <label for="emailOrPhoneInput">Email</label>
-                    <input id="emailOrPhoneInput" name="emailOrPhone" class="form-input" required/>
-                </div>
-                <button type="submit" class="action-button create" asp-page-handler="CreateUser">Erstellen</button>
-            </form>
         </div>
-        <label class="info-label">@Model.InfoBox</label>
-    }
-</div>
+    </section>
+
+</main>
 </body>
 </html>

@@ -2,108 +2,114 @@
 @model TennisBruck.Pages.Settings
 
 @{
-  Layout = null;
+    Layout = null;
 }
 
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Einstellungen</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Einstellungen | TennisBruck</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/settings.css" asp-append-version="true">
 </head>
-<body class="bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
-<div class="max-w-4xl mx-auto">
-  <div class="mb-8">
-    <form method="post" asp-page-handler="Back">
-      <button class="inline-flex items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors mb-4">
-        <span class="material-icons">arrow_back</span>
-        Zurück
-      </button>
-    </form>
-    <h1 class="text-3xl font-bold text-slate-800 mb-2">Einstellungen</h1>
-    <p class="text-slate-600">Verwalten Sie Ihre persönlichen Daten und Sicherheitseinstellungen</p>
-  </div>
+<body>
 
-  <div class="grid lg:grid-cols-2 gap-8">
-    <!-- Persönliche Daten -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="p-2 bg-blue-100 rounded-lg">
-          <span class="material-icons text-blue-600">person</span>
-        </div>
-        <h2 class="text-xl font-semibold text-slate-800">Persönliche Daten</h2>
-      </div>
-      <form method="post" asp-page-handler="ChangeSettings">
-        <div class="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label for="Firstname" class="block text-sm font-medium text-slate-700 mb-2">Vorname</label>
-            <input type="text" id="Firstname" name="Firstname" value="@Model.Player.Firstname" required
-                   class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-          </div>
-          <div>
-            <label for="Lastname" class="block text-sm font-medium text-slate-700 mb-2">Nachname</label>
-            <input type="text" id="Lastname" name="Lastname" value="@Model.Player.Lastname" required
-                   class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-          </div>
-        </div>
-        <div class="mt-4">
-          <label for="EmailOrPhone" class="block text-sm font-medium text-slate-700 mb-2">E-Mail Adresse</label>
-          <input type="text" id="EmailOrPhone" name="EmailOrPhone" value="@Model.Player.IdentityUser?.Email" required
-                 class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-        </div>
-        <div class="mt-4">
-          <label for="Username" class="block text-sm font-medium text-slate-700 mb-2">Benutzername</label>
-          <input type="text" id="Username" name="Username" value="@Model.Player.Username" required
-                 class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-        </div>
-        <button type="submit"
-                class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-lg font-medium transition-colors">
-          Speichern
-        </button>
-      </form>
+<header class="app-header">
+    <div class="header-top-bar">
+        <form method="post" style="margin: 0;">
+            <button type="submit" asp-page-handler="Back" class="btn-back-header">
+                ← Übersicht
+            </button>
+        </form>
     </div>
 
-    <!-- Passwort ändern -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="p-2 bg-red-100 rounded-lg">
-          <span class="material-icons text-red-600">lock</span>
-        </div>
-        <h2 class="text-xl font-semibold text-slate-800">Passwort ändern</h2>
-      </div>
-      <form method="post" asp-page-handler="ChangePassword">
-        <div class="mb-4">
-          <label for="OldPassword" class="block text-sm font-medium text-slate-700 mb-2">Altes Passwort</label>
-          <input id="OldPassword" name="oldPassword" type="password" required
-                 class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-        </div>
-        <div class="mb-4">
-          <label for="NewPassword" class="block text-sm font-medium text-slate-700 mb-2">Neues Passwort</label>
-          <input id="NewPassword" name="newPassword" type="password" required
-                 class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-          <!-- Hier kann eine Passwortstärkeanzeige eingefügt werden -->
-        </div>
-        <div class="mb-4">
-          <label for="NewPasswordRepeat" class="block text-sm font-medium text-slate-700 mb-2">Neues Passwort
-            wiederholen</label>
-          <input id="NewPasswordRepeat" name="newPasswordRepeat" type="password" required
-                 class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-        </div>
-        <button type="submit"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-lg font-medium transition-colors">
-          Passwort speichern
-        </button>
-      </form>
-    </div>
-  </div>
+    <h1 class="app-title">⚙️ Einstellungen</h1>
+    <p style="color: var(--text-muted); margin-top: 10px;">Verwalte deine persönlichen Daten und
+        Sicherheitseinstellungen</p>
+</header>
 
-  @if (!string.IsNullOrEmpty(Model.InfoText))
-  {
-    <div class="mt-6 p-4 bg-yellow-100 text-yellow-800 rounded-lg shadow-sm">@Model.InfoText</div>
-  }
-</div>
+<main class="main-container">
+
+    @if (!string.IsNullOrEmpty(Model.InfoText))
+    {
+        <div class="alert-info">
+            @Model.InfoText
+        </div>
+    }
+
+    <div class="settings-grid">
+
+        <section class="modern-card">
+            <div class="card-header-flex">
+                <div class="icon-box">👤</div>
+                <h2>Persönliche Daten</h2>
+            </div>
+
+            <form method="post" asp-page-handler="ChangeSettings"
+                  style="display: flex; flex-direction: column; flex-grow: 1;">
+
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="Firstname">Vorname</label>
+                        <input type="text" id="Firstname" name="Firstname" value="@Model.Player.Firstname" required
+                               class="form-input">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="Lastname">Nachname</label>
+                        <input type="text" id="Lastname" name="Lastname" value="@Model.Player.Lastname" required
+                               class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="EmailOrPhone">E-Mail Adresse</label>
+                    <input type="email" id="EmailOrPhone" name="EmailOrPhone" value="@Model.Player.IdentityUser?.Email"
+                           required class="form-input">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 30px;">
+                    <label for="Username">Benutzername</label>
+                    <input type="text" id="Username" name="Username" value="@Model.Player.Username" required
+                           class="form-input">
+                </div>
+
+                <button type="submit" class="btn-action btn-accent">Daten Speichern</button>
+            </form>
+        </section>
+
+        <section class="modern-card">
+            <div class="card-header-flex">
+                <div class="icon-box">🔒</div>
+                <h2>Passwort ändern</h2>
+            </div>
+
+            <form method="post" asp-page-handler="ChangePassword"
+                  style="display: flex; flex-direction: column; flex-grow: 1;">
+
+                <div class="form-group">
+                    <label for="OldPassword">Altes Passwort</label>
+                    <input id="OldPassword" name="oldPassword" type="password" required class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="NewPassword">Neues Passwort</label>
+                    <input id="NewPassword" name="newPassword" type="password" required class="form-input">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 30px;">
+                    <label for="NewPasswordRepeat">Neues Passwort wiederholen</label>
+                    <input id="NewPasswordRepeat" name="newPasswordRepeat" type="password" required class="form-input">
+                </div>
+
+                <button type="submit" class="btn-action">Passwort aktualisieren</button>
+            </form>
+        </section>
+
+    </div>
+</main>
+
 </body>
 </html>

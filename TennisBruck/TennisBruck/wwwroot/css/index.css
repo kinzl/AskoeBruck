@@ -1,107 +1,140 @@
-﻿/* Reset default margins and padding */
-* {
+﻿/* ==========================================
+   APP DASHBOARD THEME (INDEX)
+   ========================================== */
+:root {
+    --app-bg: #f3f4f6;
+    --nav-bg: #0f172a;
+    --accent-color: #d9f95d;
+    --accent-hover: #bceb15;
+    --text-light: #f8fafc;
+    --text-dark: #1e293b;
+    --text-muted: #64748b;
+    --card-bg: #ffffff;
+    --border-radius-lg: 16px;
+    --border-radius-sm: 8px;
+    --shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: var(--app-bg);
+    color: var(--text-dark);
     margin: 0;
     padding: 0;
+    line-height: 1.6;
+}
+
+/* --- HEADER & TOP BAR --- */
+.app-header {
+    background-color: var(--nav-bg);
+    padding: 20px 20px 80px 20px;
+    text-align: center;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: flex-end; /* Logout/Login rechts ausrichten */
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto 30px auto;
+    gap: 15px;
+}
+
+.user-greeting {
+    color: var(--text-light);
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-right: auto; /* Schiebt die Begrüßung nach links */
+}
+
+.app-title {
+    color: var(--text-light);
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.app-subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin-top: 5px;
+}
+
+/* --- MAIN DASHBOARD GRID --- */
+.main-container {
+    max-width: 1100px;
+    margin: -40px auto 40px auto; /* Zieht die Karten über den Header */
+    padding: 0 20px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+/* --- KACHELN (CARDS) --- */
+.dashboard-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 30px;
+    box-shadow: var(--shadow-soft);
+    border: none;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+    height: 100%;
     box-sizing: border-box;
 }
 
-/* Background and general styling */
-body {
-    font-family: Arial, sans-serif;
-    background-image: url('../image/neutralTennisCourt.png'); /* Use a nice tennis-themed background image */
-    background-size: cover;
-    background-position: center;
-    color: #fff;
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-/* Login button styling */
-.login-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    padding: 10px 20px;
-    background-color: #FFD700;
-    color: black;
-    font-size: 1rem;
+.card-icon {
+    font-size: 3.5rem;
+    margin-bottom: 15px;
+}
+
+.card-title {
+    margin: 0 0 10px 0;
+    font-size: 1.3rem;
+    color: var(--nav-bg);
+    font-weight: 700;
+}
+
+.card-desc {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 25px;
+    flex-grow: 1; /* Drückt den Button immer ganz nach unten */
+}
+
+/* --- BUTTONS --- */
+.btn-action {
+    background: var(--nav-bg);
+    color: var(--text-light);
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: 600;
     border: none;
-    border-radius: 5px;
     cursor: pointer;
-}
-
-.login-btn:hover {
-    background-color: #FFA500;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    text-align: center;
-    padding: 20px;
-    background-color: rgba(0, 0, 0, 0.7); /* Dark overlay for better text visibility */
-    border-radius: 10px;
-}
-
-header {
-    margin-bottom: 30px;
-}
-
-header h1 {
-    font-size: 3rem;
-    color: #FFD700; /* Golden color for a premium feel */
-}
-
-nav ul {
-    list-style: none;
-    display: flex;
-    justify-content: center;
-    margin-bottom: 40px;
-}
-
-nav ul li {
-    margin: 0 15px;
-}
-
-nav ul li a {
-    text-decoration: none;
-    color: #FFD700;
-    font-size: 1.2rem;
-}
-
-.category {
-    margin: 30px 0;
-    padding: 20px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-}
-
-.category h2 {
-    font-size: 2rem;
-    margin-bottom: 10px;
-}
-
-.category p {
-    font-size: 1.2rem;
-    margin-bottom: 20px;
-}
-
-button {
-    padding: 10px 20px;
+    transition: all 0.2s;
+    width: 100%;
     font-size: 1rem;
-    background-color: #FFD700;
-    color: black;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
 }
 
-button:hover {
-    background-color: #FFA500; /* Darker golden color on hover */
-}
+.btn-action:hover { background: #1e293b; }
 
-footer {
-    margin-top: 40px;
-}
+.btn-accent { background: var(--accent-color); color: var(--nav-bg); }
+.btn-accent:hover { background: var(--accent-hover); box-shadow: 0 4px 15px rgba(217, 249, 93, 0.4); }
 
-footer p {
-    font-size: 0.9rem;
-}
+.btn-outline-light { background: transparent; color: var(--text-light); border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; }
+.btn-outline-light:hover { background: rgba(255,255,255,0.1); }
+
+/* --- UTILS --- */
+.inline-form { margin: 0; padding: 0; display: inline-block; }
+.site-footer { text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.9rem; margin-top: 40px; }

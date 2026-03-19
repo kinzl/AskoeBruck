@@ -1,53 +1,70 @@
+using Microsoft.AspNetCore.Identity;
+
 namespace TennisBruck.Pages;
 
 [Authorize]
-public class Settings : PageModel
+public class Settings(
+    CurrentPlayerService currentPlayerService,
+    TennisContext db,
+    UserManager<IdentityUser> userManager,
+    SignInManager<IdentityUser> signInManager)
+    : PageModel
 {
-    private CurrentPlayerService _currentPlayerService;
-    private TennisContext _db;
     public string? InfoText { get; set; }
     [BindProperty] public required Player Player { get; set; }
-
-    public Settings(CurrentPlayerService currentPlayerService, TennisContext db)
-    {
-        _currentPlayerService = currentPlayerService;
-        _db = db;
-    }
 
     public IActionResult OnGet(string? infoText)
     {
         InfoText = infoText;
-        Player = _currentPlayerService.GetCurrentUser()!;
+        Player = currentPlayerService.GetCurrentUser()!;
         return Page();
     }
 
     public IActionResult OnPostChangeSettings(RegistrationDto body)
     {
-        var player = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-        Player = _currentPlayerService.GetCurrentUser()!;
+        Player = currentPlayerService.GetCurrentUser()!;
         Player.Firstname = body.Firstname;
         Player.Lastname = body.Lastname;
         Player.Username = body.Username;
-        _db.SaveChanges();
+        db.SaveChanges();
 
         return RedirectToPage(nameof(Settings), new { infoText = "Daten gespeichert" });
     }
 
-    public IActionResult OnPostChangePassword(string oldPassword, string newPassword, string newPasswordRepeat)
+    public async Task<IActionResult> OnPostChangePasswordAsync(string oldPassword, string newPassword,
+        string newPasswordRepeat)
     {
+        // Check if passwords Match each other
         if (newPassword != newPasswordRepeat)
-            return RedirectToPage(nameof(Settings), new { infoText = "Passwörter stimmen nicht überein" });
-        if (oldPassword == newPassword || oldPassword == newPasswordRepeat)
-            return RedirectToPage(nameof(Settings),
-                new { infoText = "Neues Passwort darf nicht gleich dem alten sein" });
-        var player = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-        Player = _currentPlayerService.GetCurrentUser()!;
-        //ToDo: change password in new Database
-        // if (!_pe.VerifyPassword(oldPassword, Player.PasswordHash))
-        //     return RedirectToPage(nameof(Settings), new { infoText = "Altes Passwort ist falsch" });
-        // Player.PasswordHash = _pe.HashPassword(newPassword);
-        _db.SaveChanges();
-        return RedirectToPage(nameof(Settings), new { infoText = "Neues Passwort gespeichert" });
+        {
+            InfoText = "Die neuen Passwörter stimmen nicht überein!";
+            return Page(); // Bleibt auf der Seite und zeigt den Fehler
+        }
+
+        //get the Identity-User
+        var user = await userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
+        }
+
+        var changePasswordResult = await userManager.ChangePasswordAsync(user, oldPassword, newPassword);
+
+        if (!changePasswordResult.Succeeded)
+        {
+            foreach (var error in changePasswordResult.Errors)
+            {
+                InfoText += error.Description + " ";
+            }
+
+            return Page();
+        }
+
+        // Success
+        await signInManager.RefreshSignInAsync(user);
+
+        InfoText = "Dein Passwort wurde erfolgreich geändert! ✅";
+        return Page();
     }
 
     public IActionResult OnPostBack()

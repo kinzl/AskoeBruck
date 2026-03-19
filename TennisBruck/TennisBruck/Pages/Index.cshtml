@@ -2,111 +2,102 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
+    // Falls du kein _Layout verwendest, bleibt diese Zeile leer oder auf null
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Tennis Club</title>
-    <link rel="stylesheet" href="css/index.css">
+    <title>Tennis Club Dashboard</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="~/css/index.css" asp-append-version="true">
 </head>
 <body>
-<div class="container">
-    <header>
-        @if (Model.Player == null)
+
+<header class="app-header">
+    <div class="top-bar">
+        @if (User.Identity!.IsAuthenticated)
         {
-            <h1>Willkommen beim ASKÖ Bruck-Peuerbach</h1>
+            <div class="user-greeting">
+                @(Model.Player != null ? Model.Player.ToString() : "Spieler")
+            </div>
+            <form asp-area="Identity" asp-page="/Account/Logout" method="post" class="inline-form">
+                <button type="submit" class="btn-outline-light">Logout</button>
+            </form>
         }
         else
         {
-            <h1>Willkommen @Model.Player.ToString()</h1>
+            <form asp-area="Identity" asp-page="/Account/Login" method="get" class="inline-form">
+                <button type="submit" class="btn-action btn-accent" style="width: auto; padding: 8px 20px; border-radius: 20px;">Login</button>
+            </form>
+            <form asp-area="Identity" asp-page="/Account/Register" method="get" class="inline-form">
+                <button type="submit" class="btn-outline-light">Registrieren</button>
+            </form>
         }
-    </header>
+    </div>
 
-    @* <!--#region Login/Logout  --> *@
-    @if (User.Identity!.IsAuthenticated)
-    {
-        <section id="logout" class="category">
-            <form asp-area="Identity" asp-page="/Account/Logout" method="post">
-                <p>Logge dich aus, um die Privatsphäre deines Accounts zu schützen</p>
-                <button type="submit">Logout</button>
+    <h1 class="app-title">ASKÖ Bruck-Peuerbach</h1>
+    <p class="app-subtitle">Dein digitales Tennis-Dashboard</p>
+</header>
+
+<main class="main-container">
+    <div class="dashboard-grid">
+        
+        <form method="post" asp-page-handler="ReserveCourt" class="dashboard-card">
+            <div class="card-icon">🎾</div>
+            <h2 class="card-title">Platz Reservierung</h2>
+            <p class="card-desc">Sichere dir jetzt deinen Court für das nächste Match.</p>
+            <button type="submit" class="btn-action btn-accent">Jetzt Reservieren</button>
+        </form>
+
+        @if (User.Identity!.IsAuthenticated)
+        {
+            <form method="post" asp-page-handler="Championship" class="dashboard-card">
+                <div class="card-icon">🏆</div>
+                <h2 class="card-title">Vereinsmeisterschaft</h2>
+                <p class="card-desc">Turnierbäume, Gruppen und deine anstehenden Matches.</p>
+                <button type="submit" class="btn-action">Turnier ansehen</button>
             </form>
-        </section>
-    }
-    else
-    {
-        <section id="login" class="category">
-            <h2>Login</h2>
-            <p>Melden Sie sich an, um persönliche Infos zu sehen</p>
-            <form asp-area="Identity" asp-page="/Account/Login" method="get" style="display:inline">
-                <button type="submit">Login</button>
+
+            <form method="post" asp-page-handler="Hallplan" class="dashboard-card">
+                <div class="card-icon">📅</div>
+                <h2 class="card-title">Hallenplan</h2>
+                <p class="card-desc">Überprüfe die aktuelle Belegung und freie Zeiten in der Halle.</p>
+                <button type="submit" class="btn-action">Plan öffnen</button>
             </form>
-            <form asp-area="Identity" asp-page="/Account/Register" method="get" style="display:inline">
-                <button type="submit">Registrieren</button>
+
+            <form method="post" asp-page-handler="ShowMembers" class="dashboard-card">
+                <div class="card-icon">👥</div>
+                <h2 class="card-title">Mitglieder</h2>
+                <p class="card-desc">Finde Spielpartner und durchsuche das Vereins-Verzeichnis.</p>
+                <button type="submit" class="btn-action">Mitglieder ansehen</button>
             </form>
-        </section>
-    }
-    @* <!--#endregion --> *@
 
-    <!--#region Court Reservation  -->
-    <form method="post" asp-page-handler="ReserveCourt">
-        <section id="court-reservation" class="category">
-            <h2>Platz Reservierung</h2>
-            <p>Reservieren Sie sich jetzt Ihren Platz</p>
-            <button type="submit">Jetzt Reservieren</button>
-        </section>
-    </form>
-    <!--#endregion -->
+            <form method="post" asp-page-handler="ShowSettings" class="dashboard-card">
+                <div class="card-icon">⚙️</div>
+                <h2 class="card-title">Einstellungen</h2>
+                <p class="card-desc">Verwalte dein Profil, deine Spielstärke und Passwörter.</p>
+                <button type="submit" class="btn-action">Profil bearbeiten</button>
+            </form>
+        }
+        else
+        {
+            <div class="dashboard-card" style="justify-content: center; background: #e2e8f0; border: 2px dashed #cbd5e1; box-shadow: none;">
+                <div class="card-icon" style="opacity: 0.5;">🔒</div>
+                <h2 class="card-title" style="color: var(--text-muted);">Interner Bereich</h2>
+                <p class="card-desc">Bitte logge dich ein, um Turniere, Mitglieder und den Hallenplan zu sehen.</p>
+            </div>
+        }
+    </div>
+</main>
 
+<footer class="site-footer">
+    <p>&copy; @DateTime.Now.Year Tennis Club ASKÖ Bruck-Peuerbach. Alle Rechte vorbehalten.</p>
+</footer>
 
-    @if (User.Identity!.IsAuthenticated)
-    {
-        <!--#region Hallplan  -->
-        <form method="post" asp-page-handler="Hallplan">
-            <section id="members" class="category">
-                <h2>Hallenplan</h2>
-                <p>Hier sehen Sie den Hallenplan</p>
-                <button type="submit">Hallenplan zeigen</button>
-            </section>
-        </form>
-        <!--#endregion -->
-
-        <!--#region Championship  -->
-        <form method="post" asp-page-handler="Championship">
-            <section id="championship" class="category">
-                <h2>Vereinsmeisterschaft</h2>
-                <p>Hier sehen Sie alle Infos zur Vereinsmeisterschaft</p>
-                <button type="submit">Zur Vereinsmeisterschaft</button>
-            </section>
-        </form>
-        <!--#endregion -->
-
-        <!--#region Members  -->
-        <form method="post" asp-page-handler="ShowMembers">
-            <section id="members" class="category">
-                <h2>Mitglieder</h2>
-                <p>Hier sehen Sie alle Mitglieder</p>
-                <button type="submit">Mitglieder ansehen</button>
-            </section>
-        </form>
-        <!--#endregion -->
-
-        <!--#region Settings  -->
-        <form method="post" asp-page-handler="ShowSettings">
-            <section id="members" class="category">
-                <h2>Einstellungen</h2>
-                <p>Hier sehen Sie Ihre persönlichen Einstellungen</p>
-                <button type="submit">Einstellungen</button>
-            </section>
-        </form>
-    }
-    <!--#endregion -->
-
-    <footer>
-        <p>&copy; 2024 Tennis Club. All Rights Reserved.</p>
-    </footer>
-</div>
 </body>
 </html>
