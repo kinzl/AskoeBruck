@@ -79,6 +79,64 @@ public class Hallplan : PageModel
         return Page();
     }
 
+    public async Task<IActionResult> OnPostSwapPlayersAsync([FromBody] SwapRequestData data)
+    {
+        if (data == null) return BadRequest("Ungültige Daten.");
+
+        // Fall 1: Normaler Tausch (Beide Spieler sind schon im Plan auf einem Platz)
+        if (data.Court1Id.HasValue && data.Court2Id.HasValue)
+        {
+            var playerCourt1 = await _db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+                .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player1Id && pc.HallPlanDay.Id == data.Court1Id);
+
+            var playerCourt2 = await _db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+                .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player2Id && pc.HallPlanDay.Id == data.Court2Id);
+
+            if (playerCourt1 != null && playerCourt2 != null)
+            {
+                var tempPlayer = playerCourt1.Player;
+                playerCourt1.Player = playerCourt2.Player;
+                playerCourt2.Player = tempPlayer;
+                await _db.SaveChangesAsync();
+            }
+        }
+        // Fall 2: Spieler 1 kommt von der Bank, Spieler 2 ist auf dem Platz
+        else if (!data.Court1Id.HasValue && data.Court2Id.HasValue)
+        {
+            var playerCourt2 = await _db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+                .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player2Id && pc.HallPlanDay.Id == data.Court2Id);
+
+            if (playerCourt2 != null)
+            {
+                var benchPlayer = await _db.Players.FindAsync(data.Player1Id);
+                if (benchPlayer != null)
+                {
+                    playerCourt2.Player = benchPlayer; // Ersatzspieler übernimmt den Platz!
+                    await _db.SaveChangesAsync();
+                }
+            }
+        }
+        // Fall 3: Spieler 2 kommt von der Bank (falls man den Platz-Spieler auf die Bank zieht)
+        else if (data.Court1Id.HasValue && !data.Court2Id.HasValue)
+        {
+            var playerCourt1 = await _db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+                .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player1Id && pc.HallPlanDay.Id == data.Court1Id);
+
+            if (playerCourt1 != null)
+            {
+                var benchPlayer = await _db.Players.FindAsync(data.Player2Id);
+                if (benchPlayer != null)
+                {
+                    playerCourt1.Player = benchPlayer;
+                    await _db.SaveChangesAsync();
+                }
+            }
+        }
+
+        // Wenn wir in einer Razor Page via Fetch ankommen, geben wir ein einfaches JSON-Ok zurück
+        return new JsonResult(new { success = true });
+    }
+
     public IActionResult OnPostCreateCompetition(string? competitionName)
     {
         if (string.IsNullOrWhiteSpace(competitionName))
@@ -95,10 +153,90 @@ public class Hallplan : PageModel
         return RedirectToPage(nameof(Hallplan));
     }
 
-    public IActionResult OnPostGeneratePlan(DateTime startDate, DateTime endDate)
+    public IActionResult OnPostGeneratePlan(DateTime startDate, DateTime endDate, int frequencyDays)
     {
         _logger.LogInformation("Starting plan generation");
-        GeneratePlan(startDate, endDate, HallPlanId);
+        if (frequencyDays < 1) frequencyDays = 7;
+
+        InitValues();
+
+        var existingDays = _db.HallPlanDays
+            .Include(d => d.Players)
+            .Where(d => d.HallPlanId == HallPlanId)
+            .ToList();
+
+        _db.HallPlanDays.RemoveRange(existingDays);
+        _db.SaveChanges();
+
+        // 2. Spieler laden
+        var players = _db.HallPlanEntities
+            .Include(hallPlanEntity => hallPlanEntity.Registrations)
+            .ThenInclude(hallPlanRegistration => hallPlanRegistration.Player)
+            .Single(x => x.Id == SelectedHallPlanEntity!.Id)
+            .Registrations
+            .Select(x => x.Player)
+            .ToList();
+
+        if (players.Count < 4)
+        {
+            Console.WriteLine("Nicht genug Spieler für den Plan.");
+            return Page();
+        }
+
+        var matchDays = new List<DateTime>();
+
+        // Wir starten genau am Startdatum und springen immer 'frequencyDays' weiter
+        for (var date = startDate; date <= endDate; date = date.AddDays(frequencyDays))
+        {
+            matchDays.Add(date);
+        }
+
+        if (!matchDays.Any())
+        {
+            Console.WriteLine("Keine Spieltage im gewählten Zeitraum gefunden.");
+            return Page();
+        }
+
+        // 3. Spieler fair verteilen
+        var playerCounts = players.ToDictionary(p => p.Id, p => 0);
+        var random = new Random();
+
+        foreach (var day in matchDays)
+        {
+            var shuffled = players.OrderBy(p => random.Next()).ToList();
+
+            // Holt die 4 Spieler, die bisher am wenigsten gespielt haben
+            var selectedPlayers = shuffled
+                .OrderBy(p => playerCounts[p.Id])
+                .Take(4)
+                .ToList();
+
+            // HallPlanDay erstellen
+            var hallDay = new HallPlanDay
+            {
+                HallPlanId = HallPlanId,
+                PlayDate = day,
+                Players = new List<HallPlanDayPlayer>(),
+                HallPlanEntity = SelectedHallPlanEntity!
+            };
+
+            foreach (var player in selectedPlayers)
+            {
+                hallDay.Players.Add(new HallPlanDayPlayer
+                {
+                    Player = player,
+                    HallPlanDay = hallDay
+                });
+
+                // Spielanzahl erhöhen
+                playerCounts[player.Id]++;
+            }
+
+            _db.HallPlanDays.Add(hallDay);
+        }
+
+        _db.SaveChanges();
+        Console.WriteLine($"Balanced HallPlan erfolgreich generiert (Rhythmus: {frequencyDays} Tage).");
         _logger.LogInformation("Plan generation complete");
         return RedirectToPage(nameof(Hallplan));
     }
@@ -106,14 +244,16 @@ public class Hallplan : PageModel
     public IActionResult OnPostChangePlayingState()
     {
         InitValues();
-        var playerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var playerId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
 
-        var player = _db.Players.Single(x => x.Id == playerId);
+        var player = _db.Players
+            .Include(x => x.IdentityUser)
+            .Single(x => x.IdentityUserId == playerId);
         var hallPlanEntity = _db.HallPlanEntities
             .Include(hallPlanEntity => hallPlanEntity.Registrations)
             .ThenInclude(hallPlanRegistration => hallPlanRegistration.Player)
             .Single(x => x.Id == SelectedHallPlanEntity!.Id);
-        var isRegistered = hallPlanEntity.Registrations.SingleOrDefault(x => x.Player.Id == playerId);
+        var isRegistered = hallPlanEntity.Registrations.SingleOrDefault(x => x.Player.IdentityUserId == playerId);
 
         if (isRegistered == null)
         {
@@ -125,7 +265,7 @@ public class Hallplan : PageModel
         }
         else
         {
-            var hallplanRegistration = hallPlanEntity.Registrations.Single(x => x.Player.Id == playerId);
+            var hallplanRegistration = hallPlanEntity.Registrations.Single(x => x.Player.IdentityUserId == playerId);
             hallPlanEntity.Registrations.Remove(hallplanRegistration);
         }
 
@@ -162,90 +302,6 @@ public class Hallplan : PageModel
     public IActionResult OnPostBack()
     {
         return RedirectToPage(nameof(Index));
-    }
-
-    private void GeneratePlan(DateTime startDate, DateTime endDate, int hallPlanId)
-    {
-        InitValues();
-        // 1️⃣ Alle bestehenden HallPlanDays & Spieler für diesen HallPlan löschen
-        var existingDays = _db.HallPlanDays
-            .Include(d => d.Players)
-            .Where(d => d.HallPlanId == hallPlanId)
-            .ToList();
-
-        _db.HallPlanDays.RemoveRange(existingDays);
-        _db.SaveChanges();
-
-
-        var players = _db.HallPlanEntities.Include(hallPlanEntity => hallPlanEntity.Registrations)
-            .ThenInclude(hallPlanRegistration => hallPlanRegistration.Player)
-            .Single(x => x.Id == SelectedHallPlanEntity!.Id)
-            .Registrations
-            .Select(x => x.Player)
-            .ToList();
-
-        if (players.Count < 4)
-        {
-            Console.WriteLine("Nicht genug Spieler für den Plan.");
-            return;
-        }
-
-        // 3️⃣ Generiere Spieltage (jeden Freitag zwischen Start und Ende)
-        var matchDays = new List<DateTime>();
-        for (var date = startDate; date <= endDate; date = date.AddDays(1))
-        {
-            if (date.DayOfWeek == DayOfWeek.Friday)
-                matchDays.Add(date);
-        }
-
-        if (!matchDays.Any())
-        {
-            Console.WriteLine("Keine Spieltage gefunden.");
-            return;
-        }
-
-        // 4️⃣ Zähle, wie oft jeder Spieler schon zugewiesen wurde
-        var playerCounts = players.ToDictionary(p => p.Id, p => 0);
-
-        var random = new Random();
-
-        foreach (var day in matchDays)
-        {
-            // Spieler zufällig mischen
-            var shuffled = players.OrderBy(p => random.Next()).ToList();
-
-            // 4 Spieler mit den wenigsten Spielen auswählen
-            var selectedPlayers = shuffled
-                .OrderBy(p => playerCounts[p.Id])
-                .Take(4)
-                .ToList();
-
-            // HallPlanDay erstellen
-            var hallDay = new HallPlanDay
-            {
-                HallPlanId = hallPlanId,
-                PlayDate = day,
-                Players = new List<HallPlanDayPlayer>(),
-                HallPlanEntity = SelectedHallPlanEntity!
-            };
-
-            foreach (var player in selectedPlayers)
-            {
-                hallDay.Players.Add(new HallPlanDayPlayer
-                {
-                    Player = player,
-                    HallPlanDay = hallDay
-                });
-
-                // Spielanzahl erhöhen
-                playerCounts[player.Id]++;
-            }
-
-            _db.HallPlanDays.Add(hallDay);
-        }
-
-        _db.SaveChanges();
-        Console.WriteLine("Balanced HallPlan erfolgreich generiert.");
     }
 
     public IActionResult OnPostSelectHallPlan()

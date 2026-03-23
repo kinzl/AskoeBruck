@@ -1,91 +1,157 @@
+MobileDragDrop.polyfill({
+    // Sorgt dafür, dass das "Geisterbild" des Spielers beim Ziehen am Finger klebt
+    dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride
+});
+
+window.addEventListener('touchmove', function () {
+}, {passive: false});
+
 document.addEventListener("DOMContentLoaded", () => {
-    const draggablePlayers = document.querySelectorAll(".draggable-player");
+    const draggablePlayers = document.querySelectorAll(".draggable-player, .draggable-substitute");
     let draggedPlayer = null;
 
+    // Wir holen uns deine eigene ID aus dem HTML
+    const myPlayerId = document.getElementById("main-content")?.dataset.meId;
+
+    // ==========================================
+    // NEU: AUTO-SCROLL LOGIK (EDGE SCROLLING)
+    // ==========================================
+    let isDragging = false;
+    let scrollDirection = 0; // -1 = hoch, 1 = runter, 0 = stopp
+    const scrollSpeed = 15;  // Wie schnell gescrollt wird (Pixel pro Frame)
+    const scrollThreshold = 100; // Ab wie vielen Pixeln vor dem Rand der Scroll startet
+
+    function performAutoScroll() {
+        if (!isDragging) return;
+
+        if (scrollDirection !== 0) {
+            window.scrollBy(0, scrollDirection * scrollSpeed);
+        }
+
+        // requestAnimationFrame sorgt für flüssiges Scrollen passend zur Framerate deines Monitors
+        requestAnimationFrame(performAutoScroll);
+    }
+
+    // Wir überwachen das gesamte Fenster, um zu wissen, wo die Maus ist
+    document.addEventListener("dragover", (e) => {
+        if (!isDragging) return;
+
+        const y = e.clientY;
+        const windowHeight = window.innerHeight;
+
+        if (y < scrollThreshold) {
+            scrollDirection = -1; // Maus ist oben -> Nach oben scrollen
+        } else if (windowHeight - y < scrollThreshold) {
+            scrollDirection = 1;  // Maus ist unten -> Nach unten scrollen
+        } else {
+            scrollDirection = 0;  // Maus ist in der Mitte -> Stehen bleiben
+        }
+    });
+    // ==========================================
+
     draggablePlayers.forEach(player => {
-        // Enable dragging
         player.addEventListener("dragstart", event => {
             draggedPlayer = player;
             event.dataTransfer.setData("text/plain", player.dataset.playerId);
             event.dataTransfer.effectAllowed = "move";
-            player.classList.add("opacity-50", "ring-2", "ring-emerald-400");
+            player.style.opacity = "0.5";
+            player.style.boxShadow = "0 0 0 2px var(--accent-color)";
+
+            // Start Auto-Scroll
+            isDragging = true;
+            requestAnimationFrame(performAutoScroll);
         });
 
         player.addEventListener("dragend", () => {
-            player.classList.remove("opacity-50", "ring-2", "ring-emerald-400");
+            player.style.opacity = "1";
+            player.style.boxShadow = "none";
             draggedPlayer = null;
+
+            // Stopp Auto-Scroll
+            isDragging = false;
+            scrollDirection = 0;
         });
 
-        // Allow drop
         player.addEventListener("dragover", event => {
             event.preventDefault();
             event.dataTransfer.dropEffect = "move";
             if (player !== draggedPlayer) {
-                player.classList.add("border", "border-2", "border-dashed", "border-emerald-400");
+                player.style.boxShadow = "0 0 0 2px var(--nav-bg)";
             }
         });
 
         player.addEventListener("dragleave", () => {
-            player.classList.remove("border", "border-2", "border-dashed", "border-emerald-400");
+            player.style.boxShadow = "none";
         });
 
         player.addEventListener("drop", async event => {
             event.preventDefault();
 
             const target = event.currentTarget;
-            player.classList.remove("border", "border-2", "border-dashed", "border-emerald-400");
+            target.style.boxShadow = "none";
 
             if (draggedPlayer && target !== draggedPlayer) {
+                const isFromBench = draggedPlayer.classList.contains("draggable-substitute");
+                const isTargetBench = target.classList.contains("draggable-substitute");
+
+                if (isTargetBench) return;
+
                 const player1Id = draggedPlayer.dataset.playerId;
-                const court1Id = draggedPlayer.dataset.courtId;
-
+                const court1Id = draggedPlayer.dataset.courtId ? draggedPlayer.dataset.courtId : null;
                 const player2Id = target.dataset.playerId;
-                const court2Id = target.dataset.courtId;
+                const court2Id = target.dataset.courtId ? target.dataset.courtId : null;
 
-                // Swap visuals
-                const tempContent = draggedPlayer.innerHTML;
-                draggedPlayer.innerHTML = target.innerHTML;
-                target.innerHTML = tempContent;
+                const oldTargetHTML = target.innerHTML;
+                const oldTargetPlayerId = target.dataset.playerId;
+                const oldDraggedHTML = draggedPlayer.innerHTML;
+                const oldDraggedPlayerId = draggedPlayer.dataset.playerId;
 
-                // Swap data attributes
-                const tempPlayerId = draggedPlayer.dataset.playerId;
-                const tempCourtId = draggedPlayer.dataset.courtId;
+                // 1. VISUELLES UPDATE
+                if (isFromBench) {
+                    target.innerHTML = draggedPlayer.innerHTML;
+                    target.dataset.playerId = draggedPlayer.dataset.playerId;
+                } else {
+                    target.innerHTML = draggedPlayer.innerHTML;
+                    target.dataset.playerId = draggedPlayer.dataset.playerId;
+                    draggedPlayer.innerHTML = oldTargetHTML;
+                    draggedPlayer.dataset.playerId = oldTargetPlayerId;
+                }
 
-                draggedPlayer.dataset.playerId = target.dataset.playerId;
-                draggedPlayer.dataset.courtId = target.dataset.courtId;
+                // 2. FARBE KORRIGIEREN
+                if (myPlayerId) {
+                    if (target.dataset.playerId === myPlayerId) target.classList.add("player-slot-me");
+                    else target.classList.remove("player-slot-me");
 
-                target.dataset.playerId = tempPlayerId;
-                target.dataset.courtId = tempCourtId;
+                    if (!isFromBench) {
+                        if (draggedPlayer.dataset.playerId === myPlayerId) draggedPlayer.classList.add("player-slot-me");
+                        else draggedPlayer.classList.remove("player-slot-me");
+                    }
+                }
+
+                // 3. BACKEND ANFRAGE
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
                 try {
-                    const response = await fetch("/SwapPlayer/OnPostSwapPlayers", {
+                    const response = await fetch("?handler=SwapPlayers", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
+                            "RequestVerificationToken": token
                         },
                         body: JSON.stringify({
-                            player1Id,
-                            player2Id,
-                            court1Id,
-                            court2Id,
+                            player1Id: parseInt(player1Id),
+                            player2Id: parseInt(player2Id),
+                            court1Id: court1Id ? parseInt(court1Id) : null,
+                            court2Id: court2Id ? parseInt(court2Id) : null
                         }),
                     });
 
-                    if (!response.ok) {
-                        throw new Error("Failed to swap players");
-                    }
+                    if (!response.ok) throw new Error("Fehler beim Speichern in der DB");
+
                 } catch (error) {
                     console.error(error);
-
-                    // Revert on failure
-                    target.innerHTML = draggedPlayer.innerHTML;
-                    draggedPlayer.innerHTML = tempContent;
-
-                    draggedPlayer.dataset.playerId = player1Id;
-                    draggedPlayer.dataset.courtId = court1Id;
-
-                    target.dataset.playerId = player2Id;
-                    target.dataset.courtId = court2Id;
+                    alert("Es gab einen Fehler beim Speichern. Die Seite wird neu geladen.");
+                    window.location.reload();
                 }
             }
         });
