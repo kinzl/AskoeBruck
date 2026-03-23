@@ -1,26 +1,33 @@
+using Microsoft.AspNetCore.Identity;
+
 namespace TennisBruck.Pages;
 
 [Authorize]
 public class Members(
     TennisContext db,
     ILogger<Members> logger,
-    CurrentPlayerService currentPlayerService)
+    CurrentPlayerService currentPlayerService,
+    UserManager<IdentityUser> userManager)
     : PageModel
 {
     public required Player LoggedInPlayer { get; set; }
     public required List<Player> AllPlayers { get; set; }
     public string? InfoBox { get; set; }
+    public List<string> AdminUserIds { get; set; } = [];
 
-    public RedirectToPageResult? OnGet(string? infoBox)
+    public async Task<PageResult> OnGet(string? infoBox)
     {
         InfoBox = infoBox;
         LoggedInPlayer = currentPlayerService.GetCurrentUser()!;
-        AllPlayers = db.Players.ToList();
-        return null;
+        AllPlayers = db.Players.Include(x => x.IdentityUser).ToList();
+        var adminUsers = await userManager.GetUsersInRoleAsync("Admin");
+        AdminUserIds = adminUsers.Select(u => u.Id).ToList();
+        return Page();
     }
 
     public IActionResult OnPostCreateUser(RegistrationDto body)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         logger.LogInformation("OnPostCreateUser");
         string password = "askoebruck";
         var player = new Player
@@ -38,6 +45,7 @@ public class Members(
 
     public IActionResult OnPostDeleteUser(int playerId)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         logger.LogInformation("OnPostDeleteUser");
         var player = db.Players.Single(x => x.Id == playerId);
         db.Players.Remove(player);
@@ -51,16 +59,29 @@ public class Members(
         return RedirectToPage(nameof(Index));
     }
 
-    public IActionResult OnPostChangeAdmin(int user)
+    public async Task<IActionResult> OnPostChangeAdminAsync(int user)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         logger.LogInformation("Toggling admin status for User ID: {User}", user);
 
-        var player = db.Players.FirstOrDefault(p => p.Id == user);
-        if (player != null)
+        var player = await db.Players
+            .Include(p => p.IdentityUser)
+            .FirstOrDefaultAsync(p => p.Id == user);
+
+        if (player != null && player.IdentityUser != null)
         {
-            //ToDO: Change admin state
-            // player.IsAdmin = !player.IsAdmin; // Toggle admin status
-            db.SaveChanges();
+            bool isAlreadyAdmin = await userManager.IsInRoleAsync(player.IdentityUser, "Admin");
+
+            if (isAlreadyAdmin)
+            {
+                await userManager.RemoveFromRoleAsync(player.IdentityUser, "Admin");
+                logger.LogInformation("Demoted User {User} from Admin.", player.IdentityUser.Email);
+            }
+            else
+            {
+                await userManager.AddToRoleAsync(player.IdentityUser, "Admin");
+                logger.LogInformation("Promoted User {User} to Admin.", player.IdentityUser.Email);
+            }
         }
 
         return RedirectToPage();

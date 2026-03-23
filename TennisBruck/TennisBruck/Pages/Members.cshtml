@@ -11,10 +11,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mitglieder | TennisBruck</title>
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/members.css" asp-append-version="true">
-    
+
     <script src="/js/toggleVisibility.js"></script>
 </head>
 <body>
@@ -29,7 +29,8 @@
     </div>
 
     <h1 class="app-title">👥 Mitgliederverzeichnis</h1>
-    <p style="color: var(--text-muted); margin-top: 10px;">Eingeloggt als: <strong>@Model.LoggedInPlayer.ToString()</strong></p>
+    <p style="color: var(--text-muted); margin-top: 10px;">Eingeloggt als:
+        <strong>@Model.LoggedInPlayer.ToString()</strong></p>
 </header>
 
 <main class="main-container">
@@ -44,7 +45,8 @@
                 </button>
             </div>
 
-            <div id="createUser" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <div id="createUser"
+                 style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
                 <form method="post">
                     <div class="form-grid">
                         <div class="form-group">
@@ -65,7 +67,8 @@
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <button type="submit" class="btn-action" asp-page-handler="CreateUser">Benutzer in DB anlegen</button>
+                        <button type="submit" class="btn-action" asp-page-handler="CreateUser">Benutzer in DB anlegen
+                        </button>
                     </div>
                 </form>
             </div>
@@ -103,26 +106,29 @@
                     <tr>
                         <td style="font-weight: 500;">@player.Firstname</td>
                         <td style="font-weight: 500;">@player.Lastname</td>
-                        
+
                         @if (User.IsInRole("Admin"))
                         {
                             <td style="color: var(--text-muted);">@player.Username</td>
                             <td style="color: var(--text-muted);">@player.IdentityUser?.Email</td>
-                            
+
                             <td style="text-align: center;">
                                 <form method="post" asp-page-handler="ChangeAdmin" style="margin: 0;">
                                     <input type="hidden" name="user" value="@player.Id"/>
                                     <label class="switch" title="Admin-Rechte umschalten">
-                                        <input type="checkbox" onclick="this.form.submit()" @(User.IsInRole("Admin") ? "checked" : null) />
+                                        <input type="checkbox" onclick="this.form.submit()"
+                                               @(player.IdentityUser != null && Model.AdminUserIds.Contains(player.IdentityUser.Id) ? "checked" : "")/>
                                         <span class="slider"></span>
                                     </label>
                                 </form>
                             </td>
-                            
+
                             <td style="text-align: center;">
                                 <form method="post" style="margin: 0; display: inline-block;">
                                     <button class="btn-danger-icon" name="playerId" value="@player.Id" type="submit"
-                                            asp-page-handler="DeleteUser" onclick="return confirm('Möchtest du @player.Firstname wirklich komplett aus dem System löschen?');" title="User löschen">
+                                            asp-page-handler="DeleteUser"
+                                            onclick="return confirm('Möchtest du @player.Firstname wirklich komplett aus dem System löschen?');"
+                                            title="User löschen">
                                         🗑️
                                     </button>
                                 </form>
