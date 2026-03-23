@@ -117,7 +117,7 @@ var app = builder.Build();
 
 #region -------------------------------------------- Middleware pipeline
 
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();

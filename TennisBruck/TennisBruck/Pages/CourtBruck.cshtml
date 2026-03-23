@@ -1,79 +1,174 @@
 @page
 @model TennisBruck.Pages.CourtBruck
 
+@{
+    Layout = null;
+}
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Platz Reservierung Bruck</title>
-    <link rel="stylesheet" href="css/courtBruck.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platzreservierung | TennisBruck</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/courtBruck.css" asp-append-version="true">
 </head>
 <body>
-<div class="container">
-    <h1>Platz Reservierung Bruck</h1>
-    <div class="date-navigation">
-        <form method="get">
-            <button name="date" value="@Model.CurrentDate.AddDays(-1).ToString("yyyy-MM-dd")">Vorheriger Tag</button>
-            <button name="date" value="@Model.CurrentDate.AddDays(1).ToString("yyyy-MM-dd")">Nächster Tag</button>
-            <input type="date" name="date" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"
-                   onchange="this.form.submit()">
-        </form>
-        <button onclick="window.location.href = '/Index'">Zurück</button>
+
+<header class="app-header">
+    <div class="header-top-bar">
+        <button onclick="window.location.href = '/Index'" class="btn-back-header">
+            ← Übersicht
+        </button>
     </div>
-    <table>
-        <thead>
-        <tr>
-            <th>Time</th>
-            <th>Platz 1</th>
-            <th>Platz 2</th>
-            <th>Platz 3</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var timeSlot in Model.TimeSlots)
+
+    <h1 class="app-title">🎾 Platz reservieren</h1>
+    <p style="color: var(--text-muted); margin-top: 10px;">Wähle deinen Wunschtermin für die Anlage Bruck</p>
+</header>
+
+<main class="main-container">
+    <section class="modern-card">
+
+        <div class="date-nav-wrapper">
+
+            <a href="?date=@Model.CurrentDate.AddDays(-1).ToString("yyyy-MM-dd")" class="btn-date"
+               style="text-decoration: none;">
+                ◀ Gestern
+            </a>
+
+            <form method="get" style="margin: 0; display: inline-block;">
+                <input type="date" name="date" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"
+                       class="date-picker-input" onchange="this.form.submit()">
+            </form>
+
+            <a href="?date=@Model.CurrentDate.AddDays(1).ToString("yyyy-MM-dd")" class="btn-date"
+               style="text-decoration: none;">
+                Morgen ▶
+            </a>
+
+        </div>
+
+        @if (User.IsInRole("Admin"))
         {
-            <tr>
-                <td>@timeSlot.Time.ToString("HH:mm")</td>
-                @for (int court = 1; court <= 3; court++)
-                {
-                    var reservation = Model.GetReservation(court, timeSlot.Time);
-                    if (reservation == null)
-                    {
-                        <td class="available">
-                            <form method="post" asp-page-handler="CreateReservation">
-                                <input type="hidden" name="CourtNumber" value="@court"/>
-                                <input type="hidden" name="StartTime" value="@timeSlot.Time"/>
-                                <button type="submit">+</button>
-                            </form>
-                        </td>
-                    }
-                    else
-                    {
-                        @if (Model.CurrentPlayer == null)
-                        {
-                            <td class="reserved">
-                                Reserviert
-                            </td>
-                        }
-                        else
-                        {
-                            <td class="reserved">
-                                @reservation.Player.ToString()
-                                @if (Model.CurrentPlayer?.Id == reservation.Player.Id)
-                                {
-                                    <form method="post" asp-page-handler="DeleteReservation">
-                                        <input type="hidden" name="ReservationId" value="@reservation.Id"/>
-                                        <button type="submit" class="delete-btn">🗑️</button>
-                                    </form>
-                                }
-                            </td>
-                        }
-                    }
-                }
-            </tr>
+            <div
+                style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent-color); border-radius: var(--border-radius-sm); padding: 20px; margin-bottom: 25px;">
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: var(--nav-bg);">🏆 Event /
+                    Block-Reservierung eintragen</h3>
+
+                <form method="post" asp-page-handler="CreateEvent"
+                      style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+
+                    <input type="hidden" name="CurrentDateStr" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"/>
+
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Event
+                            Name</label>
+                        <input type="text" name="EventName" required placeholder="z.B. Meisterschaft"
+                               style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+
+                    <div>
+                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Platz</label>
+                        <select name="CourtNumber"
+                                style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                            <option value="1">Platz 1</option>
+                            <option value="2">Platz 2</option>
+                            <option value="3">Platz 3</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Von</label>
+                        <input type="time" name="StartTimeStr" required
+                               style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+
+                    <div>
+                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Bis</label>
+                        <input type="time" name="EndTimeStr" required
+                               style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+
+                    <button type="submit" class="btn-action btn-accent" style="padding: 9px 20px;">Reservieren</button>
+                </form>
+            </div>
         }
-        </tbody>
-    </table>
-</div>
+
+        <div class="table-responsive">
+            <table class="court-table">
+                <thead>
+                <tr>
+                    <th class="time-col">Zeit</th>
+                    <th>Platz 1</th>
+                    <th>Platz 2</th>
+                    <th>Platz 3</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var timeSlot in Model.TimeSlots)
+                {
+                    <tr>
+                        <td class="time-col">@timeSlot.Time.ToString("HH:mm")</td>
+
+                        @for (int court = 1; court <= 3; court++)
+                        {
+                            var reservation = Model.GetReservation(court, timeSlot.Time);
+
+                            if (reservation == null)
+                            {
+                                <td class="slot-available">
+                                    <form method="post" asp-page-handler="CreateReservation"
+                                          style="margin: 0; display: flex; justify-content: center;">
+                                        <input type="hidden" name="CourtNumber" value="@court"/>
+                                        <input type="hidden" name="StartTime" value="@timeSlot.Time"/>
+                                        <button type="submit" class="btn-reserve" title="Jetzt reservieren">+</button>
+                                    </form>
+                                </td>
+                            }
+                            else
+                            {
+                                @if (Model.CurrentPlayer == null)
+                                {
+                                    <td class="slot-reserved">
+                                        🔒 Reserviert
+                                    </td>
+                                }
+                                else
+                                {
+                                    // Wir prüfen, ob es sich um die eigene Reservierung handelt
+                                    bool isMyReservation = Model.CurrentPlayer?.Id == reservation.Player?.Id;
+                                    bool isEvent = !string.IsNullOrWhiteSpace(reservation.EventName);
+
+                                    // CSS-Klasse anpassen: Ist es ein Event, die eigene Reservierung oder eine fremde?
+                                    string tdClass = isEvent ? "slot-event" : (isMyReservation ? "slot-my-reservation" : "slot-reserved");
+
+                                    <td class="@tdClass">
+
+                                        <div style="margin-bottom: 5px; font-weight: bold;">
+                                            @(isEvent ? reservation.EventName : reservation.Player.ToString())
+                                        </div>
+
+                                        @if (isMyReservation || User.IsInRole("Admin"))
+                                        {
+                                            <form method="post" asp-page-handler="DeleteReservation" style="margin: 0;">
+                                                <input type="hidden" name="ReservationId" value="@reservation.Id"/>
+                                                <button type="submit" class="btn-delete-res">Löschen</button>
+                                            </form>
+                                        }
+                                    </td>
+                                }
+                            }
+                        }
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+</main>
+
 </body>
 </html>

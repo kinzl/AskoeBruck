@@ -49,7 +49,8 @@ public class CourtBruck : PageModel
         return Reservations.FirstOrDefault(r => r.CourtNumber == courtNumber && r.StartTime == startTime);
     }
 
-    public IActionResult OnPostCreateReservation()
+    // Wir fügen string? eventName als Parameter hinzu. ASP.NET fängt das automatisch aus dem HTML (name="eventName") ab!
+    public IActionResult OnPostCreateReservation(string? eventName)
     {
         CurrentPlayer = _currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null) return RedirectToPage(nameof(Login));
@@ -73,10 +74,61 @@ public class CourtBruck : PageModel
             Player = CurrentPlayer!
         };
 
+        // Wir prüfen: Wurde ein Text eingegeben UND ist der eingeloggte User wirklich ein Admin?
+        if (!string.IsNullOrWhiteSpace(eventName) && User.IsInRole("Admin"))
+        {
+            newReservation.EventName = eventName.Trim(); // .Trim() entfernt aus Versehen getippte Leerzeichen am Anfang/Ende
+        }
+
         _db.Reservations.Add(newReservation);
         _db.SaveChanges();
 
         return RedirectToPage(new { date = StartTime.ToString("yyyy-MM-dd") });
+    }
+    
+    public IActionResult OnPostCreateEvent(int CourtNumber, string EventName, string StartTimeStr, string EndTimeStr, string CurrentDateStr)
+    {
+        // Sicherheitscheck
+        if (!User.IsInRole("Admin")) return RedirectToPage();
+
+        CurrentPlayer = _currentPlayerService.GetCurrentUser();
+        if (CurrentPlayer == null) return RedirectToPage(nameof(Login));
+
+        // Datum und Zeiten aus den Strings parsen
+        var date = DateTime.Parse(CurrentDateStr);
+        var startTime = DateTime.Parse(StartTimeStr).TimeOfDay;
+        var endTime = DateTime.Parse(EndTimeStr).TimeOfDay;
+
+        // Genaue DateTime Objekte für Start und Ende bauen
+        var startDateTime = date.Add(startTime);
+        var endDateTime = date.Add(endTime);
+
+        // WICHTIG: Schleife, die alle 30 Minuten durchgeht, bis die Endzeit erreicht ist
+        for (var time = startDateTime; time < endDateTime; time = time.AddMinutes(30))
+        {
+            // Prüfen, ob dieser spezifische 30-Min-Block schon belegt ist
+            var existing = _db.Reservations.FirstOrDefault(r => r.CourtNumber == CourtNumber && r.StartTime == time);
+        
+            // Wenn er frei ist, legen wir die Reservierung an
+            if (existing == null)
+            {
+                var newReservation = new Reservation
+                {
+                    CourtNumber = CourtNumber,
+                    StartTime = time,
+                    EndTime = time.AddMinutes(30),
+                    Player = CurrentPlayer,
+                    EventName = EventName.Trim() // Hier setzen wir das Event für jeden Block!
+                };
+
+                _db.Reservations.Add(newReservation);
+            }
+        }
+
+        // Alles auf einmal in der Datenbank speichern
+        _db.SaveChanges();
+
+        return RedirectToPage(new { date = CurrentDateStr });
     }
 
     public IActionResult OnPostDeleteReservation()
