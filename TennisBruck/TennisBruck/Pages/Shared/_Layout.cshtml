@@ -1,13 +1,20 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
-<div class="container">
-    <main role="main" class="pb-3">
-        @RenderBody()
-    </main>
-</div>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TennisBruck</title>
+    
+    <partial name="_PwaHeaders" />
+</head>
+<body>
+    
+<main role="main" class="pb-3">
+    @RenderBody() 
+</main>
 
-<script src="~/lib/jquery/dist/jquery.min.js"></script>
-<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
+<partial name="_PwaScripts" />
+    
 @await RenderSectionAsync("Scripts", required: false)
+</body>
 </html>
