@@ -84,7 +84,7 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
     private async Task DropAllTables(TennisContext db)

@@ -47,8 +47,6 @@ public class Championship : PageModel
         Message = message;
         Competitions = _db.Competitions.ToList();
 
-        // DoublePlayers = _db.PlayerCompetitions.Select(x => x.DoublePlayer).ToList();
-
         PersonalMatches = _db.Matches
             .Include(m => m.Group.Competition)
             .Include(m => m.Team1).ThenInclude(t => t.Players).ThenInclude(tp => tp.Player)
@@ -110,15 +108,16 @@ public class Championship : PageModel
                 .Include(x => x.Sets)
                 .Where(x => x.Competition.Id == SelectedCompetition!.Id));
 
-// Sort teams within each group by their points
             foreach (var group in Groups)
             {
                 group.GroupTeams = group.GroupTeams
-                    .OrderByDescending(gt => gt.Points) // Points should be on GroupTeam
+                    .OrderByDescending(gt => gt.Points)
                     .ToList();
             }
         }
     }
+
+    #region CRUD Competition
 
     public IActionResult OnPostDeleteCompetition(int competitionId)
     {
@@ -153,6 +152,10 @@ public class Championship : PageModel
         HttpContext.Session.SetString("selectedCompetitionId", selectedCompetitionId.ToString());
         return RedirectToPage();
     }
+
+    #endregion
+
+    #region registration
 
     public IActionResult OnPostRegister(int? playerId = null)
     {
@@ -209,82 +212,9 @@ public class Championship : PageModel
         return RedirectToPage(new { Message = "Vom Bewerb abgemeldet" });
     }
 
-    public IActionResult OnPostIncreaseGroupSize(int groupId)
-    {
-        if (!User.IsInRole("Admin")) return Forbid();
-        var group = _db.Groups.Single(x => x.Id == groupId);
-        group.MaxAmount++;
-        _db.SaveChanges();
-        return RedirectToPage();
-    }
+    #endregion
 
-    public IActionResult OnPostDecreaseGroupSize(int groupId)
-    {
-        if (!User.IsInRole("Admin")) return Forbid();
-        var group = _db.Groups.Single(x => x.Id == groupId);
-        if (group.MaxAmount == 1) return RedirectToPage();
-        group.MaxAmount--;
-        _db.SaveChanges();
-        return RedirectToPage();
-    }
-
-    public IActionResult OnPostAddSinglePlayer(int teamId, int groupId)
-    {
-        var group = _db.Groups
-            .Include(g => g.Competition)
-            .Single(g => g.Id == groupId);
-
-        // Team des Spielers im selben Bewerb suchen
-        var existingGroupTeam = _db.GroupTeams
-            .Include(gt => gt.Group)
-            .ThenInclude(g => g.Competition)
-            .Include(gt => gt.Team)
-            .ThenInclude(t => t.Players)
-            .SingleOrDefault(gt =>
-                gt.Team.Id == teamId &&
-                gt.Group.Competition.Id == group.Competition.Id
-            );
-
-        if (existingGroupTeam != null && existingGroupTeam.GroupId == groupId)
-        {
-            // optional: TempData["Message"] = "Spieler ist bereits in dieser Gruppe";
-            return RedirectToPage();
-        }
-
-        if (existingGroupTeam != null)
-        {
-            existingGroupTeam.GroupId = groupId;
-            _db.SaveChanges();
-            return RedirectToPage();
-        }
-
-        var team = _db.Teams.SingleOrDefault(x => x.Id == teamId);
-        if (team == null) return RedirectToPage();
-
-        var groupTeam = new GroupTeam
-        {
-            GroupId = groupId,
-            TeamId = team.Id,
-            Points = 0
-        };
-        _db.GroupTeams.Add(groupTeam);
-        _db.SaveChanges();
-
-        return RedirectToPage();
-    }
-
-    public IActionResult OnPostRemoveTeamFromGroup(int groupId, int teamId)
-    {
-        var groupTeam = _db.GroupTeams
-            .Include(gt => gt.Team)
-            .ThenInclude(t => t.Players)
-            .Single(gt => gt.GroupId == groupId && gt.TeamId == teamId);
-
-        _db.GroupTeams.Remove(groupTeam);
-
-        _db.SaveChanges();
-        return RedirectToPage();
-    }
+    #region Group Management
 
     public IActionResult OnPostCreateGroup()
     {
@@ -364,6 +294,87 @@ public class Championship : PageModel
         return RedirectToPage(new { Message = "Spiele wurden erstellt" });
     }
 
+    public IActionResult OnPostIncreaseGroupSize(int groupId)
+    {
+        if (!User.IsInRole("Admin")) return Forbid();
+        var group = _db.Groups.Single(x => x.Id == groupId);
+        group.MaxAmount++;
+        _db.SaveChanges();
+        return RedirectToPage();
+    }
+
+    public IActionResult OnPostDecreaseGroupSize(int groupId)
+    {
+        if (!User.IsInRole("Admin")) return Forbid();
+        var group = _db.Groups.Single(x => x.Id == groupId);
+        if (group.MaxAmount == 1) return RedirectToPage();
+        group.MaxAmount--;
+        _db.SaveChanges();
+        return RedirectToPage();
+    }
+
+    #endregion
+
+    public IActionResult OnPostAddSinglePlayer(int teamId, int groupId)
+    {
+        var group = _db.Groups
+            .Include(g => g.Competition)
+            .Single(g => g.Id == groupId);
+
+        // Team des Spielers im selben Bewerb suchen
+        var existingGroupTeam = _db.GroupTeams
+            .Include(gt => gt.Group)
+            .ThenInclude(g => g.Competition)
+            .Include(gt => gt.Team)
+            .ThenInclude(t => t.Players)
+            .SingleOrDefault(gt =>
+                gt.Team.Id == teamId &&
+                gt.Group.Competition.Id == group.Competition.Id
+            );
+
+        if (existingGroupTeam != null && existingGroupTeam.GroupId == groupId)
+        {
+            // optional: TempData["Message"] = "Spieler ist bereits in dieser Gruppe";
+            return RedirectToPage();
+        }
+
+        if (existingGroupTeam != null)
+        {
+            existingGroupTeam.GroupId = groupId;
+            _db.SaveChanges();
+            return RedirectToPage();
+        }
+
+        var team = _db.Teams.SingleOrDefault(x => x.Id == teamId);
+        if (team == null) return RedirectToPage();
+
+        var groupTeam = new GroupTeam
+        {
+            GroupId = groupId,
+            TeamId = team.Id,
+            Points = 0
+        };
+        _db.GroupTeams.Add(groupTeam);
+        _db.SaveChanges();
+
+        return RedirectToPage();
+    }
+
+    public IActionResult OnPostRemoveTeamFromGroup(int groupId, int teamId)
+    {
+        var groupTeam = _db.GroupTeams
+            .Include(gt => gt.Team)
+            .ThenInclude(t => t.Players)
+            .Single(gt => gt.GroupId == groupId && gt.TeamId == teamId);
+
+        _db.GroupTeams.Remove(groupTeam);
+
+        _db.SaveChanges();
+        return RedirectToPage();
+    }
+
+    #region Match Management
+
     public IActionResult OnPostSaveMatch(string score, int matchId)
     {
         try
@@ -437,6 +448,8 @@ public class Championship : PageModel
         return RedirectToPage();
     }
 
+    #endregion
+
     public IActionResult OnPostBack()
     {
         return RedirectToPage(nameof(Index));
@@ -448,7 +461,6 @@ public class Championship : PageModel
         if (!_knownBrackets.Contains(SelectedSize)) return RedirectToPage();
 
         UpdateBracket(SelectedSize);
-        // OnPostApplyUserInputs();
         return RedirectToPage();
     }
 
@@ -494,32 +506,6 @@ public class Championship : PageModel
         }
 
         _db.SaveChanges();
-    }
-
-    public IActionResult OnPostApplyUserInputs()
-    {
-        InitValues();
-
-        foreach (var match in Matches)
-        {
-            var input = Inputs.FirstOrDefault(i => i.BracketNo == match.BracketNo);
-
-            if (input != null)
-            {
-                match.Team1 = _db.Teams
-                    .Include(t => t.Players)
-                    .ThenInclude(tp => tp.Player)
-                    .SingleOrDefault(t => t.Id == input.Team1Id);
-
-                match.Team2 = _db.Teams
-                    .Include(t => t.Players)
-                    .ThenInclude(tp => tp.Player)
-                    .SingleOrDefault(t => t.Id == input.Team2Id);
-            }
-        }
-
-        _db.SaveChanges();
-        return RedirectToPage();
     }
 
     public IActionResult OnPostSavePairs(List<PlayerCompetitionPairs> pairs)
@@ -579,6 +565,10 @@ public class Championship : PageModel
     public IActionResult OnPostRemovePlayerFromCompetition(int playerId)
     {
         //ToDO: what happens if you remove the player when he already played group matches
+        var playerRegistration = _db.TournamentRegistrations.SingleOrDefault(x => x.PlayerId == playerId);
+        if (playerRegistration == null) return RedirectToPage(new { Message = "Spieler wurde nicht gefunden" });
+        _db.TournamentRegistrations.Remove(playerRegistration);
+        _db.SaveChanges();
         return RedirectToPage(new { Message = "Spieler wurde entfernt" });
     }
 }

@@ -11,11 +11,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Tennis Club Dashboard</title>
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="~/css/index.css" asp-append-version="true">
-    <partial name="_PwaHeaders" />
+    <partial name="_PwaHeaders"/>
 </head>
 <body>
 
@@ -33,7 +33,9 @@
         else
         {
             <form asp-area="Identity" asp-page="/Account/Login" method="get" class="inline-form">
-                <button type="submit" class="btn-action btn-accent" style="width: auto; padding: 8px 20px; border-radius: 20px;">Login</button>
+                <button type="submit" class="btn-action btn-accent"
+                        style="width: auto; padding: 8px 20px; border-radius: 20px;">Login
+                </button>
             </form>
             <form asp-area="Identity" asp-page="/Account/Register" method="get" class="inline-form">
                 <button type="submit" class="btn-outline-light">Registrieren</button>
@@ -47,7 +49,7 @@
 
 <main class="main-container">
     <div class="dashboard-grid">
-        
+
         <form method="post" asp-page-handler="ReserveCourt" class="dashboard-card">
             <div class="card-icon">🎾</div>
             <h2 class="card-title">Platz Reservierung</h2>
@@ -87,7 +89,8 @@
         }
         else
         {
-            <div class="dashboard-card" style="justify-content: center; background: #e2e8f0; border: 2px dashed #cbd5e1; box-shadow: none;">
+            <div class="dashboard-card"
+                 style="justify-content: center; background: #e2e8f0; border: 2px dashed #cbd5e1; box-shadow: none;">
                 <div class="card-icon" style="opacity: 0.5;">🔒</div>
                 <h2 class="card-title" style="color: var(--text-muted);">Interner Bereich</h2>
                 <p class="card-desc">Bitte logge dich ein, um Turniere, Mitglieder und den Hallenplan zu sehen.</p>
@@ -99,6 +102,6 @@
 <footer class="site-footer">
     <p>&copy; @DateTime.Now.Year Tennis Club ASKÖ Bruck-Peuerbach. Alle Rechte vorbehalten.</p>
 </footer>
-<partial name="_PwaScripts" />
+<partial name="_PwaScripts"/>
 </body>
 </html>

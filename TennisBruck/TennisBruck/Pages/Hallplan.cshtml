@@ -33,9 +33,11 @@
 <main class="main-container" id="main-content" data-me-id="@Model.LoggedInPlayer?.Id">
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
-        
+
         <section class="modern-card" style="margin: 0;">
-            <label style="font-size: 0.85rem; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 8px;">Gewählter Platz / Bewerb</label>
+            <label
+                style="font-size: 0.85rem; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 8px;">Gewählter
+                Platz / Bewerb</label>
             <form method="post" asp-page-handler="SelectHallPlan" style="margin: 0;">
                 <select asp-for="HallPlanId" class="custom-select" onchange="this.form.submit()">
                     <option value="">Bitte auswählen...</option>
@@ -49,22 +51,25 @@
 
         @if (Model.SelectedHallPlanEntity != null)
         {
-            <section class="modern-card" style="margin: 0; display: flex; justify-content: space-between; align-items: center;">
+            <section class="modern-card"
+                     style="margin: 0; display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <span style="font-size: 0.85rem; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 5px;">Mein Status</span>
+                    <span
+                        style="font-size: 0.85rem; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 5px;">Mein Status</span>
                     <h3 style="margin: 0; font-size: 1.2rem; color: @(Model.IsLoggedInPlayerPlaying ? "var(--nav-bg)" : "var(--text-muted)");">
                         @(Model.IsLoggedInPlayerPlaying ? "✅ Eingeteilt" : "⏸️ Pausiert")
                     </h3>
                 </div>
                 <form method="post" asp-page-handler="ChangePlayingState" id="statusForm" style="margin: 0;">
                     <label class="switch">
-                        <input type="checkbox" onchange="this.form.submit()" @(Model.IsLoggedInPlayerPlaying ? "checked" : "")>
+                        <input type="checkbox" onchange="this.form.submit()"
+                               @(Model.IsLoggedInPlayerPlaying ? "checked" : "")>
                         <span class="slider round"></span>
                     </label>
                 </form>
             </section>
         }
-        
+
     </div>
 
     @if (Model.SelectedHallPlanEntity != null)
@@ -201,7 +206,17 @@
                     <form method="post" asp-page-handler="CreateCompetition" style="display: flex; gap: 10px;">
                         <input type="text" name="competitionName" placeholder="Name (z.B. Halle West)"
                                class="input-field" required/>
-                        <button class="btn-action" style="width: auto;">Erstellen</button>
+                        <button class="btn-action" style="width: auto;">Erstellen
+                        </button>
+                    </form>
+                    <form method="post" asp-page-handler="DeleteSelectedHallplan" style="display: flex; gap: 10px;">
+                        @if (Model.SelectedHallPlanEntity != null)
+                        {
+                            <button class="btn-action"
+                                    style="width: auto; background-color: red">Diesen Hallenplan
+                                löschen
+                            </button>
+                        }
                     </form>
                 </div>
             </div>

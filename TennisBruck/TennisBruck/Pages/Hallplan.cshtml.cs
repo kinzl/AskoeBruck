@@ -299,6 +299,17 @@ public class Hallplan : PageModel
         return RedirectToPage(nameof(Hallplan));
     }
 
+    public IActionResult OnPostDeleteSelectedHallplan()
+    {
+        if (!User.IsInRole("Admin")) return Forbid();
+        InitValues();
+        var hallPlanEntity =
+            _db.HallPlanEntities.Single(x => SelectedHallPlanEntity != null && x.Id == SelectedHallPlanEntity.Id);
+        _db.HallPlanEntities.Remove(hallPlanEntity);
+        _db.SaveChanges();
+        return RedirectToPage(nameof(Hallplan));
+    }
+
     public IActionResult OnPostBack()
     {
         return RedirectToPage(nameof(Index));

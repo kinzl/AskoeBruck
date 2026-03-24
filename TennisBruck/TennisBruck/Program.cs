@@ -76,17 +76,27 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 //end resend service
 
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo("/tmp/dpkeys"));
+    .PersistKeysToFileSystem(
+        new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "DataProtectionKeys")));
 
 // ConnectToPostgresDb();
 // ConnectToSqliteDb();
-ConnectToNeonDb();
+if (builder.Environment.IsProduction())
+{
+    ConnectToNeonDb();
+}
+else
+{
+    ConnectToPostgresDb();
+    builder.Services.AddHostedService<StartupBackgroundService>();
+}
 
 builder.Services.AddLogging();
 // builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddHttpClient<EmailService>();
 // builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CurrentPlayerService>();
+builder.Services.AddTransient<IEmailSender, DummyEmailSender>();
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>

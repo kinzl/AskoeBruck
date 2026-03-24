@@ -32,18 +32,4 @@ public class TennisContext : IdentityDbContext<IdentityUser>
     public DbSet<HallPlanEntity> HallPlanEntities { get; set; }
     public DbSet<HallPlanDay> HallPlanDays { get; set; }
     public DbSet<HallPlanRegistration> HallPlanRegistrations { get; set; }
-
-    //ToDO: comment in?
-    // protected override void OnModelCreating(ModelBuilder modelBuilder)
-    // {
-    //     // Registrierung unique
-    //     modelBuilder.Entity<HallPlanRegistration>()
-    //         .HasIndex(x => new { x.PlayerId, x.HallPlanId })
-    //         .IsUnique();
-    //
-    //     // Spieler nur einmal pro Tag
-    //     modelBuilder.Entity<HallPlanDayPlayer>()
-    //         .HasIndex(x => new { x.HallPlanDayId, x.PlayerId })
-    //         .IsUnique();
-    // }
 }
