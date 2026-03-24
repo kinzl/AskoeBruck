@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace TennisDb;
 
-public class TennisContext : IdentityDbContext<IdentityUser>
+public class TennisContext : IdentityDbContext<IdentityUser>, IDataProtectionKeyContext
 {
     public TennisContext(DbContextOptions<TennisContext> options)
         : base(options)
@@ -32,4 +33,5 @@ public class TennisContext : IdentityDbContext<IdentityUser>
     public DbSet<HallPlanEntity> HallPlanEntities { get; set; }
     public DbSet<HallPlanDay> HallPlanDays { get; set; }
     public DbSet<HallPlanRegistration> HallPlanRegistrations { get; set; }
+    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 }

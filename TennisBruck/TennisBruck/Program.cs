@@ -78,6 +78,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(
         new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "DataProtectionKeys")));
+builder.Services.AddDataProtection().PersistKeysToDbContext<TennisContext>();
 
 // ConnectToPostgresDb();
 // ConnectToSqliteDb();
@@ -88,11 +89,11 @@ if (builder.Environment.IsProduction())
 else
 {
     ConnectToPostgresDb();
-    builder.Services.AddHostedService<StartupBackgroundService>();
+    // builder.Services.AddHostedService<StartupBackgroundService>();
 }
 
 builder.Services.AddLogging();
-// builder.Services.AddHostedService<StartupBackgroundService>();
+builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddHttpClient<EmailService>();
 // builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CurrentPlayerService>();
