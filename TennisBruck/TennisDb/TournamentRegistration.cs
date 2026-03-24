@@ -4,6 +4,7 @@ public class TournamentRegistration
 {
     public int Id { get; set; }
 
+    public bool HasWithdrawn { get; set; } = false;
     public int CompetitionId { get; set; }
     public Competition Competition { get; set; }
 

@@ -88,7 +88,7 @@ if (builder.Environment.IsProduction())
 else
 {
     ConnectToPostgresDb();
-    builder.Services.AddHostedService<StartupBackgroundService>();
+    // builder.Services.AddHostedService<StartupBackgroundService>();
 }
 
 builder.Services.AddLogging();

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Group = TennisDb.Group;
 using Match = TennisDb.Match;
 
@@ -26,13 +27,16 @@ public class Championship : PageModel
     public List<KnockoutMatch> Matches { get; set; } = new();
 
     private readonly List<int> _knownBrackets = new() { 2, 4, 8, 16, 32 };
+    private UserManager<IdentityUser> _userManager;
     public string? Message { get; set; }
     public required List<Player> UnregisteredPlayers { get; set; }
 
-    public Championship(CurrentPlayerService currentPlayerService, TennisContext db)
+    public Championship(CurrentPlayerService currentPlayerService, TennisContext db,
+        UserManager<IdentityUser> userManager)
     {
         _currentPlayerService = currentPlayerService;
         _db = db;
+        _userManager = userManager;
     }
 
     public void OnGet(string? message)
@@ -427,25 +431,30 @@ public class Championship : PageModel
             { Message = "Spiele wurden gespeichert" });
     }
 
-    public IActionResult OnPostDeleteMatch(int matchId)
+    public async Task<IActionResult> OnPostDeleteMatchAsync(int matchId)
     {
-        var match = _db.Matches
-            .Include(x => x.Sets)
-            .Include(x => x.Group)
-            .Include(x => x.Winner)
-            .Single(x => x.Id == matchId);
-        match.Sets?.Clear();
-        if (match is not KnockoutMatch)
+        var match = await _db.Matches.FindAsync(matchId);
+        if (match == null) return NotFound();
+
+        // Sicherheitscheck: Darf der User das? (Nur Admin oder beteiligter Spieler bei normalen Matches)
+        bool isAdmin = User.IsInRole("Admin");
+
+        // WICHTIG: Wenn es ein W.O. war, darf NUR der Admin es löschen!
+        if (match.IsWalkover && !isAdmin)
         {
-            var groupTeam = _db.GroupTeams
-                .Single(x => x.Group.Id == match.Group!.Id && x.Team.Id == match.Winner!.Id);
-            groupTeam.Points -= 3;
+            Message = "Ein Walkover kann nur vom Admin rückgängig gemacht werden.";
+            return RedirectToPage();
         }
 
+        match.Sets = null;
+        match.IsWalkover = false;
+        match.WalkoverTeamId = null;
+        match.WinnerTeamId = null;
         match.Winner = null;
-        _db.SaveChanges();
 
-        return RedirectToPage();
+        await _db.SaveChangesAsync();
+
+        return RedirectToPage(new { Message = "Das Match wurde erfolgreich zurückgesetzt und ist wieder offen." });
     }
 
     #endregion
@@ -508,6 +517,32 @@ public class Championship : PageModel
         _db.SaveChanges();
     }
 
+    public IActionResult OnPostApplyUserInputs()
+    {
+        InitValues();
+
+        foreach (var match in Matches)
+        {
+            var input = Inputs.FirstOrDefault(i => i.BracketNo == match.BracketNo);
+
+            if (input != null)
+            {
+                match.Team1 = _db.Teams
+                    .Include(t => t.Players)
+                    .ThenInclude(tp => tp.Player)
+                    .SingleOrDefault(t => t.Id == input.Team1Id);
+
+                match.Team2 = _db.Teams
+                    .Include(t => t.Players)
+                    .ThenInclude(tp => tp.Player)
+                    .SingleOrDefault(t => t.Id == input.Team2Id);
+            }
+        }
+
+        _db.SaveChanges();
+        return RedirectToPage();
+    }
+
     public IActionResult OnPostSavePairs(List<PlayerCompetitionPairs> pairs)
     {
         InitValues();
@@ -562,13 +597,130 @@ public class Championship : PageModel
         return RedirectToPage(new { Message = "Neues Datum wurde gespeichert" });
     }
 
-    public IActionResult OnPostRemovePlayerFromCompetition(int playerId)
+    public async Task<IActionResult> OnPostGiveWalkoverAsync(int matchId)
     {
-        //ToDO: what happens if you remove the player when he already played group matches
-        var playerRegistration = _db.TournamentRegistrations.SingleOrDefault(x => x.PlayerId == playerId);
-        if (playerRegistration == null) return RedirectToPage(new { Message = "Spieler wurde nicht gefunden" });
-        _db.TournamentRegistrations.Remove(playerRegistration);
-        _db.SaveChanges();
-        return RedirectToPage(new { Message = "Spieler wurde entfernt" });
+        // Lade das Match inklusive der Teams und deren Spieler
+        var match = await _db.Matches
+            .Include(m => m.Team1).ThenInclude(t => t.Players).ThenInclude(teamPlayer => teamPlayer.Player)
+            .Include(m => m.Team2).ThenInclude(t => t.Players).ThenInclude(teamPlayer => teamPlayer.Player)
+            .Include(match => match.Group)
+            .FirstOrDefaultAsync(m => m.Id == matchId);
+
+        if (match == null) return NotFound();
+
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null) return Unauthorized();
+
+        // Gehört der User zu Team 1 oder Team 2?
+        bool isTeam1 = match.Team1 != null && match.Team1.Players.Any(p => p.Player.IdentityUserId == currentUser.Id);
+        bool isTeam2 = match.Team2 != null && match.Team2.Players.Any(p => p.Player.IdentityUserId == currentUser.Id);
+
+        if (!isTeam1 && !isTeam2) return Forbid(); // User spielt in diesem Match gar nicht mit
+
+        // Walkover setzen
+        match.IsWalkover = true;
+
+        // Wer hat aufgegeben und wer hat gewonnen?
+        if (match is { Team1: not null, Team2: not null })
+        {
+            match.WalkoverTeamId = isTeam1 ? match.Team1.Id : match.Team2.Id;
+            match.Winner = isTeam1 ? match.Team2 : match.Team1;
+        }
+
+        await _db.SaveChangesAsync();
+
+        Message = "Du hast das Match aufgegeben. Der Sieg geht per w.o. an die Gegner.";
+        return RedirectToPage(new { Message });
+    }
+
+// 2. Für den Admin (wählt aus, welches Team W.O. gegeben hat)
+    public async Task<IActionResult> OnPostAdminWalkoverAsync(int matchId, int walkoverTeamId)
+    {
+        var match = await _db.Matches
+            .Include(m => m.Team1).ThenInclude(t => t.Players).ThenInclude(teamPlayer => teamPlayer.Player)
+            .Include(m => m.Team2).ThenInclude(t => t.Players).ThenInclude(teamPlayer => teamPlayer.Player)
+            .Include(match => match.Group)
+            .FirstOrDefaultAsync(m => m.Id == matchId);
+        if (match == null) return NotFound();
+
+        match.IsWalkover = true;
+        match.WalkoverTeamId = walkoverTeamId;
+
+        // Der Sieger ist das Team, das NICHT aufgegeben hat
+        match.Winner = match.Team1 != null && match.Team1.Id == walkoverTeamId ? match.Team2 : match.Team1;
+
+        await _db.SaveChangesAsync();
+
+        Message = "Match wurde durch Admin als w.o. gewertet.";
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostWithdrawPlayerAsync(int playerId, int competitionId)
+    {
+        return await WithDrawPlayer(playerId, competitionId);
+    }
+
+    public async Task<IActionResult> OnPostSelfWithdrawAsync(int selectedCompetition)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null) return Unauthorized();
+
+        var player = _db.Players.Single(x => x.IdentityUserId == currentUser.Id);
+
+        return await WithDrawPlayer(player.Id, selectedCompetition);
+    }
+
+    private async Task<IActionResult> WithDrawPlayer(int playerId, int competitionId)
+    {
+        var userTeams = await _db.Teams
+            .Include(t => t.Players)
+            .Where(t => t.CompetitionId == competitionId && t.Players.Any(p => p.PlayerId == playerId))
+            .ToListAsync();
+
+        var teamIds = userTeams.Select(t => t.Id).ToList();
+
+        if (!teamIds.Any())
+        {
+            Message = "Spieler ist in keinen Teams dieses Bewerbs.";
+            return RedirectToPage(new { selectedCompetitionId = competitionId });
+        }
+
+        // 2. Finde alle noch NICHT GESPIELTEN Matches für diese Teams in diesem Bewerb
+        // (Wir holen auch Team1 und Team2 dazu, falls wir sie gleich brauchen)
+        var unplayedMatches = await _db.Matches
+            .Include(x => x.Winner)
+            .Include(x => x.Team1)
+            .Include(x => x.Team2)
+            .Where(m => teamIds.Contains(m.Team1.Id) || teamIds.Contains(m.Team2.Id))
+            .ToListAsync();
+
+        // 3. Setze alle diese Matches automatisch auf w.o.
+        foreach (var match in unplayedMatches)
+        {
+            match.IsWalkover = true;
+
+            // Welches Team hat das W.O. verursacht? (Das Team des abgemeldeten Spielers)
+            bool team1Withdrew = teamIds.Contains(match.Team1.Id);
+
+            match.WalkoverTeamId = team1Withdrew ? match.Team1.Id : match.Team2.Id;
+            match.WinnerTeamId = team1Withdrew ? match.Team2.Id : match.Team1.Id;
+        }
+
+        // 4. (Optional) Markiere den Spieler in der Anmeldeliste als abgemeldet
+        // Falls du die HasWithdrawn-Spalte schon in 'RegisteredCompetitionPlayers' hast:
+
+        var registration = await _db.TournamentRegistrations
+            .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.PlayerId == playerId);
+        if (registration != null)
+        {
+            registration.HasWithdrawn = true;
+        }
+
+        await _db.SaveChangesAsync();
+        return RedirectToPage(new
+        {
+            Message =
+                "Spieler wurde abgemeldet. Alle seine offenen Spiele wurden automatisch als w.o. für die Gegner gewertet."
+        });
     }
 }

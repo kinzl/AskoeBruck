@@ -77,6 +77,13 @@
                     else
                     {
                         <span class="badge-closed">Anmeldung geschlossen</span>
+                        @if (Model.IsRegistered)
+                        {
+                            <button class="btn-action btn-warning" asp-page-handler="SelfWithdraw"
+                                    onclick="return confirm('Möchtest du das Turnier wirklich komplett abbrechen? ALLE deine noch offenen Matches werden als Sieg (w.o.) für deine Gegner gewertet. Das kann nicht rückgängig gemacht werden!');">
+                                🏳️ Turnier abbrechen (w.o.)
+                            </button>
+                        }
                     }
                 </form>
             </div>
@@ -332,13 +339,24 @@
                                                     }
                                                     else
                                                     {
-                                                        <div
-                                                            class="bracket-team-read-1">@(match.Team1?.PlayersToString() ?? "TBD")</div>
-                                                        <div
-                                                            class="bracket-team-read-2">@(match.Team2?.PlayersToString() ?? "TBD")</div>
+                                                        <div class="bracket-team-read-1"
+                                                             style="@(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "text-decoration: line-through; color: gray;" : "")">
+                                                            @(match.Team1?.PlayersToString() ?? "TBD") @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "✅" : "")
+                                                        </div>
+                                                        <div class="bracket-team-read-2"
+                                                             style="@(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "text-decoration: line-through; color: gray;" : "")">
+                                                            @(match.Team2?.PlayersToString() ?? "TBD") @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "✅" : "")
+                                                        </div>
                                                     }
 
-                                                    @if (match.Sets != null && match.Sets.Any())
+                                                    @if (match.IsWalkover)
+                                                    {
+                                                        var winnerName = match.WalkoverTeamId == match.Team1?.Id ? match.Team2?.PlayersToString() : match.Team1?.PlayersToString();
+                                                        <div class="bracket-result text-warning fw-bold">w.o.
+                                                            (Sieger: @winnerName)
+                                                        </div>
+                                                    }
+                                                    else if (match.Sets != null && match.Sets.Any())
                                                     {
                                                         <div class="bracket-result">
                                                             @match.SetToString()
@@ -374,9 +392,15 @@
                 {
                     <div class="match-scorecard">
                         <div class="match-players">
-                            <span>@match.Team1?.PlayersToString()</span>
+                            <span
+                                style="@(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "text-decoration: line-through; color: gray;" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "font-weight: bold; color: #10b981;" : ""))">
+                                @match.Team1?.PlayersToString() @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "✅" : "")
+                            </span>
                             <span class="text-vs">vs</span>
-                            <span>@match.Team2?.PlayersToString()</span>
+                            <span
+                                style="@(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "text-decoration: line-through; color: gray;" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "font-weight: bold; color: #10b981;" : ""))">
+                                @match.Team2?.PlayersToString() @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "✅" : "")
+                            </span>
                             <span class="badge-phase">
                                 @(match.Group != null ? match.Group.Competition.Name : "K.O Phase")
                             </span>
@@ -384,10 +408,30 @@
 
                         <form method="post" class="match-action-form">
                             <input type="hidden" name="matchId" value="@match.Id"/>
-                            @if (match.Sets == null || !match.Sets.Any())
+
+                            @if (match.IsWalkover)
                             {
-                                <input type="text" name="score" placeholder="6:4 6:2" class="input-score"/>
-                                <button class="btn-action btn-accent" asp-page-handler="SaveMatch">Eintragen</button>
+                                var winnerName = match.WalkoverTeamId == match.Team1?.Id ? match.Team2?.PlayersToString() : match.Team1?.PlayersToString();
+                                <div class="match-score text-warning fw-bold">w.o. (Sieger: @winnerName)</div>
+                                @if (match.Team1?.Players.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true || match.Team2?.Players.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true)
+                                {
+                                    <button class="btn-action btn-danger btn-xs" asp-page-handler="DeleteMatch">
+                                        Rückgängig
+                                    </button>
+                                }
+                            }
+                            else if (match.Sets == null || !match.Sets.Any())
+                            {
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="text" name="score" placeholder="6:4 6:2" class="input-score"/>
+                                    <button class="btn-action btn-accent" asp-page-handler="SaveMatch">Eintragen
+                                    </button>
+                                    <button type="submit" class="btn-action btn-warning btn-sm"
+                                            asp-page-handler="GiveWalkover"
+                                            onclick="return confirm('Möchtest du dieses Match wirklich aufgeben? Dein Gegner gewinnt durch w.o.');">
+                                        🏳️ W.O. geben
+                                    </button>
+                                </div>
                             }
                             else
                             {
@@ -424,10 +468,16 @@
                             @registered.Player.ToString()
                             @if (User.IsInRole("Admin"))
                             {
-                                <form method="post" class="inline-form-zero">
-                                    <input type="hidden" name="playerId" value="@registered.Id"/>
-                                    <button asp-page-handler="RemovePlayerFromCompetition"
-                                            class="btn-delete-participant" title="Entfernen">✖
+                                <form method="post" class="inline-form-zero"
+                                      style="display: flex; gap: 4px; align-items: center;">
+                                    <input type="hidden" name="playerId" value="@registered.Player.Id"/>
+                                    <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+
+                                    <button asp-page-handler="WithdrawPlayer" class="btn-warning btn-xs"
+                                            style="border-radius: 4px; padding: 2px 6px; border: none; cursor: pointer;"
+                                            title="Spieler w.o. abmelden"
+                                            onclick="return confirm('Soll dieser Spieler wirklich verletzungsbedingt/w.o. abgemeldet werden? ALLE seine offenen Matches in diesem Bewerb werden sofort als Sieg für die Gegner gewertet!');">
+                                        🏳️ Alles W.O.
                                     </button>
                                 </form>
                             }
@@ -465,9 +515,15 @@
                     {
                         <div class="match-scorecard">
                             <div class="match-players text-sm">
-                                <span>@match.Team1.PlayersToString()</span>
+                                <span
+                                    style="@(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "text-decoration: line-through; color: gray;" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "font-weight: bold; color: #10b981;" : ""))">
+                                    @match.Team1?.PlayersToString() @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "✅" : "")
+                                </span>
                                 <span class="text-vs">vs</span>
-                                <span>@match.Team2.PlayersToString()</span>
+                                <span
+                                    style="@(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "text-decoration: line-through; color: gray;" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "font-weight: bold; color: #10b981;" : ""))">
+                                    @match.Team2?.PlayersToString() @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "✅" : "")
+                                </span>
                                 <span class="badge-phase">
                                     @(match.Group != null ? match.Group.Competition.Name : "K.O Phase")
                                 </span>
@@ -477,11 +533,34 @@
                             {
                                 <form method="post" class="match-action-form">
                                     <input type="hidden" name="matchId" value="@match.Id"/>
-                                    @if (match.Sets == null || !match.Sets.Any())
+
+                                    @if (match.IsWalkover)
                                     {
-                                        <input type="text" name="score" placeholder="6:4 6:2" class="input-score-sm"/>
-                                        <button class="btn-action btn-xs" asp-page-handler="SaveMatch">Speichern
+                                        var winnerName = match.WalkoverTeamId == match.Team1?.Id ? match.Team2?.PlayersToString() : match.Team1?.PlayersToString();
+                                        <div class="match-score text-warning fw-bold">w.o. (Sieger: @winnerName)</div>
+                                        <button class="btn-action btn-danger btn-xs" asp-page-handler="DeleteMatch">
+                                            Löschen
                                         </button>
+                                    }
+                                    else if (match.Sets == null || !match.Sets.Any())
+                                    {
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <input type="text" name="score" placeholder="6:4 6:2"
+                                                   class="input-score-sm"/>
+                                            <button class="btn-action btn-xs" asp-page-handler="SaveMatch">Speichern
+                                            </button>
+
+                                            <button type="submit" class="btn-action btn-warning btn-xs"
+                                                    asp-page-handler="AdminWalkover" name="walkoverTeamId"
+                                                    value="@match.Team1.Id" title="T1 aufgeben">
+                                                W.O. T1
+                                            </button>
+                                            <button type="submit" class="btn-action btn-warning btn-xs"
+                                                    asp-page-handler="AdminWalkover" name="walkoverTeamId"
+                                                    value="@match.Team2.Id" title="T2 aufgeben">
+                                                W.O. T2
+                                            </button>
+                                        </div>
                                     }
                                     else
                                     {
@@ -494,8 +573,16 @@
                             }
                             else
                             {
-                                <div
-                                    class="match-score">@(match.Sets != null && match.Sets.Any() ? match.SetToString() : "Offen")</div>
+                                @if (match.IsWalkover)
+                                {
+                                    var winnerName = match.WalkoverTeamId == match.Team1?.Id ? match.Team2?.PlayersToString() : match.Team1?.PlayersToString();
+                                    <div class="match-score text-warning fw-bold">w.o. (Sieger: @winnerName)</div>
+                                }
+                                else
+                                {
+                                    <div
+                                        class="match-score">@(match.Sets != null && match.Sets.Any() ? match.SetToString() : "Offen")</div>
+                                }
                             }
                         </div>
                     }
