@@ -68,4 +68,10 @@
         <_ContentIncludedByDefault Remove="Pages\Shared\Components\ScoreComponent\ScoreComponent.cshtml" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="Pages\GroupTableEntry.cs">
+        <DependentUpon>Championship.cshtml</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>

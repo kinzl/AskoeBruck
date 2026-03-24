@@ -8,5 +8,4 @@ public class GroupTeam
 
     public int TeamId { get; set; }
     public Team Team { get; set; }
-    public int Points { get; set; }
 }

@@ -213,7 +213,12 @@
                             <div class="group-panel-body">
                                 @for (int i = 0; i < group.MaxAmount; i++)
                                 {
-                                    var groupTeam = group.GroupTeams.ElementAtOrDefault(i);
+                                    // Wir holen uns die sicher berechneten Daten für diese Zeile
+                                    var tableEntry = Model.GroupTables.ContainsKey(group.Id) ? Model.GroupTables[group.Id].ElementAtOrDefault(i) : null;
+
+                                    // Das ist dein Original-Objekt, das wir für die Team-Namen und den Lösch-Button brauchen
+                                    var groupTeam = tableEntry?.GroupTeam ?? group.GroupTeams.ElementAtOrDefault(i);
+
                                     <div class="group-team-row">
                                         @if (User.IsInRole("Admin"))
                                         {
@@ -242,7 +247,19 @@
                                         }
 
                                         <div class="group-score-wrapper">
-                                            <span class="group-points">@(groupTeam?.Points ?? 0)</span>
+                                            @if (tableEntry != null)
+                                            {
+                                                <span class="group-points"
+                                                      title="Punkte (Siege)">@tableEntry.Points</span>
+                                                <span class="group-points"
+                                                      title="Games (Gewonnen:Verloren)">@tableEntry.GamesWon:@tableEntry.GamesLost</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="group-points">0</span>
+                                                <span class="group-points">0:0</span>
+                                            }
+
                                             @if (User.IsInRole("Admin") && groupTeam != null)
                                             {
                                                 <form method="post">

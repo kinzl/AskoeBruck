@@ -30,6 +30,7 @@ public class Championship : PageModel
     private UserManager<IdentityUser> _userManager;
     public string? Message { get; set; }
     public required List<Player> UnregisteredPlayers { get; set; }
+    public Dictionary<int, List<GroupTableEntry>> GroupTables { get; set; } = new();
 
     public Championship(CurrentPlayerService currentPlayerService, TennisContext db,
         UserManager<IdentityUser> userManager)
@@ -114,9 +115,11 @@ public class Championship : PageModel
 
             foreach (var group in Groups)
             {
-                group.GroupTeams = group.GroupTeams
-                    .OrderByDescending(gt => gt.Points)
-                    .ToList();
+                // Holt alle Matches für genau diese Gruppe
+                var matchesForGroup = AllMatches.Where(m => m.Group?.Id == group.Id).ToList();
+
+                // Berechnet die Tabelle und speichert sie im Dictionary unter der Gruppen-ID
+                GroupTables[group.Id] = CalculateGroupTable(group.GroupTeams, matchesForGroup);
             }
         }
     }
@@ -355,8 +358,7 @@ public class Championship : PageModel
         var groupTeam = new GroupTeam
         {
             GroupId = groupId,
-            TeamId = team.Id,
-            Points = 0
+            TeamId = team.Id
         };
         _db.GroupTeams.Add(groupTeam);
         _db.SaveChanges();
@@ -410,13 +412,6 @@ public class Championship : PageModel
             if (setsWonPlayer1 == setsWonPlayer2)
                 return RedirectToPage(new { Message = "Unentschieden ist nicht erlaubt" });
             var winner = setsWonPlayer1 > setsWonPlayer2 ? match.Team1 : match.Team2;
-            if (match is not KnockoutMatch)
-            {
-                var groupPlayer = _db.GroupTeams
-                    .Single(x => x.Group.Id == match.Group!.Id && x.Team.Id == winner!.Id);
-                groupPlayer.Points += 3;
-            }
-
             match.Winner = winner;
 
             _db.SaveChanges();
@@ -433,28 +428,37 @@ public class Championship : PageModel
 
     public async Task<IActionResult> OnPostDeleteMatchAsync(int matchId)
     {
-        var match = await _db.Matches.FindAsync(matchId);
+        // WICHTIG: .Include(m => m.Sets) hinzufügen, damit er die Sätze auch findet!
+        var match = await _db.Matches
+            .Include(m => m.Sets)
+            .FirstOrDefaultAsync(m => m.Id == matchId);
+
         if (match == null) return NotFound();
 
-        // Sicherheitscheck: Darf der User das? (Nur Admin oder beteiligter Spieler bei normalen Matches)
         bool isAdmin = User.IsInRole("Admin");
-
-        // WICHTIG: Wenn es ein W.O. war, darf NUR der Admin es löschen!
         if (match.IsWalkover && !isAdmin)
         {
             Message = "Ein Walkover kann nur vom Admin rückgängig gemacht werden.";
             return RedirectToPage();
         }
 
+        // --- NEU: Normale Sätze ECHT aus der Datenbank löschen ---
+        if (match.Sets != null && match.Sets.Any())
+        {
+            _db.Sets.RemoveRange(match.Sets);
+        }
+
+        // Alles sauber zurücksetzen
         match.Sets = null;
         match.IsWalkover = false;
         match.WalkoverTeamId = null;
         match.WinnerTeamId = null;
-        match.Winner = null;
 
         await _db.SaveChangesAsync();
 
-        return RedirectToPage(new { Message = "Das Match wurde erfolgreich zurückgesetzt und ist wieder offen." });
+        Message = "Das Match wurde erfolgreich zurückgesetzt und ist wieder offen.";
+        // Passe den Redirect an deine Route an, falls nötig
+        return RedirectToPage();
     }
 
     #endregion
@@ -722,5 +726,89 @@ public class Championship : PageModel
             Message =
                 "Spieler wurde abgemeldet. Alle seine offenen Spiele wurden automatisch als w.o. für die Gegner gewertet."
         });
+    }
+
+    private List<GroupTableEntry> CalculateGroupTable(IEnumerable<GroupTeam> groupTeams,
+        IEnumerable<Match> groupMatches)
+    {
+        var table = new List<GroupTableEntry>();
+
+        foreach (var groupTeam in groupTeams)
+        {
+            var entry = new GroupTableEntry { GroupTeam = groupTeam };
+
+            // HIER filtern wir die Matches für das aktuelle Team (das ist "teamMatches")
+            var teamMatches = groupMatches.Where(m =>
+                (m.Team1.Id == groupTeam.TeamId || m.Team2.Id == groupTeam.TeamId)).ToList();
+
+            entry.MatchesPlayed = teamMatches.Count;
+
+            // Jetzt werten wir diese Matches aus
+            foreach (var match in teamMatches)
+            {
+                // Greife sicher auf die ID zu
+                int team1Id = match.Team1.Id;
+                bool isTeam1 = team1Id == groupTeam.TeamId;
+
+                if (match.IsWalkover)
+                {
+                    // LOGIK FÜR W.O. MATCHES
+                    if (match.IsWalkover)
+                    {
+                        // LOGIK FÜR W.O. MATCHES
+                        // Der Gewinner ist das Team, das in diesem Match NICHT w.o. gegeben hat!
+                        bool isWinner = match.WalkoverTeamId != groupTeam.TeamId;
+
+                        if (isWinner)
+                        {
+                            entry.Points++; // 1 Siegpunkt
+                            entry.SetsWon += 2; // 2 Sätze
+                            entry.GamesWon += 12; // 12 Games
+                        }
+                        else
+                        {
+                            entry.SetsLost += 2;
+                            entry.GamesLost += 12;
+                        }
+                    }
+                }
+                else if (match.Sets != null && match.Sets.Any())
+                {
+                    // LOGIK FÜR NORMALE MATCHES
+                    int setsWonHere = 0;
+                    int setsLostHere = 0;
+
+                    foreach (var set in match.Sets)
+                    {
+                        int myGames = isTeam1 ? set.Player1GamesWon : set.Player2GamesWon;
+                        int oppGames = isTeam1 ? set.Player2GamesWon : set.Player1GamesWon;
+
+                        entry.GamesWon += myGames;
+                        entry.GamesLost += oppGames;
+
+                        if (myGames > oppGames) setsWonHere++;
+                        else if (oppGames > myGames) setsLostHere++;
+                    }
+
+                    entry.SetsWon += setsWonHere;
+                    entry.SetsLost += setsLostHere;
+
+                    // Hat das Team das normale Match gewonnen? Dann gibt es den Punkt!
+                    if (setsWonHere > setsLostHere)
+                    {
+                        entry.Points++;
+                    }
+                }
+            }
+
+            table.Add(entry);
+        }
+
+        // Die Tabelle nach Punkten, dann Satzdifferenz, dann Gamedifferenz sortieren
+        return table
+            .OrderByDescending(e => e.Points)
+            .ThenByDescending(e => e.SetDifference)
+            .ThenByDescending(e => e.GameDifference)
+            .ToList();
     }
 }

@@ -8,6 +8,5 @@ public partial class Team
 
     public int BracketNo { get; set; }
     public Competition Competition { get; set; }
-
     public ICollection<TeamPlayer> Players { get; set; } = new List<TeamPlayer>();
 }

@@ -288,20 +288,17 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
         db.GroupTeams.Add(new GroupTeam
         {
             Group = groupa,
-            Team = team,
-            Points = 0
+            Team = team
         });
         db.GroupTeams.Add(new GroupTeam
         {
             Group = groupa,
-            Team = team1,
-            Points = 0
+            Team = team1
         });
         db.GroupTeams.Add(new GroupTeam
         {
             Group = groupb,
-            Team = team2,
-            Points = 0
+            Team = team2
         });
         // db.GroupTeams.Add(new GroupTeam
         // {
