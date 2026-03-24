@@ -96,7 +96,6 @@ builder.Services.AddLogging();
 builder.Services.AddHttpClient<EmailService>();
 // builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CurrentPlayerService>();
-builder.Services.AddTransient<IEmailSender, DummyEmailSender>();
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
