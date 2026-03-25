@@ -741,7 +741,7 @@ public class Championship : PageModel
 
             // HIER filtern wir die Matches für das aktuelle Team (das ist "teamMatches")
             var teamMatches = groupMatches.Where(m =>
-                (m.Team1.Id == groupTeam.TeamId || m.Team2.Id == groupTeam.TeamId)).ToList();
+                m.Team1.Id == groupTeam.TeamId || m.Team2.Id == groupTeam.TeamId).ToList();
 
             entry.MatchesPlayed = teamMatches.Count;
 

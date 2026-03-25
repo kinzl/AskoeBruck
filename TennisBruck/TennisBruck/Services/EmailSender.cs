@@ -9,7 +9,7 @@ public class EmailSender(ResendClient resend) : IEmailSender
     {
         await resend.EmailSendAsync(new EmailMessage
         {
-            From = "onboarding@resend.dev",
+            From = "noreply@tennis-bruck.at",
             To = { email },
             Subject = subject,
             HtmlBody = htmlMessage
