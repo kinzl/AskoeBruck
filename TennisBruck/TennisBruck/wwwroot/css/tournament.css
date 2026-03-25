@@ -1,6 +1,3 @@
-/* ==========================================
-   MODERN SPORTS APP THEME - BASE VARIABLES
-   ========================================== */
 :root {
     --app-bg: #f3f4f6;
     --nav-bg: #0f172a;
@@ -722,4 +719,27 @@ input:focus, select:focus {
 
 .btn-back-header:hover {
     background: rgba(255, 255, 255, 0.2);
+}
+
+.team-walkover {
+    text-decoration: line-through;
+    color: gray;
+}
+
+.team-walkover-winner {
+    font-weight: bold;
+    color: #10b981;
+}
+
+.flex-center-gap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-action-micro {
+    border-radius: 4px;
+    padding: 2px 6px;
+    border: none;
+    cursor: pointer;
 }

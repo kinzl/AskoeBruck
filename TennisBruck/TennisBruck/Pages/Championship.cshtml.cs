@@ -70,6 +70,7 @@ public class Championship : PageModel
                 .Where(x => x.Competition.Id == SelectedCompetition!.Id)
                 .Any(x => x.Player.Id == CurrentPlayer.Id);
 
+
             RegisteredTeams = _db.Teams
                 .Include(x => x.Players)
                 .ThenInclude(x => x.Player)
@@ -135,6 +136,7 @@ public class Championship : PageModel
 
         _db.Competitions.Remove(competition);
         _db.SaveChanges();
+        HttpContext.Session.SetString("selectedCompetitionId", "0");
         return RedirectToPage(new { Message = "Bewerb wurde gelöscht" });
     }
 
