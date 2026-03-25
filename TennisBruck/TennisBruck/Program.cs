@@ -89,11 +89,11 @@ if (builder.Environment.IsProduction())
 else
 {
     ConnectToPostgresDb();
-    // builder.Services.AddHostedService<StartupBackgroundService>();
+    builder.Services.AddHostedService<StartupBackgroundService>();
 }
 
 builder.Services.AddLogging();
-builder.Services.AddHostedService<StartupBackgroundService>();
+// builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddHttpClient<EmailService>();
 // builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CurrentPlayerService>();
