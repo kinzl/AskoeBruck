@@ -66,19 +66,6 @@ builder.Services.AddTransient<IResend, ResendClient>();
 // 4. Deinen eigenen EmailSender registrieren
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options =>
-    {
-        // Hier stellst du ein, ob man die Email bestätigen muss, um sich einzuloggen
-        options.SignIn.RequireConfirmedAccount = true;
-    })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<TennisContext>();
-//end resend service
-
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(
-        new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "DataProtectionKeys")));
-builder.Services.AddDataProtection().PersistKeysToDbContext<TennisContext>();
 
 // ConnectToPostgresDb();
 // ConnectToSqliteDb();
@@ -91,6 +78,14 @@ else
     ConnectToPostgresDb();
     builder.Services.AddHostedService<StartupBackgroundService>();
 }
+
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<TennisContext>()
+    .SetApplicationName("TennisBruck");
+
+builder.Services.AddDefaultIdentity<IdentityUser>(options => { options.SignIn.RequireConfirmedAccount = true; })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<TennisContext>();
 
 builder.Services.AddLogging();
 // builder.Services.AddHostedService<StartupBackgroundService>();
@@ -106,9 +101,6 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
     options.Cookie.HttpOnly = true;
 });
-
-builder.Services.AddDataProtection()
-    .SetDefaultKeyLifetime(TimeSpan.FromDays(365));
 
 // builder.Services.AddHttpLogging();
 builder.Services.AddHttpContextAccessor();

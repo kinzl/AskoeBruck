@@ -81,10 +81,11 @@
                         {
                             <button class="btn-action btn-warning" asp-page-handler="SelfWithdraw"
                                     onclick="return confirm('Möchtest du das Turnier wirklich komplett abbrechen? ALLE deine noch offenen Matches werden als Sieg (w.o.) für deine Gegner gewertet. Das kann nicht rückgängig gemacht werden!');">
-                                🏳️ Turnier abbrechen (w.o.)
+                                Turnier abbrechen (w.o.)
                             </button>
                         }
                     }
+                    <span class="badge-count">Spieler: @Model.RegisteredCompetitionPlayers.Count</span>
                 </form>
             </div>
 
@@ -107,74 +108,112 @@
             <section class="modern-card">
                 <div class="card-header">
                     <h2>👥 Doppel-Paare Konfigurieren</h2>
-                    <span class="badge-count">Spieler: @Model.RegisteredCompetitionPlayers.Count</span>
+                    <form method="post" class="m-0">
+                        <input type="hidden" name="ChampionshipId" value="@Model.SelectedCompetition.Id"/>
+
+                        <button type="submit" asp-page-handler="GeneratePairs" class="btn-action">
+                            🔀 Doppel-Paare zufällig auslosen
+                        </button>
+                    </form>
                 </div>
 
-                <form method="post" asp-page-handler="SavePairs">
-                    <div class="double-pair-wrapper">
-                        @for (int i = 0; i < Model.RegisteredCompetitionPlayers.Count / 2; i++)
-                        {
-                            var firstPlayer = Model.RegisteredCompetitionPlayers[i * 2].Player;
-                            var secondPlayer = Model.RegisteredCompetitionPlayers[i * 2 + 1].Player;
+                @{
+                    int totalPairs = Model.RegisteredCompetitionPlayers.Count / 2;
+                }
 
-                            <div class="double-pair-row">
-                                <div class="flex-1">
-                                    <label class="double-pair-label">Spieler A</label>
-                                    @if (User.IsInRole("Admin"))
-                                    {
-                                        <select name="pairs[@i].SinglePlayerId" class="mt-5">
-                                            <option value="">Auswählen</option>
-                                            @foreach (var registration in Model.RegisteredCompetitionPlayers)
-                                            {
-                                                <option value="@registration.Player.Id"
-                                                        selected="@(registration.Player.Id == firstPlayer.Id)">
-                                                    @registration.Player.ToString()
-                                                </option>
-                                            }
-                                        </select>
-                                    }
-                                    else
-                                    {
-                                        <div class="readonly-input">@firstPlayer.ToString()</div>
-                                    }
+                <form method="post">
+                    <input type="hidden" name="ChampionshipId" value="@Model.SelectedCompetition?.Id"/>
+
+                    <div class="pairs-grid-container">
+                        @for (int i = 0; i < totalPairs; i++)
+                        {
+                            var currentTeam = (Model.RegisteredTeams != null && i < Model.RegisteredTeams.Count) ? Model.RegisteredTeams[i] : null;
+                            var firstPlayer = currentTeam?.TeamPlayers?.ElementAtOrDefault(0)?.Player;
+                            var secondPlayer = currentTeam?.TeamPlayers?.ElementAtOrDefault(1)?.Player;
+
+                            <div class="pair-card">
+                                <div
+                                    style="font-weight: bold; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; margin-bottom: 15px;">
+                                    Paar @(i + 1)
                                 </div>
 
-                                <span class="double-pair-separator">+</span>
+                                @if (currentTeam != null && User.IsInRole("Admin"))
+                                {
+                                    <input type="hidden" name="pairs[@i].TeamId" value="@currentTeam.Id"/>
+                                }
 
-                                <div class="flex-1">
-                                    <label class="double-pair-label">Spieler B</label>
-                                    @if (User.IsInRole("Admin"))
-                                    {
-                                        <select name="pairs[@i].DoublePlayerId" class="mt-5">
-                                            <option value="">Auswählen</option>
-                                            @foreach (var registration in Model.RegisteredCompetitionPlayers)
-                                            {
-                                                <option value="@registration.Player.Id"
-                                                        selected="@(registration.Player.Id == secondPlayer.Id)">
-                                                    @registration.Player.ToString()
-                                                </option>
-                                            }
-                                        </select>
-                                    }
-                                    else
-                                    {
-                                        <div class="readonly-input">@secondPlayer.ToString()</div>
-                                    }
+                                <div class="players-flex-row">
+                                    <div class="player-column">
+                                        <label class="player-label">Spieler A</label>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <select name="pairs[@i].SinglePlayerId" class="player-select">
+                                                <option value="">Auswählen...</option>
+                                                @foreach (var registration in Model.RegisteredCompetitionPlayers)
+                                                {
+                                                    bool isSelected = (firstPlayer != null && registration.Player.Id == firstPlayer.Id);
+                                                    <option value="@registration.Player.Id" selected="@isSelected">
+                                                        @registration.Player.ToString()
+                                                    </option>
+                                                }
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            <div class="player-select" style="background-color: #e9ecef;">
+                                                @(firstPlayer != null ? firstPlayer.ToString() : "Offen")
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="plus-symbol">+</div>
+
+                                    <div class="player-column">
+                                        <label class="player-label">Spieler B</label>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <select name="pairs[@i].DoublePlayerId" class="player-select">
+                                                <option value="">Auswählen...</option>
+                                                @foreach (var registration in Model.RegisteredCompetitionPlayers)
+                                                {
+                                                    bool isSelected = (secondPlayer != null && registration.Player.Id == secondPlayer.Id);
+                                                    <option value="@registration.Player.Id" selected="@isSelected">
+                                                        @registration.Player.ToString()
+                                                    </option>
+                                                }
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            <div class="player-select" style="background-color: #e9ecef;">
+                                                @(secondPlayer != null ? secondPlayer.ToString() : "Offen")
+                                            </div>
+                                        }
+                                    </div>
                                 </div>
                             </div>
                         }
                     </div>
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <div class="group-save-wrapper">
-                            <button type="submit" class="btn-action btn-accent">💾 Paare Speichern</button>
-                        </div>
-                    }
+
                 </form>
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="d-flex justify-content-center align-items-center gap-3 mt-4 mb-5">
+                        <form method="post" asp-page-handler="SavePairs">
+                            <div class="group-save-wrapper m-0">
+                                <button type="submit" class="btn-action btn-accent">
+                                    💾 Paare Speichern
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                }
+
             </section>
         }
 
-        @if (Model.Groups != null && Model.Groups.Any() || User.IsInRole("Admin"))
+        @if (Model.Groups.Any() || User.IsInRole("Admin"))
         {
             <section class="modern-card">
                 <div class="card-header">
@@ -186,6 +225,23 @@
                         </form>
                     }
                 </div>
+
+                <form method="post">
+                    <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+
+                    <div class="group-generator-toolbar">
+                        <label for="targetGroupSize" class="toolbar-label">
+                            Wunsch-Gruppengröße:
+                        </label>
+
+                        <input type="number" id="targetGroupSize" name="TargetGroupSize"
+                               class="toolbar-input" value="4" min="2" max="10" required/>
+        
+                        <button type="submit" asp-page-handler="GenerateGroups" class="btn-generate">
+                            Zufällig Auslosen
+                        </button>
+                    </div>
+                </form>
 
                 <div class="group-grid">
                     @foreach (var group in Model.Groups)
@@ -214,7 +270,7 @@
                                 @for (int i = 0; i < group.MaxAmount; i++)
                                 {
                                     // Wir holen uns die sicher berechneten Daten für diese Zeile
-                                    var tableEntry = Model.GroupTables.ContainsKey(group.Id) ? Model.GroupTables[group.Id].ElementAtOrDefault(i) : null;
+                                    var tableEntry = Model.GroupTables.TryGetValue(group.Id, out var table) ? table.ElementAtOrDefault(i) : null;
 
                                     // Das ist dein Original-Objekt, das wir für die Team-Namen und den Lösch-Button brauchen
                                     var groupTeam = tableEntry?.GroupTeam ?? group.GroupTeams.ElementAtOrDefault(i);
@@ -431,7 +487,7 @@
                             {
                                 var winnerName = match.WalkoverTeamId == match.Team1?.Id ? match.Team2?.PlayersToString() : match.Team1?.PlayersToString();
                                 <div class="match-score text-warning fw-bold">w.o. (Sieger: @winnerName)</div>
-                                @if (match.Team1?.Players.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true || match.Team2?.Players.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true)
+                                @if (match.Team1?.TeamPlayers.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true || match.Team2?.TeamPlayers.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true)
                                 {
                                     <button class="btn-action btn-danger btn-xs" asp-page-handler="DeleteMatch">
                                         Rückgängig
@@ -447,14 +503,14 @@
                                     <button type="submit" class="btn-action btn-warning btn-sm"
                                             asp-page-handler="GiveWalkover"
                                             onclick="return confirm('Möchtest du dieses Match wirklich aufgeben? Dein Gegner gewinnt durch w.o.');">
-                                        🏳️ W.O. geben
+                                        W.O. geben
                                     </button>
                                 </div>
                             }
                             else
                             {
                                 <div class="match-score">@match.SetToString()</div>
-                                @if (match.Team1?.Players.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true || match.Team2?.Players.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true)
+                                @if (match.Team1?.TeamPlayers.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true || match.Team2?.TeamPlayers.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true)
                                 {
                                     <button class="btn-action btn-danger btn-xs" asp-page-handler="DeleteMatch">
                                         Rückgängig
@@ -494,7 +550,7 @@
                                             class="btn-warning btn-xs btn-action-micro"
                                             title="Spieler w.o. abmelden"
                                             onclick="return confirm('Soll dieser Spieler wirklich verletzungsbedingt/w.o. abgemeldet werden? ALLE seine offenen Matches in diesem Bewerb werden sofort als Sieg für die Gegner gewertet!');">
-                                        🏳️ Alles W.O.
+                                        Alles W.O.
                                     </button>
                                 </form>
                             }

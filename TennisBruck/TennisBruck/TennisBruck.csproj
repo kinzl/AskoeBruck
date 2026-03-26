@@ -13,6 +13,7 @@
         <PackageReference Include="GrueneisR.RestClientGenerator" Version="1.2.3" />
         <PackageReference Include="MailKit" Version="4.8.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.5" />
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.4" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.4" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.4" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
@@ -66,6 +67,11 @@
     <ItemGroup>
         <_ContentIncludedByDefault Remove="Pages\Components\ScoreControllerInvokeAsync.cshtml" />
         <_ContentIncludedByDefault Remove="Pages\Shared\Components\ScoreComponent\ScoreComponent.cshtml" />
+        <_ContentIncludedByDefault Remove="wwwroot\css\championship\app.css" />
+        <_ContentIncludedByDefault Remove="wwwroot\css\championship\championship.css" />
+        <_ContentIncludedByDefault Remove="wwwroot\css\championship\responsive.css" />
+        <_ContentIncludedByDefault Remove="wwwroot\css\championship\tournament.css" />
+        <_ContentIncludedByDefault Remove="wwwroot\css\championship\variables.css" />
     </ItemGroup>
 
     <ItemGroup>

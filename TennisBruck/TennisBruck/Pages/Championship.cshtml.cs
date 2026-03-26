@@ -54,11 +54,11 @@ public class Championship : PageModel
 
         PersonalMatches = _db.Matches
             .Include(m => m.Group.Competition)
-            .Include(m => m.Team1).ThenInclude(t => t.Players).ThenInclude(tp => tp.Player)
-            .Include(m => m.Team2).ThenInclude(t => t.Players).ThenInclude(tp => tp.Player)
+            .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+            .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
             .Include(m => m.Sets)
-            .Where(m => m.Team1.Players.Any(tp => tp.PlayerId == CurrentPlayer.Id) ||
-                        m.Team2.Players.Any(tp => tp.PlayerId == CurrentPlayer.Id))
+            .Where(m => m.Team1.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id) ||
+                        m.Team2.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id))
             .ToList();
 
         Matches = _db.KnockoutMatch.ToList();
@@ -72,7 +72,7 @@ public class Championship : PageModel
 
 
             RegisteredTeams = _db.Teams
-                .Include(x => x.Players)
+                .Include(x => x.TeamPlayers)
                 .ThenInclude(x => x.Player)
                 .Where(x => x.Competition.Id == SelectedCompetition!.Id)
                 .ToList();
@@ -91,7 +91,7 @@ public class Championship : PageModel
                 .Where(g => g.Competition.Id == selectedCompetitionId)
                 .Include(g => g.GroupTeams)
                 .ThenInclude(gt => gt.Team)
-                .ThenInclude(t => t.Players)
+                .ThenInclude(t => t.TeamPlayers)
                 .ThenInclude(tp => tp.Player)
                 .Include(g => g.Competition)
                 .ThenInclude(c => c.Teams)
@@ -180,7 +180,7 @@ public class Championship : PageModel
             var team = new Team
             {
                 CompetitionId = SelectedCompetition.Id,
-                Players = new List<TeamPlayer>
+                TeamPlayers = new List<TeamPlayer>
                 {
                     new() { PlayerId = playerId ?? CurrentPlayer.Id }
                 }
@@ -202,7 +202,7 @@ public class Championship : PageModel
             x.Player.Id == CurrentPlayer.Id && x.Team.Competition.Id == SelectedCompetition!.Id);
 
         var team = _db.Teams.SingleOrDefault(x =>
-            x.Competition.Id == SelectedCompetition!.Id && x.Players.Any(y => y.Player.Id == CurrentPlayer.Id));
+            x.Competition.Id == SelectedCompetition!.Id && x.TeamPlayers.Any(y => y.Player.Id == CurrentPlayer.Id));
 
         if (registeredPlayer != null) _db.TournamentRegistrations.Remove(registeredPlayer);
         if (teamPlayer != null) _db.TeamPlayer.Remove(teamPlayer);
@@ -211,7 +211,7 @@ public class Championship : PageModel
 
         var groupTeam = _db.GroupTeams.SingleOrDefault(x =>
             x.Group.Competition.Id == SelectedCompetition!.Id &&
-            x.Team.Players.Any(y => y.Player.Id == CurrentPlayer.Id));
+            x.Team.TeamPlayers.Any(y => y.Player.Id == CurrentPlayer.Id));
         if (groupTeam != null)
         {
             _db.GroupTeams.Remove(groupTeam);
@@ -273,7 +273,7 @@ public class Championship : PageModel
             .Where(g => g.Competition.Id == SelectedCompetition!.Id)
             .Include(g => g.GroupTeams)
             .ThenInclude(gt => gt.Team)
-            .ThenInclude(t => t.Players) // TeamPlayer
+            .ThenInclude(t => t.TeamPlayers) // TeamPlayer
             .ThenInclude(tp => tp.Player)
             .ToList();
 
@@ -335,7 +335,7 @@ public class Championship : PageModel
             .Include(gt => gt.Group)
             .ThenInclude(g => g.Competition)
             .Include(gt => gt.Team)
-            .ThenInclude(t => t.Players)
+            .ThenInclude(t => t.TeamPlayers)
             .SingleOrDefault(gt =>
                 gt.Team.Id == teamId &&
                 gt.Group.Competition.Id == group.Competition.Id
@@ -372,7 +372,7 @@ public class Championship : PageModel
     {
         var groupTeam = _db.GroupTeams
             .Include(gt => gt.Team)
-            .ThenInclude(t => t.Players)
+            .ThenInclude(t => t.TeamPlayers)
             .Single(gt => gt.GroupId == groupId && gt.TeamId == teamId);
 
         _db.GroupTeams.Remove(groupTeam);
@@ -534,12 +534,12 @@ public class Championship : PageModel
             if (input != null)
             {
                 match.Team1 = _db.Teams
-                    .Include(t => t.Players)
+                    .Include(t => t.TeamPlayers)
                     .ThenInclude(tp => tp.Player)
                     .SingleOrDefault(t => t.Id == input.Team1Id);
 
                 match.Team2 = _db.Teams
-                    .Include(t => t.Players)
+                    .Include(t => t.TeamPlayers)
                     .ThenInclude(tp => tp.Player)
                     .SingleOrDefault(t => t.Id == input.Team2Id);
             }
@@ -563,8 +563,8 @@ public class Championship : PageModel
 
             // Prüfen, ob Spieler schon in einem Team in dieser Competition sind
             bool exists = _db.Teams
-                .Include(t => t.Players)
-                .Any(t => t.Players.Any(tp => tp.PlayerId == player1Id || tp.PlayerId == player2Id)
+                .Include(t => t.TeamPlayers)
+                .Any(t => t.TeamPlayers.Any(tp => tp.PlayerId == player1Id || tp.PlayerId == player2Id)
                           && t.CompetitionId == SelectedCompetition!.Id);
 
             if (exists)
@@ -574,7 +574,7 @@ public class Championship : PageModel
             var team = new Team
             {
                 CompetitionId = SelectedCompetition!.Id,
-                Players = new List<TeamPlayer>
+                TeamPlayers = new List<TeamPlayer>
                 {
                     new() { PlayerId = player1Id },
                     new() { PlayerId = player2Id }
@@ -607,8 +607,8 @@ public class Championship : PageModel
     {
         // Lade das Match inklusive der Teams und deren Spieler
         var match = await _db.Matches
-            .Include(m => m.Team1).ThenInclude(t => t.Players).ThenInclude(teamPlayer => teamPlayer.Player)
-            .Include(m => m.Team2).ThenInclude(t => t.Players).ThenInclude(teamPlayer => teamPlayer.Player)
+            .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
+            .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
             .Include(match => match.Group)
             .FirstOrDefaultAsync(m => m.Id == matchId);
 
@@ -618,8 +618,10 @@ public class Championship : PageModel
         if (currentUser == null) return Unauthorized();
 
         // Gehört der User zu Team 1 oder Team 2?
-        bool isTeam1 = match.Team1 != null && match.Team1.Players.Any(p => p.Player.IdentityUserId == currentUser.Id);
-        bool isTeam2 = match.Team2 != null && match.Team2.Players.Any(p => p.Player.IdentityUserId == currentUser.Id);
+        bool isTeam1 = match.Team1 != null &&
+                       match.Team1.TeamPlayers.Any(p => p.Player.IdentityUserId == currentUser.Id);
+        bool isTeam2 = match.Team2 != null &&
+                       match.Team2.TeamPlayers.Any(p => p.Player.IdentityUserId == currentUser.Id);
 
         if (!isTeam1 && !isTeam2) return Forbid(); // User spielt in diesem Match gar nicht mit
 
@@ -643,8 +645,8 @@ public class Championship : PageModel
     public async Task<IActionResult> OnPostAdminWalkoverAsync(int matchId, int walkoverTeamId)
     {
         var match = await _db.Matches
-            .Include(m => m.Team1).ThenInclude(t => t.Players).ThenInclude(teamPlayer => teamPlayer.Player)
-            .Include(m => m.Team2).ThenInclude(t => t.Players).ThenInclude(teamPlayer => teamPlayer.Player)
+            .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
+            .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
             .Include(match => match.Group)
             .FirstOrDefaultAsync(m => m.Id == matchId);
         if (match == null) return NotFound();
@@ -679,8 +681,8 @@ public class Championship : PageModel
     private async Task<IActionResult> WithDrawPlayer(int playerId, int competitionId)
     {
         var userTeams = await _db.Teams
-            .Include(t => t.Players)
-            .Where(t => t.CompetitionId == competitionId && t.Players.Any(p => p.PlayerId == playerId))
+            .Include(t => t.TeamPlayers)
+            .Where(t => t.CompetitionId == competitionId && t.TeamPlayers.Any(p => p.PlayerId == playerId))
             .ToListAsync();
 
         var teamIds = userTeams.Select(t => t.Id).ToList();
@@ -812,5 +814,123 @@ public class Championship : PageModel
             .ThenByDescending(e => e.SetDifference)
             .ThenByDescending(e => e.GameDifference)
             .ToList();
+    }
+
+    public async Task<IActionResult> OnPostGenerateGroupsAsync(int competitionId, int targetGroupSize)
+    {
+        // Sicherheitscheck
+        if (targetGroupSize < 2) targetGroupSize = 2;
+
+        // 1. Alle angemeldeten Spieler holen
+        var players = await _db.TournamentRegistrations
+            .Where(p => p.CompetitionId == competitionId)
+            .ToListAsync();
+
+        if (!players.Any()) return RedirectToPage(new { id = competitionId });
+
+        // 2. ALTE Gruppen löschen (Reset)
+        var oldGroups = await _db.Groups
+            // Falls du die Spieler-Liste in der Gruppe includen musst, damit EF sie beim Löschen sauber trennt:
+            .Include(g => g.GroupTeams)
+            .Include(g => g.Matches)
+            .Where(g => g.CompetitionId == competitionId)
+            .ToListAsync();
+
+        _db.Matches.RemoveRange(oldGroups.SelectMany(x => x.Matches).ToList());
+        _db.GroupTeams.RemoveRange(oldGroups.SelectMany(gt => gt.GroupTeams).ToList());
+        _db.Groups.RemoveRange(oldGroups);
+
+        await _db.SaveChangesAsync();
+
+        // 3. Wieviele NEUE Gruppen brauchen wir?
+        int numberOfGroups = (int)Math.Ceiling((double)players.Count / targetGroupSize);
+
+        // 4. NEUE Gruppen im Arbeitsspeicher anlegen (noch nicht in der DB!)
+        var newGroups = new List<Group>();
+        for (int i = 0; i < numberOfGroups; i++)
+        {
+            newGroups.Add(new Group
+            {
+                CompetitionId = competitionId,
+                GroupName = $"Gruppe {(char)('A' + i)}",
+                MaxAmount = targetGroupSize,
+                GroupTeams = []
+            });
+        }
+
+        // 5. Spieler zufällig mischen
+        var random = new Random();
+        var shuffledPlayers = _db.Teams.Where(x => x.CompetitionId == competitionId).ToList();
+
+        shuffledPlayers = shuffledPlayers.OrderBy(x => random.Next()).ToList();
+
+        for (int i = 0; i < shuffledPlayers.Count; i++)
+        {
+            int groupIndex = i % numberOfGroups;
+
+            _db.GroupTeams.Add(new GroupTeam()
+            {
+                Group = newGroups[groupIndex],
+                TeamId = shuffledPlayers[i].Id
+            });
+        }
+
+        _db.Groups.AddRange(newGroups);
+        await _db.SaveChangesAsync();
+
+        return RedirectToPage(new { id = competitionId });
+    }
+
+    public async Task<IActionResult> OnPostGeneratePairsAsync(int championshipId)
+    {
+        // 1. Alle angemeldeten Spieler holen
+        var players = await _db.TournamentRegistrations
+            .Where(p => p.CompetitionId == championshipId)
+            .Include(x => x.Player)
+            .ToListAsync();
+
+        // Bei weniger als 2 Spielern können wir kein Doppel bilden
+        if (players.Count < 2) return RedirectToPage(new { id = championshipId });
+
+        // 2. ALTE Teams/Paare löschen (Reset-Funktion)
+        // Passe "GroupTeams" an den Namen deiner Tabelle an, in der die Doppel-Teams gespeichert werden!
+        var oldTeams = await _db.Teams.Where(x => x.CompetitionId == championshipId).ToListAsync();
+        var oldGroupTeams = await _db.GroupTeams
+            .Where(t => t.Group.CompetitionId == championshipId)
+            .ToListAsync();
+
+        _db.GroupTeams.RemoveRange(oldGroupTeams);
+        _db.Teams.RemoveRange(oldTeams);
+        await _db.SaveChangesAsync();
+
+        // 3. Spieler zufällig mischen
+        var rng = new Random();
+        var shuffledPlayers = players.OrderBy(x => rng.Next()).ToList();
+
+        List<Team> newTeams = [];
+
+        // 4. In 2er-Schritten durch die Liste gehen
+        for (int i = 0; i < shuffledPlayers.Count - 1; i += 2)
+        {
+            var player1 = shuffledPlayers[i];
+            var player2 = shuffledPlayers[i + 1];
+
+            // Neues Team erstellen
+            var team = new Team
+            {
+                CompetitionId = championshipId,
+                TeamPlayers = new List<TeamPlayer>
+                    { new() { Player = player1.Player }, new() { Player = player2.Player } }
+            };
+            newTeams.Add(team);
+        }
+
+        // Info: Wenn es z.B. 15 Spieler gibt, wird der 15. Spieler (Index 14) von der 
+        // Schleife (wegen i < Count - 1) ignoriert und bekommt noch kein Team.
+
+        _db.Teams.AddRange(newTeams);
+        await _db.SaveChangesAsync();
+
+        return RedirectToPage(new { id = championshipId });
     }
 }

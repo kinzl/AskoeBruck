@@ -743,3 +743,115 @@ input:focus, select:focus {
     border: none;
     cursor: pointer;
 }
+
+/* Das Grid zwingt die Boxen nebeneinander! */
+.pairs-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    margin-top: 25px;
+}
+
+/* Die optische Karte für jedes Paar */
+.pair-card {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Spieler A und B direkt nebeneinander in der Karte */
+.players-flex-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.player-column {
+    flex: 1; /* Beide Dropdowns werden gleich groß */
+}
+
+.player-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #495057;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.player-select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.plus-symbol {
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: #adb5bd;
+    margin-top: 20px; /* Rutscht etwas runter, damit es zwischen den Dropdowns steht */
+}
+
+/* Container für die gesamte Auslosungs-Leiste */
+.group-generator-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: #f8fafc; /* Sehr helles Grau-Blau */
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin-bottom: 25px;
+    max-width: fit-content; /* Passt sich der Breite des Inhalts an */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* Der Text "Wunsch-Gruppengröße:" */
+.toolbar-label {
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* Das Zahlen-Eingabefeld */
+.toolbar-input {
+    width: 70px;
+    text-align: center;
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-weight: bold;
+    color: #1e293b;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Leuchtet leicht blau auf, wenn man reinklickt */
+.toolbar-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Der Auslosen-Button */
+.btn-generate {
+    background-color: #1a1e36; /* Dein dunkles Navy-Blau */
+    color: #ffffff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* Hover-Effekt für den Button */
+.btn-generate:hover {
+    background-color: #2a3158;
+}
