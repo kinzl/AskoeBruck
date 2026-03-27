@@ -15,9 +15,7 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
     public async Task<IActionResult> OnGet(string? date)
     {
-        var user = currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
-        CurrentPlayer = user;
+        CurrentPlayer = currentPlayerService.GetCurrentUser()!;
 
         // Parse the date or default to today
         CurrentDate = string.IsNullOrEmpty(date) ? DateTime.Today : DateTime.Parse(date);
@@ -56,10 +54,8 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
     // Wir fügen string? eventName als Parameter hinzu. ASP.NET fängt das automatisch aus dem HTML (name="eventName") ab!
     public IActionResult OnPostCreateReservation(string? eventName)
     {
-        var user = currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
-        CurrentPlayer = user;
-        
+        CurrentPlayer = currentPlayerService.GetCurrentUser()!;
+
         // Check if the reservation already exists
         var existing = db.Reservations.FirstOrDefault(r =>
             r.CourtNumber == CourtNumber && r.StartTime == StartTime);
@@ -98,9 +94,7 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         // Sicherheitscheck
         if (!User.IsInRole("Admin")) return RedirectToPage();
 
-        var user = currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
-        CurrentPlayer = user;
+        CurrentPlayer = currentPlayerService.GetCurrentUser()!;
 
         // Datum und Zeiten aus den Strings parsen
         var date = DateTime.Parse(CurrentDateStr);
@@ -141,9 +135,7 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
     public IActionResult OnPostDeleteReservation()
     {
-        var user = currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
-        CurrentPlayer = user;
+        CurrentPlayer = currentPlayerService.GetCurrentUser()!;
 
         Console.WriteLine(StartTime);
         // Find the reservation

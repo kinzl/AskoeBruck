@@ -18,9 +18,7 @@ public class Members(
     public async Task<IActionResult> OnGet(string? infoBox)
     {
         InfoBox = infoBox;
-        var user = currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
-        LoggedInPlayer = user;
+        LoggedInPlayer = currentPlayerService.GetCurrentUser()!;
         AllPlayers = db.Players.Include(x => x.IdentityUser).ToList();
         var adminUsers = await userManager.GetUsersInRoleAsync("Admin");
         AdminUserIds = adminUsers.Select(u => u.Id).ToList();

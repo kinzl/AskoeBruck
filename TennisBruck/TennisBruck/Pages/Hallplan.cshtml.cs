@@ -33,9 +33,7 @@ public class Hallplan(
     {
         HallPlanId = HttpContext.Session.GetInt32("selectedHallPlanId") ?? 0;
 
-        var user = currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
-        LoggedInPlayer = user;
+        LoggedInPlayer = currentPlayerService.GetCurrentUser()!;
 
         HallPlanEntity = db.HallPlanEntities.ToList();
         SelectedHallPlanEntity = db.HallPlanEntities.SingleOrDefault(x => x.Id == HallPlanId);
@@ -236,8 +234,7 @@ public class Hallplan(
     public IActionResult OnPostChangePlayingState()
     {
         InitValues();
-        var user = currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        var user = currentPlayerService.GetCurrentUser()!;
 
         var player = db.Players
             .Include(x => x.IdentityUser)

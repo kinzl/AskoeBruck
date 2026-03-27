@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using Resend;
 using TennisContext = TennisDb.TennisContext;
 using Microsoft.EntityFrameworkCore;
+using TennisBruck.Pages.Filter;
 using TennisDb;
 
 string corsKey = "_myCorsKey";
@@ -18,8 +19,11 @@ string restClientFilename = "_requests.http";
 DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddRazorPages();
-
+builder.Services.AddRazorPages()
+    .AddMvcOptions(options =>
+    {
+        options.Filters.Add<ZombieUserFilter>();
+    });
 Console.WriteLine($"Current Environment: {builder.Environment.EnvironmentName}");
 
 #region -------------------------------------------- ConfigureServices

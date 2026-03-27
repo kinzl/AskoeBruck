@@ -10,28 +10,20 @@ public class PartnerBoardModel(
 {
     public Dictionary<DateTime, List<AvailabilitySlot>> SlotsByDay { get; set; } = new();
     public int CurrentPlayerId { get; set; }
+    public List<AvailabilitySlot> MyFixedMatches { get; set; } = [];
 
-    // 1. Neue Eigenschaft für die fixierten Matches hinzufügen (oben bei den anderen Properties)
-    public List<AvailabilitySlot> MyFixedMatches { get; set; } = new();
-
-// 2. Die OnGetAsync Methode updaten
     public async Task<IActionResult> OnGetAsync()
     {
-        var user = currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
-        CurrentPlayerId = user.Id;
-
         var oldSlots = await db.AvailabilitySlots
             .Where(s => s.Date < DateTime.Today)
             .ToListAsync();
 
-        if (oldSlots.Any()) // Wenn er welche findet...
+        if (oldSlots.Any())
         {
-            db.AvailabilitySlots.RemoveRange(oldSlots); // ...alle auf einmal löschen
-            await db.SaveChangesAsync(); // ...und ab in den Papierkorb!
+            db.AvailabilitySlots.RemoveRange(oldSlots);
+            await db.SaveChangesAsync();
         }
 
-        // A) Hole die OFFENEN Slots (für das allgemeine Board)
         var availableSlots = await db.AvailabilitySlots
             .Include(s => s.Player)
             .Where(s => s.Date >= DateTime.Today && s.IsMatched == false)
@@ -60,9 +52,7 @@ public class PartnerBoardModel(
 
     public async Task<IActionResult> OnPostAcceptMatchAsync(int slotId)
     {
-        var user = currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
-        CurrentPlayerId = user.Id;
+        CurrentPlayerId = currentPlayerService.GetCurrentUser()!.Id;
 
         var slot = await db.AvailabilitySlots
             .Include(s => s.Player)

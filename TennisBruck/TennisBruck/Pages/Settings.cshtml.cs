@@ -16,17 +16,13 @@ public class Settings(
     public IActionResult OnGet(string? infoText)
     {
         InfoText = infoText;
-        var user = currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
-        CurrentPlayer = user;
+        CurrentPlayer = currentPlayerService.GetCurrentUser()!;
         return Page();
     }
 
     public IActionResult OnPostChangeSettings(RegistrationDto body)
     {
-        var user = currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
-        CurrentPlayer = user;
+        CurrentPlayer = currentPlayerService.GetCurrentUser()!;
         CurrentPlayer.Firstname = body.Firstname;
         CurrentPlayer.Lastname = body.Lastname;
         CurrentPlayer.Username = body.Username;

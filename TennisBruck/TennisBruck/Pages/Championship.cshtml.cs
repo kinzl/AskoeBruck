@@ -6,11 +6,13 @@ namespace TennisBruck.Pages;
 
 [Authorize]
 [BindProperties]
-public class Championship : PageModel
+public class Championship(
+    CurrentPlayerService currentPlayerService,
+    TennisContext db,
+    UserManager<IdentityUser> userManager)
+    : PageModel
 {
-    private TennisContext _db;
     public bool IsRegistered { get; set; }
-    private CurrentPlayerService _currentPlayerService;
     public required Player CurrentPlayer { get; set; }
 
     public required List<Competition> Competitions { get; set; }
@@ -22,23 +24,14 @@ public class Championship : PageModel
     public required List<Team> RegisteredTeams { get; set; }
     [BindProperty] public int SelectedSize { get; set; }
 
-    [BindProperty] public List<BracketInput> Inputs { get; set; } = new();
+    [BindProperty] public List<BracketInput> Inputs { get; set; } = [];
 
-    public List<KnockoutMatch> Matches { get; set; } = new();
+    public List<KnockoutMatch> Matches { get; set; } = [];
 
-    private readonly List<int> _knownBrackets = new() { 2, 4, 8, 16, 32 };
-    private UserManager<IdentityUser> _userManager;
+    private readonly List<int> _knownBrackets = [2, 4, 8, 16, 32];
     public string? Message { get; set; }
     public required List<Player> UnregisteredPlayers { get; set; }
     public Dictionary<int, List<GroupTableEntry>> GroupTables { get; set; } = new();
-
-    public Championship(CurrentPlayerService currentPlayerService, TennisContext db,
-        UserManager<IdentityUser> userManager)
-    {
-        _currentPlayerService = currentPlayerService;
-        _db = db;
-        _userManager = userManager;
-    }
 
     public IActionResult OnGet(string? message)
     {
@@ -48,13 +41,11 @@ public class Championship : PageModel
     private IActionResult InitValues(string? message = null)
     {
         int? selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
-        var user = _currentPlayerService.GetCurrentUser();
-        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
-        CurrentPlayer = user;
+        CurrentPlayer = currentPlayerService.GetCurrentUser()!;
         Message = message;
-        Competitions = _db.Competitions.ToList();
+        Competitions = db.Competitions.ToList();
 
-        PersonalMatches = _db.Matches
+        PersonalMatches = db.Matches
             .Include(m => m.Group.Competition)
             .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
             .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
@@ -63,33 +54,33 @@ public class Championship : PageModel
                         m.Team2.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id))
             .ToList();
 
-        Matches = _db.KnockoutMatch.ToList();
+        Matches = db.KnockoutMatch.ToList();
         if (selectedCompetitionId != 0)
         {
             SelectedCompetition = Competitions.FirstOrDefault(c => c.Id == selectedCompetitionId);
 
-            IsRegistered = _db.TournamentRegistrations
+            IsRegistered = db.TournamentRegistrations
                 .Where(x => x.Competition.Id == SelectedCompetition!.Id)
                 .Any(x => x.Player.Id == CurrentPlayer.Id);
 
 
-            RegisteredTeams = _db.Teams
+            RegisteredTeams = db.Teams
                 .Include(x => x.TeamPlayers)
                 .ThenInclude(x => x.Player)
                 .Where(x => x.Competition.Id == SelectedCompetition!.Id)
                 .ToList();
 
-            RegisteredCompetitionPlayers = _db.TournamentRegistrations
+            RegisteredCompetitionPlayers = db.TournamentRegistrations
                 .Include(x => x.Competition)
                 .Include(x => x.Player)
                 .Where(x => x.Competition.Id == selectedCompetitionId)
                 .ToList();
 
-            UnregisteredPlayers = _db.Players
+            UnregisteredPlayers = db.Players
                 .Where(p => p.TournamentRegistrations.All(r => r.CompetitionId != SelectedCompetition!.Id))
                 .ToList();
 
-            Groups = _db.Groups
+            Groups = db.Groups
                 .Where(g => g.Competition.Id == selectedCompetitionId)
                 .Include(g => g.GroupTeams)
                 .ThenInclude(gt => gt.Team)
@@ -99,7 +90,7 @@ public class Championship : PageModel
                 .ThenInclude(c => c.Teams)
                 .ToList();
 
-            AllMatches = _db.Matches
+            AllMatches = db.Matches
                 .Include(x => x.Group)
                 .ThenInclude(x => x.Competition)
                 .Include(x => x.Team1)
@@ -108,7 +99,7 @@ public class Championship : PageModel
                 .Where(x => x.Group != null && x.Group.Competition.Id == SelectedCompetition!.Id)
                 .ToList();
 
-            AllMatches.AddRange(_db.KnockoutMatch
+            AllMatches.AddRange(db.KnockoutMatch
                 .Include(x => x.Group)
                 .ThenInclude(x => x.Competition)
                 .Include(x => x.Team1)
@@ -135,11 +126,11 @@ public class Championship : PageModel
     {
         if (!User.IsInRole("Admin")) return Forbid();
 
-        var competition = _db.Competitions.Find(competitionId);
+        var competition = db.Competitions.Find(competitionId);
         if (competition == null) return RedirectToPage(new { Message = "Ein Fehler ist aufgetreten" });
 
-        _db.Competitions.Remove(competition);
-        _db.SaveChanges();
+        db.Competitions.Remove(competition);
+        db.SaveChanges();
         HttpContext.Session.SetString("selectedCompetitionId", "0");
         return RedirectToPage(new { Message = "Bewerb wurde gelöscht" });
     }
@@ -149,14 +140,14 @@ public class Championship : PageModel
         if (!User.IsInRole("Admin")) return Forbid();
         if (competitionName.IsNullOrEmpty() || !isSingle.HasValue)
             return RedirectToPage(new { Message = "Bitte geben Sie einen Namen ein oder Wählen Sie einen Bewerb" });
-        _db.Competitions.Add(new Competition
+        db.Competitions.Add(new Competition
         {
             Name = competitionName,
             IsSingle = isSingle.Value,
             RegistrationUntil = DateTime.Now.AddDays(14),
             Teams = []
         });
-        _db.SaveChanges();
+        db.SaveChanges();
         return RedirectToPage(new { Message = "Neuer Bewerb erstellt" });
     }
 
@@ -173,7 +164,7 @@ public class Championship : PageModel
     public IActionResult OnPostRegister(int? playerId = null)
     {
         InitValues();
-        _db.TournamentRegistrations.Add(new TournamentRegistration()
+        db.TournamentRegistrations.Add(new TournamentRegistration()
         {
             Competition = SelectedCompetition!,
             PlayerId = playerId ?? CurrentPlayer.Id,
@@ -189,39 +180,39 @@ public class Championship : PageModel
                     new() { PlayerId = playerId ?? CurrentPlayer.Id }
                 }
             };
-            _db.Teams.Add(team);
+            db.Teams.Add(team);
         }
 
-        _db.SaveChanges();
+        db.SaveChanges();
         return RedirectToPage(new { Message = $"Beim Bewerb angemeldet" });
     }
 
     public IActionResult OnPostUnregister()
     {
         InitValues();
-        var registeredPlayer = _db.TournamentRegistrations
+        var registeredPlayer = db.TournamentRegistrations
             .SingleOrDefault(x => x.Player.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
 
-        var teamPlayer = _db.TeamPlayer.SingleOrDefault(x =>
+        var teamPlayer = db.TeamPlayer.SingleOrDefault(x =>
             x.Player.Id == CurrentPlayer.Id && x.Team.Competition.Id == SelectedCompetition!.Id);
 
-        var team = _db.Teams.SingleOrDefault(x =>
+        var team = db.Teams.SingleOrDefault(x =>
             x.Competition.Id == SelectedCompetition!.Id && x.TeamPlayers.Any(y => y.Player.Id == CurrentPlayer.Id));
 
-        if (registeredPlayer != null) _db.TournamentRegistrations.Remove(registeredPlayer);
-        if (teamPlayer != null) _db.TeamPlayer.Remove(teamPlayer);
-        if (team != null) _db.Teams.Remove(team);
+        if (registeredPlayer != null) db.TournamentRegistrations.Remove(registeredPlayer);
+        if (teamPlayer != null) db.TeamPlayer.Remove(teamPlayer);
+        if (team != null) db.Teams.Remove(team);
 
 
-        var groupTeam = _db.GroupTeams.SingleOrDefault(x =>
+        var groupTeam = db.GroupTeams.SingleOrDefault(x =>
             x.Group.Competition.Id == SelectedCompetition!.Id &&
             x.Team.TeamPlayers.Any(y => y.Player.Id == CurrentPlayer.Id));
         if (groupTeam != null)
         {
-            _db.GroupTeams.Remove(groupTeam);
+            db.GroupTeams.Remove(groupTeam);
         }
 
-        _db.SaveChanges();
+        db.SaveChanges();
         return RedirectToPage(new { Message = "Vom Bewerb abgemeldet" });
     }
 
@@ -232,31 +223,31 @@ public class Championship : PageModel
     public IActionResult OnPostCreateGroup()
     {
         InitValues();
-        _db.Groups.Add(new Group
+        db.Groups.Add(new Group
         {
             Competition = SelectedCompetition!,
             MaxAmount = 1,
             GroupName = "Gruppe "
         });
-        _db.SaveChanges();
+        db.SaveChanges();
 
-        var groups = _db.Groups.Where(x => x.Competition.Id == SelectedCompetition!.Id).ToList();
+        var groups = db.Groups.Where(x => x.Competition.Id == SelectedCompetition!.Id).ToList();
 
         for (int i = 0; i < groups.Count; i++)
         {
             groups[i].GroupName = $"Gruppe {(char)(i + 65)}";
         }
 
-        _db.SaveChanges();
+        db.SaveChanges();
 
         return RedirectToPage();
     }
 
     public IActionResult OnPostDeleteGroup(int groupId)
     {
-        var selectedGroup = _db.Groups.Single(x => x.Id == groupId);
-        _db.Groups.Remove(selectedGroup);
-        _db.SaveChanges();
+        var selectedGroup = db.Groups.Single(x => x.Id == groupId);
+        db.Groups.Remove(selectedGroup);
+        db.SaveChanges();
         return RedirectToPage();
     }
 
@@ -265,15 +256,15 @@ public class Championship : PageModel
         InitValues();
 
         // Delete old matches
-        var removedMatches = _db.Matches
+        var removedMatches = db.Matches
             .Where(m => m.Group.Competition.Id == SelectedCompetition!.Id)
             .ToList();
 
-        _db.Matches.RemoveRange(removedMatches);
-        _db.SaveChanges();
+        db.Matches.RemoveRange(removedMatches);
+        db.SaveChanges();
 
         // load groups with teams
-        var groups = _db.Groups
+        var groups = db.Groups
             .Where(g => g.Competition.Id == SelectedCompetition!.Id)
             .Include(g => g.GroupTeams)
             .ThenInclude(gt => gt.Team)
@@ -292,7 +283,7 @@ public class Championship : PageModel
             {
                 for (int j = i + 1; j < teams.Count; j++)
                 {
-                    _db.Matches.Add(new Match
+                    db.Matches.Add(new Match
                     {
                         Group = group,
                         Team1 = teams[i],
@@ -302,7 +293,7 @@ public class Championship : PageModel
             }
         }
 
-        _db.SaveChanges();
+        db.SaveChanges();
 
         return RedirectToPage(new { Message = "Spiele wurden erstellt" });
     }
@@ -310,19 +301,19 @@ public class Championship : PageModel
     public IActionResult OnPostIncreaseGroupSize(int groupId)
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        var group = _db.Groups.Single(x => x.Id == groupId);
+        var group = db.Groups.Single(x => x.Id == groupId);
         group.MaxAmount++;
-        _db.SaveChanges();
+        db.SaveChanges();
         return RedirectToPage();
     }
 
     public IActionResult OnPostDecreaseGroupSize(int groupId)
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        var group = _db.Groups.Single(x => x.Id == groupId);
+        var group = db.Groups.Single(x => x.Id == groupId);
         if (group.MaxAmount == 1) return RedirectToPage();
         group.MaxAmount--;
-        _db.SaveChanges();
+        db.SaveChanges();
         return RedirectToPage();
     }
 
@@ -330,12 +321,12 @@ public class Championship : PageModel
 
     public IActionResult OnPostAddSinglePlayer(int teamId, int groupId)
     {
-        var group = _db.Groups
+        var group = db.Groups
             .Include(g => g.Competition)
             .Single(g => g.Id == groupId);
 
         // Team des Spielers im selben Bewerb suchen
-        var existingGroupTeam = _db.GroupTeams
+        var existingGroupTeam = db.GroupTeams
             .Include(gt => gt.Group)
             .ThenInclude(g => g.Competition)
             .Include(gt => gt.Team)
@@ -354,11 +345,11 @@ public class Championship : PageModel
         if (existingGroupTeam != null)
         {
             existingGroupTeam.GroupId = groupId;
-            _db.SaveChanges();
+            db.SaveChanges();
             return RedirectToPage();
         }
 
-        var team = _db.Teams.SingleOrDefault(x => x.Id == teamId);
+        var team = db.Teams.SingleOrDefault(x => x.Id == teamId);
         if (team == null) return RedirectToPage();
 
         var groupTeam = new GroupTeam
@@ -366,22 +357,22 @@ public class Championship : PageModel
             GroupId = groupId,
             TeamId = team.Id
         };
-        _db.GroupTeams.Add(groupTeam);
-        _db.SaveChanges();
+        db.GroupTeams.Add(groupTeam);
+        db.SaveChanges();
 
         return RedirectToPage();
     }
 
     public IActionResult OnPostRemoveTeamFromGroup(int groupId, int teamId)
     {
-        var groupTeam = _db.GroupTeams
+        var groupTeam = db.GroupTeams
             .Include(gt => gt.Team)
             .ThenInclude(t => t.TeamPlayers)
             .Single(gt => gt.GroupId == groupId && gt.TeamId == teamId);
 
-        _db.GroupTeams.Remove(groupTeam);
+        db.GroupTeams.Remove(groupTeam);
 
-        _db.SaveChanges();
+        db.SaveChanges();
         return RedirectToPage();
     }
 
@@ -393,7 +384,7 @@ public class Championship : PageModel
         {
             int setsWonPlayer1 = 0;
             int setsWonPlayer2 = 0;
-            var match = _db.Matches
+            var match = db.Matches
                 .Include(x => x.Sets)
                 .Include(x => x.Team1)
                 .Include(x => x.Team2)
@@ -420,7 +411,7 @@ public class Championship : PageModel
             var winner = setsWonPlayer1 > setsWonPlayer2 ? match.Team1 : match.Team2;
             match.Winner = winner;
 
-            _db.SaveChanges();
+            db.SaveChanges();
         }
         catch (Exception)
         {
@@ -435,7 +426,7 @@ public class Championship : PageModel
     public async Task<IActionResult> OnPostDeleteMatchAsync(int matchId)
     {
         // WICHTIG: .Include(m => m.Sets) hinzufügen, damit er die Sätze auch findet!
-        var match = await _db.Matches
+        var match = await db.Matches
             .Include(m => m.Sets)
             .FirstOrDefaultAsync(m => m.Id == matchId);
 
@@ -451,7 +442,7 @@ public class Championship : PageModel
         // --- NEU: Normale Sätze ECHT aus der Datenbank löschen ---
         if (match.Sets != null && match.Sets.Any())
         {
-            _db.Sets.RemoveRange(match.Sets);
+            db.Sets.RemoveRange(match.Sets);
         }
 
         // Alles sauber zurücksetzen
@@ -460,7 +451,7 @@ public class Championship : PageModel
         match.WalkoverTeamId = null;
         match.WinnerTeamId = null;
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
 
         Message = "Das Match wurde erfolgreich zurückgesetzt und ist wieder offen.";
         // Passe den Redirect an deine Route an, falls nötig
@@ -485,8 +476,8 @@ public class Championship : PageModel
 
     private void UpdateBracket(int size)
     {
-        _db.KnockoutMatch.ExecuteDelete();
-        _db.SaveChanges();
+        db.KnockoutMatch.ExecuteDelete();
+        db.SaveChanges();
         int closest = _knownBrackets.First(k => k >= size);
         int byes = closest - size;
         if (byes > 0) size = closest;
@@ -504,7 +495,7 @@ public class Championship : PageModel
 
             if (isBye) byes--;
 
-            _db.KnockoutMatch.Add(new KnockoutMatch()
+            db.KnockoutMatch.Add(new KnockoutMatch()
             {
                 CompetitionId = SelectedCompetition!.Id,
                 BracketNo = matchId++,
@@ -524,7 +515,7 @@ public class Championship : PageModel
             }
         }
 
-        _db.SaveChanges();
+        db.SaveChanges();
     }
 
     public IActionResult OnPostApplyUserInputs()
@@ -537,19 +528,19 @@ public class Championship : PageModel
 
             if (input != null)
             {
-                match.Team1 = _db.Teams
+                match.Team1 = db.Teams
                     .Include(t => t.TeamPlayers)
                     .ThenInclude(tp => tp.Player)
                     .SingleOrDefault(t => t.Id == input.Team1Id);
 
-                match.Team2 = _db.Teams
+                match.Team2 = db.Teams
                     .Include(t => t.TeamPlayers)
                     .ThenInclude(tp => tp.Player)
                     .SingleOrDefault(t => t.Id == input.Team2Id);
             }
         }
 
-        _db.SaveChanges();
+        db.SaveChanges();
         return RedirectToPage();
     }
 
@@ -566,7 +557,7 @@ public class Championship : PageModel
             int player2Id = pair.DoublePlayerId.Value;
 
             // Prüfen, ob Spieler schon in einem Team in dieser Competition sind
-            bool exists = _db.Teams
+            bool exists = db.Teams
                 .Include(t => t.TeamPlayers)
                 .Any(t => t.TeamPlayers.Any(tp => tp.PlayerId == player1Id || tp.PlayerId == player2Id)
                           && t.CompetitionId == SelectedCompetition!.Id);
@@ -585,10 +576,10 @@ public class Championship : PageModel
                 }
             };
 
-            _db.Teams.Add(team);
+            db.Teams.Add(team);
         }
 
-        _db.SaveChanges();
+        db.SaveChanges();
         return RedirectToPage();
     }
 
@@ -596,21 +587,21 @@ public class Championship : PageModel
     {
         InitValues();
 
-        var selectedCompetition = _db.Competitions.Single(x => x.Id == SelectedCompetition!.Id);
+        var selectedCompetition = db.Competitions.Single(x => x.Id == SelectedCompetition!.Id);
 
         var date = DateOnly.Parse(newDate);
         var time = TimeOnly.Parse(newTime);
 
         selectedCompetition.RegistrationUntil = date.ToDateTime(time);
 
-        _db.SaveChanges();
+        db.SaveChanges();
         return RedirectToPage(new { Message = "Neues Datum wurde gespeichert" });
     }
 
     public async Task<IActionResult> OnPostGiveWalkoverAsync(int matchId)
     {
         // Lade das Match inklusive der Teams und deren Spieler
-        var match = await _db.Matches
+        var match = await db.Matches
             .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
             .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
             .Include(match => match.Group)
@@ -618,7 +609,7 @@ public class Championship : PageModel
 
         if (match == null) return NotFound();
 
-        var currentUser = await _userManager.GetUserAsync(User);
+        var currentUser = await userManager.GetUserAsync(User);
         if (currentUser == null) return Unauthorized();
 
         // Gehört der User zu Team 1 oder Team 2?
@@ -639,7 +630,7 @@ public class Championship : PageModel
             match.Winner = isTeam1 ? match.Team2 : match.Team1;
         }
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
 
         Message = "Du hast das Match aufgegeben. Der Sieg geht per w.o. an die Gegner.";
         return RedirectToPage(new { Message });
@@ -648,7 +639,7 @@ public class Championship : PageModel
 // 2. Für den Admin (wählt aus, welches Team W.O. gegeben hat)
     public async Task<IActionResult> OnPostAdminWalkoverAsync(int matchId, int walkoverTeamId)
     {
-        var match = await _db.Matches
+        var match = await db.Matches
             .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
             .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
             .Include(match => match.Group)
@@ -661,7 +652,7 @@ public class Championship : PageModel
         // Der Sieger ist das Team, das NICHT aufgegeben hat
         match.Winner = match.Team1 != null && match.Team1.Id == walkoverTeamId ? match.Team2 : match.Team1;
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
 
         Message = "Match wurde durch Admin als w.o. gewertet.";
         return RedirectToPage();
@@ -674,17 +665,17 @@ public class Championship : PageModel
 
     public async Task<IActionResult> OnPostSelfWithdrawAsync(int selectedCompetition)
     {
-        var currentUser = await _userManager.GetUserAsync(User);
+        var currentUser = await userManager.GetUserAsync(User);
         if (currentUser == null) return Unauthorized();
 
-        var player = _db.Players.Single(x => x.IdentityUserId == currentUser.Id);
+        var player = db.Players.Single(x => x.IdentityUserId == currentUser.Id);
 
         return await WithDrawPlayer(player.Id, selectedCompetition);
     }
 
     private async Task<IActionResult> WithDrawPlayer(int playerId, int competitionId)
     {
-        var userTeams = await _db.Teams
+        var userTeams = await db.Teams
             .Include(t => t.TeamPlayers)
             .Where(t => t.CompetitionId == competitionId && t.TeamPlayers.Any(p => p.PlayerId == playerId))
             .ToListAsync();
@@ -699,7 +690,7 @@ public class Championship : PageModel
 
         // 2. Finde alle noch NICHT GESPIELTEN Matches für diese Teams in diesem Bewerb
         // (Wir holen auch Team1 und Team2 dazu, falls wir sie gleich brauchen)
-        var unplayedMatches = await _db.Matches
+        var unplayedMatches = await db.Matches
             .Include(x => x.Winner)
             .Include(x => x.Team1)
             .Include(x => x.Team2)
@@ -721,14 +712,14 @@ public class Championship : PageModel
         // 4. (Optional) Markiere den Spieler in der Anmeldeliste als abgemeldet
         // Falls du die HasWithdrawn-Spalte schon in 'RegisteredCompetitionPlayers' hast:
 
-        var registration = await _db.TournamentRegistrations
+        var registration = await db.TournamentRegistrations
             .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.PlayerId == playerId);
         if (registration != null)
         {
             registration.HasWithdrawn = true;
         }
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
         return RedirectToPage(new
         {
             Message =
@@ -826,25 +817,25 @@ public class Championship : PageModel
         if (targetGroupSize < 2) targetGroupSize = 2;
 
         // 1. Alle angemeldeten Spieler holen
-        var players = await _db.TournamentRegistrations
+        var players = await db.TournamentRegistrations
             .Where(p => p.CompetitionId == competitionId)
             .ToListAsync();
 
         if (!players.Any()) return RedirectToPage(new { id = competitionId });
 
         // 2. ALTE Gruppen löschen (Reset)
-        var oldGroups = await _db.Groups
+        var oldGroups = await db.Groups
             // Falls du die Spieler-Liste in der Gruppe includen musst, damit EF sie beim Löschen sauber trennt:
             .Include(g => g.GroupTeams)
             .Include(g => g.Matches)
             .Where(g => g.CompetitionId == competitionId)
             .ToListAsync();
 
-        _db.Matches.RemoveRange(oldGroups.SelectMany(x => x.Matches).ToList());
-        _db.GroupTeams.RemoveRange(oldGroups.SelectMany(gt => gt.GroupTeams).ToList());
-        _db.Groups.RemoveRange(oldGroups);
+        db.Matches.RemoveRange(oldGroups.SelectMany(x => x.Matches).ToList());
+        db.GroupTeams.RemoveRange(oldGroups.SelectMany(gt => gt.GroupTeams).ToList());
+        db.Groups.RemoveRange(oldGroups);
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
 
         // 3. Wieviele NEUE Gruppen brauchen wir?
         int numberOfGroups = (int)Math.Ceiling((double)players.Count / targetGroupSize);
@@ -864,7 +855,7 @@ public class Championship : PageModel
 
         // 5. Spieler zufällig mischen
         var random = new Random();
-        var shuffledPlayers = _db.Teams.Where(x => x.CompetitionId == competitionId).ToList();
+        var shuffledPlayers = db.Teams.Where(x => x.CompetitionId == competitionId).ToList();
 
         shuffledPlayers = shuffledPlayers.OrderBy(x => random.Next()).ToList();
 
@@ -872,15 +863,15 @@ public class Championship : PageModel
         {
             int groupIndex = i % numberOfGroups;
 
-            _db.GroupTeams.Add(new GroupTeam()
+            db.GroupTeams.Add(new GroupTeam()
             {
                 Group = newGroups[groupIndex],
                 TeamId = shuffledPlayers[i].Id
             });
         }
 
-        _db.Groups.AddRange(newGroups);
-        await _db.SaveChangesAsync();
+        db.Groups.AddRange(newGroups);
+        await db.SaveChangesAsync();
 
         return RedirectToPage(new { id = competitionId });
     }
@@ -888,7 +879,7 @@ public class Championship : PageModel
     public async Task<IActionResult> OnPostGeneratePairsAsync(int championshipId)
     {
         // 1. Alle angemeldeten Spieler holen
-        var players = await _db.TournamentRegistrations
+        var players = await db.TournamentRegistrations
             .Where(p => p.CompetitionId == championshipId)
             .Include(x => x.Player)
             .ToListAsync();
@@ -898,14 +889,14 @@ public class Championship : PageModel
 
         // 2. ALTE Teams/Paare löschen (Reset-Funktion)
         // Passe "GroupTeams" an den Namen deiner Tabelle an, in der die Doppel-Teams gespeichert werden!
-        var oldTeams = await _db.Teams.Where(x => x.CompetitionId == championshipId).ToListAsync();
-        var oldGroupTeams = await _db.GroupTeams
+        var oldTeams = await db.Teams.Where(x => x.CompetitionId == championshipId).ToListAsync();
+        var oldGroupTeams = await db.GroupTeams
             .Where(t => t.Group.CompetitionId == championshipId)
             .ToListAsync();
 
-        _db.GroupTeams.RemoveRange(oldGroupTeams);
-        _db.Teams.RemoveRange(oldTeams);
-        await _db.SaveChangesAsync();
+        db.GroupTeams.RemoveRange(oldGroupTeams);
+        db.Teams.RemoveRange(oldTeams);
+        await db.SaveChangesAsync();
 
         // 3. Spieler zufällig mischen
         var rng = new Random();
@@ -932,8 +923,8 @@ public class Championship : PageModel
         // Info: Wenn es z.B. 15 Spieler gibt, wird der 15. Spieler (Index 14) von der 
         // Schleife (wegen i < Count - 1) ignoriert und bekommt noch kein Team.
 
-        _db.Teams.AddRange(newTeams);
-        await _db.SaveChangesAsync();
+        db.Teams.AddRange(newTeams);
+        await db.SaveChangesAsync();
 
         return RedirectToPage(new { id = championshipId });
     }
