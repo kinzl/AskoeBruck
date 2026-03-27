@@ -199,6 +199,26 @@
                             <button class="btn-action">Hinzufügen</button>
                         </form>
                     </div>
+
+                    <div class="admin-box">
+                        <h4>Spieler entfernen</h4>
+                        <form method="post" asp-page-handler="RemovePlayerFromAbo"
+                              style="display: flex; flex-direction: column; gap: 10px;">
+                            <select name="PlayerIdToRemove" class="custom-select" required>
+                                <option value="">Spieler wählen...</option>
+
+                                @foreach (var player in Model.RegisteredPlayers)
+                                {
+                                    <option value="@player.Id">@player.ToString()</option>
+                                }
+                            </select>
+
+                            <button type="submit" class="btn-action"
+                                    style="width: auto; background-color: red">
+                                Entfernen
+                            </button>
+                        </form>
+                    </div>
                 }
 
                 <div class="admin-box" style="grid-column: 1 / -1;">

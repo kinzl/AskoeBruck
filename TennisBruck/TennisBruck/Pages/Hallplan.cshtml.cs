@@ -75,8 +75,6 @@ public class Hallplan(
 
     public async Task<IActionResult> OnPostSwapPlayersAsync([FromBody] SwapRequestData data)
     {
-        if (data == null) return BadRequest("Ungültige Daten.");
-
         // Fall 1: Normaler Tausch (Beide Spieler sind schon im Plan auf einem Platz)
         if (data.Court1Id.HasValue && data.Court2Id.HasValue)
         {
@@ -192,12 +190,12 @@ public class Hallplan(
         }
 
         // 3. Spieler fair verteilen
-        var playerCounts = players.ToDictionary(p => p.Id, p => 0);
+        var playerCounts = players.ToDictionary(p => p.Id, _ => 0);
         var random = new Random();
 
         foreach (var day in matchDays)
         {
-            var shuffled = players.OrderBy(p => random.Next()).ToList();
+            var shuffled = players.OrderBy(_ => random.Next()).ToList();
 
             // Holt die 4 Spieler, die bisher am wenigsten gespielt haben
             var selectedPlayers = shuffled
@@ -245,17 +243,20 @@ public class Hallplan(
             .Include(x => x.IdentityUser)
             .Single(x => x.IdentityUserId == user.IdentityUserId);
         var hallPlanEntity = db.HallPlanEntities
-            .Include(hallPlanEntity => hallPlanEntity.Registrations)
-            .ThenInclude(hallPlanRegistration => hallPlanRegistration.Player)
+            .Include(x => x.Registrations)
+            .ThenInclude(x => x.Player)
             .Single(x => x.Id == SelectedHallPlanEntity!.Id);
         var isRegistered =
             hallPlanEntity.Registrations.SingleOrDefault(x => x.Player.IdentityUserId == user.IdentityUserId);
 
         if (isRegistered == null)
         {
-            hallPlanEntity.Registrations.Add(new HallPlanRegistration()
+            db.HallPlanRegistrations.Add(new HallPlanRegistration()
             {
+                PlayerId = player.Id,
                 Player = player,
+                HallPlanEntity = hallPlanEntity,
+                HallPlanId = hallPlanEntity.Id,
                 RegisteredAt = DateTime.Now
             });
         }
@@ -263,7 +264,7 @@ public class Hallplan(
         {
             var hallplanRegistration =
                 hallPlanEntity.Registrations.Single(x => x.Player.IdentityUserId == user.IdentityUserId);
-            hallPlanEntity.Registrations.Remove(hallplanRegistration);
+            db.HallPlanRegistrations.Remove(hallplanRegistration);
         }
 
         db.SaveChanges();
@@ -287,7 +288,8 @@ public class Hallplan(
             PlayerId = playerId,
             HallPlanId = HallPlanId,
             Player = player,
-            HallPlanEntity = hallPlanEntity
+            HallPlanEntity = hallPlanEntity,
+            RegisteredAt = DateTime.Now
         });
 
         db.SaveChanges();
@@ -316,5 +318,21 @@ public class Hallplan(
     {
         HttpContext.Session.SetInt32("selectedHallPlanId", HallPlanId);
         return RedirectToPage(nameof(Hallplan));
+    }
+
+    public async Task<IActionResult> OnPostRemovePlayerFromAboAsync(int playerIdToRemove)
+    {
+        InitValues();
+        var player = await db.Players.FirstOrDefaultAsync(p => p.Id == playerIdToRemove);
+
+        if (player == null) return RedirectToPage();
+        var hallPlanEntity = db.HallPlanEntities
+            .Include(x => x.Registrations)
+            .ThenInclude(x => x.Player)
+            .Single(x => x.Id == SelectedHallPlanEntity!.Id);
+        var registration = hallPlanEntity.Registrations.Single(x => x.Player.IdentityUserId == player.IdentityUserId);
+        db.HallPlanRegistrations.Remove(registration);
+        await db.SaveChangesAsync();
+        return RedirectToPage();
     }
 }
