@@ -247,3 +247,279 @@ body {
     border-color: var(--nav-bg);
     background: white;
 }
+
+/* --- Basis-Variablen & Layout --- */
+:root {
+    --nav-bg: #0f172a;
+    --text-muted: #cbd5e1;
+    --accent-color: #bef264;
+    --border-radius-sm: 8px;
+    --shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f1f5f9;
+}
+
+
+
+/* =========================================================
+   BASIS & VARIABLEN
+   ========================================================= */
+:root {
+    --nav-bg: #0f172a;
+    --text-muted: #64748b;
+    --accent-color: #bef264;
+    --border-radius-sm: 8px;
+
+    /* Farben für die Reservierungs-Zustände */
+    --slot-reserved-bg: #f8fafc;
+    --slot-reserved-text: #64748b;
+    --slot-my-res-bg: #e0f2fe;     /* Leichtes Blau für eigene */
+    --slot-my-res-text: #0369a1;
+    --slot-event-bg: #fef08a;      /* Gelb für Events */
+    --slot-event-text: #854d0e;
+    --danger-color: #ef4444;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f1f5f9;
+    color: #334155;
+    overflow-x: hidden; /* Verhindert seitliches Scrollen der GANZEN Seite */
+}
+
+/* =========================================================
+   HEADER & LAYOUT
+   ========================================================= */
+.app-header {
+    background-color: var(--nav-bg);
+    color: white;
+    padding: 20px 15px;
+    text-align: center;
+}
+
+.header-top-bar {
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.btn-back-header {
+    background-color: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-back-header:hover { background-color: rgba(255, 255, 255, 0.1); }
+
+.app-title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+.main-container {
+    padding: 15px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.modern-card {
+    background-color: white;
+    border-radius: var(--border-radius-sm);
+    padding: 15px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 768px) {
+    .modern-card { padding: 25px; } /* Mehr Luft auf dem PC */
+}
+
+/* =========================================================
+   DATUMS-NAVIGATION
+   ========================================================= */
+.date-nav-wrapper {
+    display: flex;
+    flex-wrap: wrap; /* Erlaubt den Umbruch auf sehr kleinen Displays */
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.btn-date {
+    background-color: white;
+    border: 1px solid #cbd5e1;
+    padding: 8px 16px;
+    border-radius: 20px;
+    color: var(--nav-bg);
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.date-picker-input {
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--nav-bg);
+    font-weight: 600;
+    background-color: #f8fafc;
+}
+
+/* =========================================================
+   ADMIN FORMULAR (Überschreibt die Inline-Styles für Mobile)
+   ========================================================= */
+/* Bricht die flex-items auf dem Handy in 100% Breite um */
+@media (max-width: 650px) {
+    form[asp-page-handler="CreateEvent"] > div {
+        flex: 1 1 100% !important;
+    }
+    .btn-action.btn-accent {
+        width: 100%;
+        margin-top: 5px;
+    }
+}
+
+.btn-action.btn-accent {
+    background-color: var(--accent-color);
+    color: var(--nav-bg);
+    border: none;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btn-action.btn-accent:active { opacity: 0.8; }
+
+/* =========================================================
+   DIE HALLENPLAN-TABELLE (Mobile-optimiert mit Sticky Col)
+   ========================================================= */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto; /* Aktiviert horizontales Scrollen */
+    -webkit-overflow-scrolling: touch; /* Butterweiches Scrollen auf iOS */
+    border: 1px solid #e2e8f0;
+    border-radius: var(--border-radius-sm);
+}
+
+.court-table {
+    width: 100%;
+    border-collapse: separate; /* Wichtig für Sticky-Borders */
+    border-spacing: 0;
+    min-width: 500px; /* Erzwingt die Breite, damit auf dem Handy gescrollt werden MUSS */
+    background-color: white;
+    font-size: 0.9rem;
+}
+
+.court-table thead tr {
+    background-color: var(--nav-bg);
+    color: white;
+}
+
+.court-table th, .court-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* --- Die festgeklebte Zeit-Spalte --- */
+.court-table th.time-col,
+.court-table td.time-col {
+    position: sticky;
+    left: 0; /* Klebt am linken Rand */
+    background-color: var(--nav-bg);
+    color: white;
+    font-weight: 700;
+    width: 60px;
+    border-right: 2px solid #000; /* Starke Trennlinie zum scrollbaren Bereich */
+}
+
+/* Z-Index Fix: Der Tabellenkopf links oben muss immer ganz vorne sein */
+.court-table th.time-col { z-index: 3; }
+.court-table td.time-col { z-index: 2; }
+
+/* =========================================================
+   RESERVIERUNGS-SLOTS (Zellen-Design)
+   ========================================================= */
+.slot-available {
+    background-color: white;
+}
+
+.btn-reserve {
+    background-color: var(--accent-color);
+    color: var(--nav-bg);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Zustände der gebuchten Plätze */
+.slot-reserved {
+    background-color: var(--slot-reserved-bg);
+    color: var(--slot-reserved-text);
+    font-size: 0.85rem;
+}
+
+.slot-my-reservation {
+    background-color: var(--slot-my-res-bg);
+    color: var(--slot-my-res-text);
+}
+
+.slot-event {
+    background-color: var(--slot-event-bg);
+    color: var(--slot-event-text);
+}
+
+/* Text-Container in der Zelle (verhindert, dass lange Namen das Layout sprengen) */
+.slot-reserved div,
+.slot-my-reservation div,
+.slot-event div {
+    max-width: 100px;
+    margin: 0 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Schneidet zu lange Namen mit "..." ab */
+}
+
+.btn-delete-res {
+    background-color: white;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    transition: background-color 0.2s;
+}
+
+.btn-delete-res:active {
+    background-color: #fee2e2;
+}
