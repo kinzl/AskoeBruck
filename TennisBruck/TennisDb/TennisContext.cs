@@ -34,4 +34,5 @@ public class TennisContext : IdentityDbContext<IdentityUser>, IDataProtectionKey
     public DbSet<HallPlanDay> HallPlanDays { get; set; }
     public DbSet<HallPlanRegistration> HallPlanRegistrations { get; set; }
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
+    public DbSet<AvailabilitySlot> AvailabilitySlots { get; set; }
 }

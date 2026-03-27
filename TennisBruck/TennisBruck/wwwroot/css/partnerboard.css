@@ -1,0 +1,75 @@
+body {
+    background-color: #f4f6f8; /* Hellgrau für den unteren Bereich */
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Der dunkle Header-Bereich (wie beim Hallenplan) */
+.dark-header-section {
+    background-color: #0f172a; /* Sehr dunkles Navy-Blau */
+    color: white;
+    padding: 40px 20px 80px 20px; /* Extra Platz unten für die überlappenden Karten */
+    text-align: center;
+}
+
+.back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 6px 15px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+.back-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* Der Container für die Karten, der sich über den dunklen Header schiebt */
+.main-content-container {
+    max-width: 900px;
+    margin: -40px auto 50px auto; /* Zieht die Karten nach oben in den dunklen Bereich */
+    padding: 0 15px;
+    position: relative;
+    z-index: 10;
+}
+
+/* Die weiße Karte im Hallenplan-Design */
+.hallenplan-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+/* Die Karte mit dem limonengrünen Rand (wie "Administrator Werkzeuge") */
+.card-with-accent {
+    border-left: 6px solid #cddc39;
+}
+
+/* Der Limonengrüne Button */
+.btn-limone {
+    background-color: #cddc39;
+    color: #1a1e36;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+.btn-limone:hover {
+    background-color: #b9ca32;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    color: #cddc39;
+    margin-bottom: 10px;
+}

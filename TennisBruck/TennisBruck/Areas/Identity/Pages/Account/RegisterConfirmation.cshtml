@@ -6,29 +6,21 @@
 
 <div class="auth-card-container">
     <div class="auth-card">
-        
+
         <div class="status-icon">
             📬
         </div>
 
         <h1>@ViewData["Title"]</h1>
-        
+
         <div class="status-message-wrapper">
-            @if (@Model.DisplayConfirmAccountLink)
-            {
-                <div class="dev-warning">
-                    <strong>Entwickler-Modus:</strong> Es ist aktuell kein echter E-Mail-Versand konfiguriert.
-                </div>
-                <p>Normalerweise würdest du jetzt eine E-Mail bekommen. Für den Moment kannst du hier klicken:</p>
-                <a id="confirm-link" href="@Model.EmailConfirmationUrl" class="btn-primary">Konto jetzt bestätigen</a>
-            }
-            else
-            {
-                <p>
-                    Wir haben dir gerade eine E-Mail geschickt. <br /><br />
-                    <strong>Bitte überprüfe dein Postfach (und deinen Spam-Ordner)</strong> und klicke auf den Link darin, um dein Konto zu aktivieren.
-                </p>
-            }
+
+            <p>
+                Wir haben dir gerade eine E-Mail geschickt. <br/><br/>
+                <strong>Bitte überprüfe dein Postfach (und deinen Spam-Ordner)</strong> und klicke auf den Link darin,
+                um dein Konto zu aktivieren.
+            </p>
+            
         </div>
 
         @if (!@Model.DisplayConfirmAccountLink)

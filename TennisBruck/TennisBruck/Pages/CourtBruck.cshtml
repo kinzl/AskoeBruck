@@ -137,17 +137,17 @@
                                 }
                                 else
                                 {
-                                    // Wir prüfen, ob es sich um die eigene Reservierung handelt
-                                    bool isMyReservation = Model.CurrentPlayer?.Id == reservation.Player?.Id;
+                                    // Wir prüfen, ob es sich um die eigene Reservierung handelt (Null-sicher!)
+                                    bool isMyReservation = Model.CurrentPlayer.Id == reservation.Player?.Id;
                                     bool isEvent = !string.IsNullOrWhiteSpace(reservation.EventName);
 
-                                    // CSS-Klasse anpassen: Ist es ein Event, die eigene Reservierung oder eine fremde?
-                                    string tdClass = isEvent ? "slot-event" : (isMyReservation ? "slot-my-reservation" : "slot-reserved");
+                                    // CSS-Klasse anpassen: Eigene Reservierungen ('slot-my-reservation') haben ab sofort VORRANG vor 'slot-event'!
+                                    string tdClass = isMyReservation ? "slot-my-reservation" : (isEvent ? "slot-event" : "slot-reserved");
 
                                     <td class="@tdClass">
 
                                         <div style="margin-bottom: 5px; font-weight: bold;">
-                                            @(isEvent ? reservation.EventName : reservation.Player.ToString())
+                                            @reservation.DisplayName
                                         </div>
 
                                         @if (isMyReservation || User.IsInRole("Admin"))

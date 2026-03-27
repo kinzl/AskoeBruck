@@ -14,12 +14,21 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
         var roleManager = _scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = _scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-        await DropAllTables(db);
-        await db.Database.EnsureCreatedAsync(cancellationToken);
+        // 1. ALTE LOGIK ENTFERNT: Wir reißen nicht mehr bei jedem Start das Haus ab!
+        // await DropAllTables(db);
+        // await db.Database.EnsureDeletedAsync(cancellationToken);
+        // await db.Database.EnsureCreatedAsync(cancellationToken);
 
-        await SeedAdminUserAndPlayer(db, userManager, roleManager);
-        await SeedPlayer(db);
-        SeedCompetition(db);
+        // 2. NEUE LOGIK: Wir wenden ausstehende Updates (Migrationen) sanft an
+        Console.WriteLine("Prüfe auf Datenbank-Updates...");
+        await db.Database.MigrateAsync(cancellationToken);
+        Console.WriteLine("Datenbank ist auf dem neuesten Stand!");
+
+        // 3. SEEDING: Standard-Daten anlegen (falls sie noch nicht existieren)
+        // await SeedAdminUserAndPlayer(db, userManager, roleManager);
+        // await SeedPlayer(db);
+        // SeedCompetition(db);
+
         await db.SaveChangesAsync(cancellationToken);
     }
 
@@ -90,21 +99,30 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
     private async Task DropAllTables(TennisContext db)
     {
         var sql = @"
-        DO $$
-        DECLARE
-            r RECORD;
-        BEGIN
-            FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
-                EXECUTE 'DROP TABLE IF EXISTS ""' || r.tablename || '"" CASCADE';
-            END LOOP;
-        END $$;";
-        await db.Database.ExecuteSqlRawAsync(sql);
+    DO $$
+    DECLARE
+        r RECORD;
+    BEGIN
+        FOR r IN (
+            SELECT tablename 
+            FROM pg_tables 
+            WHERE schemaname = 'public'
+            AND tablename NOT IN (
+                'AspNetUsers',
+                'AspNetRoles',
+                'AspNetUserRoles',
+                'AspNetUserClaims',
+                'AspNetRoleClaims',
+                'AspNetUserLogins',
+                'AspNetUserTokens',
+                '__EFMigrationsHistory'
+            )
+        ) LOOP
+            EXECUTE 'DROP TABLE IF EXISTS ""' || r.tablename || '"" CASCADE';
+        END LOOP;
+    END $$;";
 
-//         var resetSql = @"
-//     DROP SCHEMA public CASCADE;
-//     CREATE SCHEMA public;
-// ";
-//         await db.Database.ExecuteSqlRawAsync(resetSql);
+        await db.Database.ExecuteSqlRawAsync(sql);
     }
 
     private Task SeedPlayer(TennisContext db)

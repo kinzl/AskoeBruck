@@ -1,0 +1,189 @@
+@page
+@model TennisBruck.Pages.PartnerBoardModel
+
+@{
+    // Wir schalten das Standard-Layout ab, damit wir eine 100% saubere Datei haben
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="css/partnerboard.css"/>
+    <title>Spielpartner-Börse - TennisBruck</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm mt-3" role="alert"
+         style="background-color: #e8f5e9; border-left: 5px solid #4caf50; border-radius: 8px;">
+        <i class="bi bi-check-circle-fill me-2" style="color: #4caf50;"></i>
+        <strong style="color: #2e7d32;">@TempData["SuccessMessage"]</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+<div class="dark-header-section">
+    <a href="/" class="back-button">← Übersicht</a>
+    <h1 class="fw-bold mb-2">🎾 Spielpartner-Börse</h1>
+    <p class="text-white-50">Finde unkompliziert Mitspieler oder trage deine Zeiten ein</p>
+</div>
+
+<div class="main-content-container">
+    @if (Model.MyFixedMatches != null && Model.MyFixedMatches.Any())
+    {
+        <div class="hallenplan-card mb-4" style="background-color: #f8fafc; border-left: 6px solid #10b981;">
+            <h5 class="fw-bold mb-3" style="color: #0f172a;">
+                <i class="bi bi-calendar-check-fill text-success me-2"></i> Meine fixierten Matches
+            </h5>
+
+            <div class="list-group list-group-flush shadow-sm rounded">
+                @foreach (var match in Model.MyFixedMatches)
+                {
+                    <div
+                        class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white">
+                        <div>
+                            @if (match.PlayerId == Model.CurrentPlayerId)
+                            {
+                                <strong style="color: #1a1e36;">Du</strong>
+                                <label>spielst gegen einen Partner</label>
+                                <div class="small text-success fw-bold mt-1"> Dein Gesuch wurde angenommen!</div>
+                            }
+                            else
+                            {
+                                <strong
+                                    style="color: #1a1e36;">@(match.Player?.ToString() ?? "Ein Spieler")</strong>
+                                <label> spielt gegen </label>
+                                <strong style="color: #1a1e36;"> Dich </strong>
+                                <div class="small text-muted mt-1"> Du hast zugesagt.</div>
+                            }
+
+                            <div class="small text-muted mt-2">
+                                <i class="bi bi-clock me-1"></i> @match.Date.ToString("dd.MM.yyyy") | @match.StartTime.ToString(@"hh\:mm") - @match.EndTime.ToString(@"hh\:mm") Uhr
+                            </div>
+                        </div>
+
+                        <span class="badge"
+                              style="background-color: #10b981; font-size: 0.9rem; padding: 8px 12px;">Fixiert ✔</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    <div class="hallenplan-card d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold" style="color: #475569;">Verfügbare Zeiten</h5>
+        <button type="button" class="btn-limone" data-bs-toggle="modal" data-bs-target="#createSlotModal">
+            + Zeit eintragen
+        </button>
+    </div>
+
+    <div class="hallenplan-card card-with-accent">
+
+        @if (!Model.SlotsByDay.Any())
+        {
+            <div class="text-center py-5">
+                <div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
+                <h5 class="fw-bold" style="color: #1a1e36;">Aktuell keine Gesuche!</h5>
+                <p class="text-muted mb-0">Sei der Erste und trage ein, wann du Zeit hast.</p>
+            </div>
+        }
+        else
+        {
+            <div class="list-group list-group-flush">
+                @foreach (var dayGroup in Model.SlotsByDay)
+                {
+                    <h6 class="fw-bold mt-3 mb-2" style="color: #1a1e36;">
+                        <i class="bi bi-calendar-event me-2 text-muted"></i>
+                        @dayGroup.Key.ToString("dd. MMMM yyyy")
+                    </h6>
+
+                    @foreach (var slot in dayGroup.Value)
+                    {
+                        <div
+                            class="list-group-item d-flex justify-content-between align-items-center border-0 bg-light mb-2 rounded">
+                            <div>
+                                <strong
+                                    class="d-block text-dark">@(slot.Player?.ToString() ?? "Unbekannter Spieler")</strong>
+                                <small
+                                    class="text-muted">@slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm") Uhr</small>
+                                @if (!string.IsNullOrEmpty(slot.Message))
+                                {
+                                    <div class="small fst-italic mt-1 text-secondary">"@slot.Message"</div>
+                                }
+                            </div>
+                            <div class="ms-3">
+                                @if (slot.PlayerId == Model.CurrentPlayerId)
+                                {
+                                    <form method="post" asp-page-handler="DeleteSlot" class="m-0">
+                                        <input type="hidden" name="SlotId" value="@slot.Id"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger fw-bold"
+                                                onclick="return confirm('Möchtest du deinen Eintrag wirklich löschen?');">
+                                            <i class="bi bi-trash3 me-1"></i> Löschen
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-page-handler="AcceptMatch" class="m-0">
+                                        <input type="hidden" name="SlotId" value="@slot.Id"/>
+                                        <button type="submit" class="btn btn-sm btn-limone fw-bold">
+                                            Fixieren
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+
+</div>
+
+<div class="modal fade" id="createSlotModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" style="color: #1a1e36;">Wann hast du Zeit?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-page-handler="CreateSlot">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">Datum</label>
+                        <input type="date" name="date" class="form-control"
+                               value="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               min="@DateTime.Today.ToString("yyyy-MM-dd")" required/>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label fw-bold text-muted small">Von (Uhrzeit)</label>
+                            <input type="time" name="startTime" class="form-control" required/>
+                        </div>
+                        <div class="col">
+                            <label class="form-label fw-bold text-muted small">Bis (Uhrzeit)</label>
+                            <input type="time" name="endTime" class="form-control" required/>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">Nachricht (Optional)</label>
+                        <input type="text" name="message" class="form-control"
+                               placeholder="Z.B. Suche Gegner für lockeres Einzel" maxlength="200"/>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="submit" class="btn-limone">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

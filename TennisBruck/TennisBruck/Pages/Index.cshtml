@@ -50,7 +50,7 @@
 <main class="main-container">
     <div class="dashboard-grid">
 
-        <form method="post" asp-page-handler="ReserveCourt" class="dashboard-card">
+        <form method="get" asp-page="/CourtBruck" class="dashboard-card">
             <div class="card-icon">🎾</div>
             <h2 class="card-title">Platz Reservierung</h2>
             <p class="card-desc">Sichere dir jetzt deinen Court für das nächste Match.</p>
@@ -59,28 +59,39 @@
 
         @if (User.Identity!.IsAuthenticated)
         {
-            <form method="post" asp-page-handler="Championship" class="dashboard-card">
+            <form method="get" asp-page="/Championship" class="dashboard-card">
                 <div class="card-icon">🏆</div>
                 <h2 class="card-title">Vereinsmeisterschaft</h2>
                 <p class="card-desc">Turnierbäume, Gruppen und deine anstehenden Matches.</p>
                 <button type="submit" class="btn-action">Turnier ansehen</button>
             </form>
 
-            <form method="post" asp-page-handler="Hallplan" class="dashboard-card">
+            <form method="get" asp-page="/Hallplan" class="dashboard-card">
                 <div class="card-icon">📅</div>
                 <h2 class="card-title">Hallenplan</h2>
                 <p class="card-desc">Überprüfe die aktuelle Belegung und freie Zeiten in der Halle.</p>
                 <button type="submit" class="btn-action">Plan öffnen</button>
             </form>
 
-            <form method="post" asp-page-handler="ShowMembers" class="dashboard-card">
+            <form method="get" asp-page="/PartnerBoard" class="dashboard-card">
+                <div class="card-icon">🤝</div>
+
+                <h2 class="card-title">Spielpartner-Börse</h2>
+
+                <p class="card-desc">Finde unkompliziert Mitspieler für ein Match oder trage deine eigenen freien Zeiten
+                    ein.</p>
+
+                <button type="submit" class="btn-action">Börse öffnen</button>
+            </form>
+
+            <form method="get" asp-page="/Members" class="dashboard-card">
                 <div class="card-icon">👥</div>
                 <h2 class="card-title">Mitglieder</h2>
                 <p class="card-desc">Finde Spielpartner und durchsuche das Vereins-Verzeichnis.</p>
                 <button type="submit" class="btn-action">Mitglieder ansehen</button>
             </form>
 
-            <form method="post" asp-page-handler="ShowSettings" class="dashboard-card">
+            <form method="get" asp-page="/Settings" class="dashboard-card">
                 <div class="card-icon">⚙️</div>
                 <h2 class="card-title">Einstellungen</h2>
                 <p class="card-desc">Verwalte dein Profil, deine Spielstärke und Passwörter.</p>
