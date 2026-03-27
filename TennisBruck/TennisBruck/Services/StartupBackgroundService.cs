@@ -25,9 +25,9 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
         Console.WriteLine("Datenbank ist auf dem neuesten Stand!");
 
         // 3. SEEDING: Standard-Daten anlegen (falls sie noch nicht existieren)
-        // await SeedAdminUserAndPlayer(db, userManager, roleManager);
-        // await SeedPlayer(db);
-        // SeedCompetition(db);
+        await SeedAdminUserAndPlayer(db, userManager, roleManager);
+        await SeedPlayer(db);
+        SeedCompetition(db);
 
         await db.SaveChangesAsync(cancellationToken);
     }
