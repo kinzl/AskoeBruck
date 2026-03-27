@@ -14,6 +14,7 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
     <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/scroll-behaviour.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/hallplan.css" asp-append-version="true">
     <script src="~/js/hallplan.js" asp-append-version="true" defer></script>
@@ -156,7 +157,7 @@
                                 <input type="date" name="startDate" value="@DateTime.Today.ToString("yyyy-MM-dd")"
                                        class="input-field input-date" required/>
                                 <input type="date" name="endDate"
-                                       value="@DateTime.Today.AddMonths(6).ToString("yyyy-MM-dd")" 
+                                       value="@DateTime.Today.AddMonths(6).ToString("yyyy-MM-dd")"
                                        class="input-field input-date" required/>
                             </div>
 
@@ -214,10 +215,11 @@
                                class="input-field" required/>
                         <button class="btn-action btn-auto">Erstellen</button>
                     </form>
-                    
+
                     @if (Model.SelectedHallPlanEntity != null)
                     {
-                        <form method="post" asp-page-handler="DeleteSelectedHallplan" class="form-row" style="margin-top: 10px;">
+                        <form method="post" asp-page-handler="DeleteSelectedHallplan" class="form-row"
+                              style="margin-top: 10px;">
                             <button class="btn-action btn-danger btn-auto">Diesen Hallenplan löschen</button>
                         </form>
                     }

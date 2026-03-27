@@ -1,11 +1,8 @@
 MobileDragDrop.polyfill({
-    // Sorgt dafür, dass das "Geisterbild" des Spielers beim Ziehen am Finger klebt
-    dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride
+    dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride,
 });
-
 window.addEventListener('touchmove', function () {
 }, {passive: false});
-
 document.addEventListener("DOMContentLoaded", () => {
     const draggablePlayers = document.querySelectorAll(".draggable-player, .draggable-substitute");
     let draggedPlayer = null;
