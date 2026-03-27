@@ -54,25 +54,25 @@
                 <div class="form-row">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="Firstname">Vorname</label>
-                        <input type="text" id="Firstname" name="Firstname" value="@Model.Player.Firstname" required
+                        <input type="text" id="Firstname" name="Firstname" value="@Model.CurrentPlayer.Firstname" required
                                class="form-input">
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="Lastname">Nachname</label>
-                        <input type="text" id="Lastname" name="Lastname" value="@Model.Player.Lastname" required
+                        <input type="text" id="Lastname" name="Lastname" value="@Model.CurrentPlayer.Lastname" required
                                class="form-input">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="EmailOrPhone">E-Mail Adresse</label>
-                    <input type="email" id="EmailOrPhone" name="EmailOrPhone" value="@Model.Player.IdentityUser?.Email"
+                    <input type="email" id="EmailOrPhone" name="EmailOrPhone" value="@Model.CurrentPlayer.IdentityUser?.Email"
                            required class="form-input">
                 </div>
 
                 <div class="form-group" style="margin-bottom: 30px;">
                     <label for="Username">Benutzername</label>
-                    <input type="text" id="Username" name="Username" value="@Model.Player.Username" required
+                    <input type="text" id="Username" name="Username" value="@Model.CurrentPlayer.Username" required
                            class="form-input">
                 </div>
 

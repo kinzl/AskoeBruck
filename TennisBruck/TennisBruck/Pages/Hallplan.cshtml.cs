@@ -1,20 +1,12 @@
 namespace TennisBruck.Pages;
 
 [Authorize]
-public class Hallplan : PageModel
+public class Hallplan(
+    CurrentPlayerService currentPlayerService,
+    TennisContext db,
+    ILogger<Hallplan> logger)
+    : PageModel
 {
-    private readonly CurrentPlayerService _currentPlayerService;
-    private readonly TennisContext _db;
-    private readonly ILogger<Hallplan> _logger;
-
-    public Hallplan(CurrentPlayerService currentPlayerService, TennisContext db,
-        ILogger<Hallplan> logger)
-    {
-        _currentPlayerService = currentPlayerService;
-        _db = db;
-        _logger = logger;
-    }
-
     public Player LoggedInPlayer { get; set; } = null!;
 
     [BindProperty] public List<HallPlanDay> HallPlanDays { get; set; } = new();
@@ -41,25 +33,27 @@ public class Hallplan : PageModel
     {
         HallPlanId = HttpContext.Session.GetInt32("selectedHallPlanId") ?? 0;
 
-        LoggedInPlayer = _currentPlayerService.GetCurrentUser()!;
+        var user = currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        LoggedInPlayer = user;
 
-        HallPlanEntity = _db.HallPlanEntities.ToList();
-        SelectedHallPlanEntity = _db.HallPlanEntities.SingleOrDefault(x => x.Id == HallPlanId);
+        HallPlanEntity = db.HallPlanEntities.ToList();
+        SelectedHallPlanEntity = db.HallPlanEntities.SingleOrDefault(x => x.Id == HallPlanId);
 
-        HallPlanDays = _db.HallPlanDays
+        HallPlanDays = db.HallPlanDays
             .Where(x => x.HallPlanId == HallPlanId)
             .Include(x => x.Players)
             .ThenInclude(x => x.Player)
             .OrderBy(x => x.PlayDate)
             .ToList();
 
-        NotRegisteredPlayers = _db.Players
-            .Where(p => !_db.HallPlanRegistrations
+        NotRegisteredPlayers = db.Players
+            .Where(p => !db.HallPlanRegistrations
                 .Any(r => r.PlayerId == p.Id && r.HallPlanId == HallPlanId))
             .ToList();
 
-        RegisteredPlayers = _db.Players
-            .Where(p => _db.HallPlanRegistrations
+        RegisteredPlayers = db.Players
+            .Where(p => db.HallPlanRegistrations
                 .Any(r => r.PlayerId == p.Id && r.HallPlanId == HallPlanId))
             .ToList();
 
@@ -70,7 +64,7 @@ public class Hallplan : PageModel
 
         if (SelectedHallPlanEntity != null)
         {
-            IsLoggedInPlayerPlaying = _db.HallPlanEntities
+            IsLoggedInPlayerPlaying = db.HallPlanEntities
                 .Include(hallPlanEntity => hallPlanEntity.Registrations)
                 .Single(x => x.Id == SelectedHallPlanEntity.Id)
                 .Registrations.Any(x => x.Player.Id == LoggedInPlayer.Id);
@@ -86,10 +80,10 @@ public class Hallplan : PageModel
         // Fall 1: Normaler Tausch (Beide Spieler sind schon im Plan auf einem Platz)
         if (data.Court1Id.HasValue && data.Court2Id.HasValue)
         {
-            var playerCourt1 = await _db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+            var playerCourt1 = await db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
                 .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player1Id && pc.HallPlanDay.Id == data.Court1Id);
 
-            var playerCourt2 = await _db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+            var playerCourt2 = await db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
                 .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player2Id && pc.HallPlanDay.Id == data.Court2Id);
 
             if (playerCourt1 != null && playerCourt2 != null)
@@ -97,38 +91,38 @@ public class Hallplan : PageModel
                 var tempPlayer = playerCourt1.Player;
                 playerCourt1.Player = playerCourt2.Player;
                 playerCourt2.Player = tempPlayer;
-                await _db.SaveChangesAsync();
+                await db.SaveChangesAsync();
             }
         }
         // Fall 2: Spieler 1 kommt von der Bank, Spieler 2 ist auf dem Platz
         else if (!data.Court1Id.HasValue && data.Court2Id.HasValue)
         {
-            var playerCourt2 = await _db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+            var playerCourt2 = await db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
                 .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player2Id && pc.HallPlanDay.Id == data.Court2Id);
 
             if (playerCourt2 != null)
             {
-                var benchPlayer = await _db.Players.FindAsync(data.Player1Id);
+                var benchPlayer = await db.Players.FindAsync(data.Player1Id);
                 if (benchPlayer != null)
                 {
                     playerCourt2.Player = benchPlayer; // Ersatzspieler übernimmt den Platz!
-                    await _db.SaveChangesAsync();
+                    await db.SaveChangesAsync();
                 }
             }
         }
         // Fall 3: Spieler 2 kommt von der Bank (falls man den Platz-Spieler auf die Bank zieht)
         else if (data.Court1Id.HasValue && !data.Court2Id.HasValue)
         {
-            var playerCourt1 = await _db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+            var playerCourt1 = await db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
                 .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player1Id && pc.HallPlanDay.Id == data.Court1Id);
 
             if (playerCourt1 != null)
             {
-                var benchPlayer = await _db.Players.FindAsync(data.Player2Id);
+                var benchPlayer = await db.Players.FindAsync(data.Player2Id);
                 if (benchPlayer != null)
                 {
                     playerCourt1.Player = benchPlayer;
-                    await _db.SaveChangesAsync();
+                    await db.SaveChangesAsync();
                 }
             }
         }
@@ -147,29 +141,29 @@ public class Hallplan : PageModel
             Name = competitionName
         };
 
-        _db.HallPlanEntities.Add(plan);
-        _db.SaveChanges();
+        db.HallPlanEntities.Add(plan);
+        db.SaveChanges();
 
         return RedirectToPage(nameof(Hallplan));
     }
 
     public IActionResult OnPostGeneratePlan(DateTime startDate, DateTime endDate, int frequencyDays)
     {
-        _logger.LogInformation("Starting plan generation");
+        logger.LogInformation("Starting plan generation");
         if (frequencyDays < 1) frequencyDays = 7;
 
         InitValues();
 
-        var existingDays = _db.HallPlanDays
+        var existingDays = db.HallPlanDays
             .Include(d => d.Players)
             .Where(d => d.HallPlanId == HallPlanId)
             .ToList();
 
-        _db.HallPlanDays.RemoveRange(existingDays);
-        _db.SaveChanges();
+        db.HallPlanDays.RemoveRange(existingDays);
+        db.SaveChanges();
 
         // 2. Spieler laden
-        var players = _db.HallPlanEntities
+        var players = db.HallPlanEntities
             .Include(hallPlanEntity => hallPlanEntity.Registrations)
             .ThenInclude(hallPlanRegistration => hallPlanRegistration.Player)
             .Single(x => x.Id == SelectedHallPlanEntity!.Id)
@@ -232,12 +226,12 @@ public class Hallplan : PageModel
                 playerCounts[player.Id]++;
             }
 
-            _db.HallPlanDays.Add(hallDay);
+            db.HallPlanDays.Add(hallDay);
         }
 
-        _db.SaveChanges();
+        db.SaveChanges();
         Console.WriteLine($"Balanced HallPlan erfolgreich generiert (Rhythmus: {frequencyDays} Tage).");
-        _logger.LogInformation("Plan generation complete");
+        logger.LogInformation("Plan generation complete");
         return RedirectToPage(nameof(Hallplan));
     }
 
@@ -246,10 +240,10 @@ public class Hallplan : PageModel
         InitValues();
         var playerId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
 
-        var player = _db.Players
+        var player = db.Players
             .Include(x => x.IdentityUser)
             .Single(x => x.IdentityUserId == playerId);
-        var hallPlanEntity = _db.HallPlanEntities
+        var hallPlanEntity = db.HallPlanEntities
             .Include(hallPlanEntity => hallPlanEntity.Registrations)
             .ThenInclude(hallPlanRegistration => hallPlanRegistration.Player)
             .Single(x => x.Id == SelectedHallPlanEntity!.Id);
@@ -269,7 +263,7 @@ public class Hallplan : PageModel
             hallPlanEntity.Registrations.Remove(hallplanRegistration);
         }
 
-        _db.SaveChanges();
+        db.SaveChanges();
 
         return RedirectToPage(nameof(Hallplan));
     }
@@ -279,13 +273,13 @@ public class Hallplan : PageModel
         InitValues();
         if (playerId == 0) return RedirectToPage(nameof(Hallplan), new { HallPlanId });
 
-        var exists = _db.HallPlanRegistrations.Any(x => x.PlayerId == playerId && x.HallPlanId == HallPlanId);
+        var exists = db.HallPlanRegistrations.Any(x => x.PlayerId == playerId && x.HallPlanId == HallPlanId);
 
         if (exists) return RedirectToPage(nameof(Hallplan));
 
-        var player = _db.Players.Single(x => x.Id == playerId);
-        var hallPlanEntity = _db.HallPlanEntities.Single(x => x.Id == HallPlanId);
-        _db.HallPlanRegistrations.Add(new HallPlanRegistration
+        var player = db.Players.Single(x => x.Id == playerId);
+        var hallPlanEntity = db.HallPlanEntities.Single(x => x.Id == HallPlanId);
+        db.HallPlanRegistrations.Add(new HallPlanRegistration
         {
             PlayerId = playerId,
             HallPlanId = HallPlanId,
@@ -293,7 +287,7 @@ public class Hallplan : PageModel
             HallPlanEntity = hallPlanEntity
         });
 
-        _db.SaveChanges();
+        db.SaveChanges();
 
 
         return RedirectToPage(nameof(Hallplan));
@@ -304,9 +298,9 @@ public class Hallplan : PageModel
         if (!User.IsInRole("Admin")) return Forbid();
         InitValues();
         var hallPlanEntity =
-            _db.HallPlanEntities.Single(x => SelectedHallPlanEntity != null && x.Id == SelectedHallPlanEntity.Id);
-        _db.HallPlanEntities.Remove(hallPlanEntity);
-        _db.SaveChanges();
+            db.HallPlanEntities.Single(x => SelectedHallPlanEntity != null && x.Id == SelectedHallPlanEntity.Id);
+        db.HallPlanEntities.Remove(hallPlanEntity);
+        db.SaveChanges();
         return RedirectToPage(nameof(Hallplan));
     }
 

@@ -40,15 +40,17 @@ public class Championship : PageModel
         _userManager = userManager;
     }
 
-    public void OnGet(string? message)
+    public IActionResult OnGet(string? message)
     {
-        InitValues(message);
+        return InitValues(message);
     }
 
-    private void InitValues(string? message = null)
+    private IActionResult InitValues(string? message = null)
     {
         int? selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
-        CurrentPlayer = _currentPlayerService.GetCurrentUser()!;
+        var user = _currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        CurrentPlayer = user;
         Message = message;
         Competitions = _db.Competitions.ToList();
 
@@ -123,6 +125,8 @@ public class Championship : PageModel
                 GroupTables[group.Id] = CalculateGroupTable(group.GroupTeams, matchesForGroup);
             }
         }
+
+        return Page();
     }
 
     #region CRUD Competition

@@ -11,21 +11,25 @@ public class Settings(
     : PageModel
 {
     public string? InfoText { get; set; }
-    [BindProperty] public required Player Player { get; set; }
+    [BindProperty] public required Player CurrentPlayer { get; set; }
 
     public IActionResult OnGet(string? infoText)
     {
         InfoText = infoText;
-        Player = currentPlayerService.GetCurrentUser()!;
+        var user = currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        CurrentPlayer = user;
         return Page();
     }
 
     public IActionResult OnPostChangeSettings(RegistrationDto body)
     {
-        Player = currentPlayerService.GetCurrentUser()!;
-        Player.Firstname = body.Firstname;
-        Player.Lastname = body.Lastname;
-        Player.Username = body.Username;
+        var user = currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        CurrentPlayer = user;
+        CurrentPlayer.Firstname = body.Firstname;
+        CurrentPlayer.Lastname = body.Lastname;
+        CurrentPlayer.Username = body.Username;
         db.SaveChanges();
 
         return RedirectToPage(nameof(Settings), new { infoText = "Daten gespeichert" });

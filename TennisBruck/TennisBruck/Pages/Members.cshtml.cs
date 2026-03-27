@@ -15,10 +15,12 @@ public class Members(
     public string? InfoBox { get; set; }
     public List<string> AdminUserIds { get; set; } = [];
 
-    public async Task<PageResult> OnGet(string? infoBox)
+    public async Task<IActionResult> OnGet(string? infoBox)
     {
         InfoBox = infoBox;
-        LoggedInPlayer = currentPlayerService.GetCurrentUser()!;
+        var user = currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        LoggedInPlayer = user;
         AllPlayers = db.Players.Include(x => x.IdentityUser).ToList();
         var adminUsers = await userManager.GetUsersInRoleAsync("Admin");
         AdminUserIds = adminUsers.Select(u => u.Id).ToList();

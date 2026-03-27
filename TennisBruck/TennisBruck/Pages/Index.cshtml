@@ -24,7 +24,7 @@
         @if (User.Identity!.IsAuthenticated)
         {
             <div class="user-greeting">
-                @(Model.Player != null ? Model.Player.ToString() : "Spieler")
+                @(Model.CurrentPlayer != null ? Model.CurrentPlayer.ToString() : "Spieler")
             </div>
             <form asp-area="Identity" asp-page="/Account/Logout" method="post" class="inline-form">
                 <button type="submit" class="btn-outline-light">Logout</button>

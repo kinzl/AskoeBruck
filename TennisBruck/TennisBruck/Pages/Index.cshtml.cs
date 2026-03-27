@@ -2,59 +2,50 @@ using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pag
 
 namespace TennisBruck.Pages;
 
-public class IndexModel : PageModel
+public class IndexModel(ILogger<IndexModel> logger, CurrentPlayerService currentPlayerService)
+    : PageModel
 {
-    private CurrentPlayerService _currentPlayerService;
-    private TennisContext _db;
-    private readonly ILogger<IndexModel> _logger;
-    [BindProperty(SupportsGet = true)] public Player? Player { get; set; }
-
-    public IndexModel(ILogger<IndexModel> logger, TennisContext db, CurrentPlayerService currentPlayerService)
-    {
-        _logger = logger;
-        _db = db;
-        _currentPlayerService = currentPlayerService;
-    }
+    [BindProperty(SupportsGet = true)] public Player? CurrentPlayer { get; set; }
 
     public void OnGet()
     {
-        Player = _currentPlayerService.GetCurrentUser();
+        CurrentPlayer = currentPlayerService.GetCurrentUser();
     }
 
     public IActionResult OnPostLogin(LoginDto body)
     {
-        _logger.LogInformation("OnPostLogin");
+        logger.LogInformation("OnPostLogin");
         return RedirectToPage(nameof(Login));
     }
 
     public async Task<RedirectToPageResult> OnPostLogout()
     {
-        _logger.LogInformation("OnPostLogout");
+        logger.LogInformation("OnPostLogout");
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return new RedirectToPageResult(nameof(Index));
     }
 
     public IActionResult OnPostShowMembers()
     {
-        _logger.LogInformation("OnPostShowMembers");
+        logger.LogInformation("OnPostShowMembers");
         return new RedirectToPageResult(nameof(Members));
     }
 
     public IActionResult OnPostHallplan()
     {
-        _logger.LogInformation("OnPostHallplan");
+        logger.LogInformation("OnPostHallplan");
         return new RedirectToPageResult(nameof(Hallplan));
     }
 
     public IActionResult OnPostShowSettings()
     {
-        _logger.LogInformation("OnPostShowSettings");
+        logger.LogInformation("OnPostShowSettings");
         return new RedirectToPageResult(nameof(Settings));
     }
 
     public IActionResult OnPostReserveCourt()
     {
-        _logger.LogInformation("OnPostReserveCourt");
+        logger.LogInformation("OnPostReserveCourt");
         return new RedirectToPageResult(nameof(CourtBruck));
     }
 

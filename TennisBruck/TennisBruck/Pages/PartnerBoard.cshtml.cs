@@ -17,11 +17,9 @@ public class PartnerBoardModel(
 // 2. Die OnGetAsync Methode updaten
     public async Task<IActionResult> OnGetAsync()
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user != null)
-        {
-            CurrentPlayerId = currentPlayerService.GetCurrentUser()!.Id;
-        }
+        var user = currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        CurrentPlayerId = user.Id;
 
         var oldSlots = await db.AvailabilitySlots
             .Where(s => s.Date < DateTime.Today)
@@ -62,21 +60,20 @@ public class PartnerBoardModel(
 
     public async Task<IActionResult> OnPostAcceptMatchAsync(int slotId)
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return Challenge();
-
-        var currentPlayer = currentPlayerService.GetCurrentUser()!;
+        var user = currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        CurrentPlayerId = user.Id;
 
         var slot = await db.AvailabilitySlots
             .Include(s => s.Player)
             .FirstOrDefaultAsync(s => s.Id == slotId);
 
         // Sicherheits-Check: Nur fixieren, wenn frei und NICHT der eigene Termin
-        if (slot != null && !slot.IsMatched && slot.PlayerId != currentPlayer.Id)
+        if (slot != null && !slot.IsMatched && slot.PlayerId != CurrentPlayerId)
         {
             // 1. Match in der Börse als "Fixiert" markieren
             slot.IsMatched = true;
-            slot.MatchedWithPlayerId = currentPlayer.Id;
+            slot.MatchedWithPlayerId = CurrentPlayerId;
 
             // 2. Neue Erfolgsmeldung mit einem kleinen Reminder
             TempData["SuccessMessage"] =

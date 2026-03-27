@@ -15,7 +15,10 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
     public async Task<IActionResult> OnGet(string? date)
     {
-        CurrentPlayer = currentPlayerService.GetCurrentUser();
+        var user = currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        CurrentPlayer = user;
+
         // Parse the date or default to today
         CurrentDate = string.IsNullOrEmpty(date) ? DateTime.Today : DateTime.Parse(date);
 
@@ -53,9 +56,10 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
     // Wir fügen string? eventName als Parameter hinzu. ASP.NET fängt das automatisch aus dem HTML (name="eventName") ab!
     public IActionResult OnPostCreateReservation(string? eventName)
     {
-        CurrentPlayer = currentPlayerService.GetCurrentUser();
-        if (CurrentPlayer == null) return RedirectToPage(nameof(Login));
-
+        var user = currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        CurrentPlayer = user;
+        
         // Check if the reservation already exists
         var existing = db.Reservations.FirstOrDefault(r =>
             r.CourtNumber == CourtNumber && r.StartTime == StartTime);
@@ -94,8 +98,9 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         // Sicherheitscheck
         if (!User.IsInRole("Admin")) return RedirectToPage();
 
-        CurrentPlayer = currentPlayerService.GetCurrentUser();
-        if (CurrentPlayer == null) return RedirectToPage(nameof(Login));
+        var user = currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        CurrentPlayer = user;
 
         // Datum und Zeiten aus den Strings parsen
         var date = DateTime.Parse(CurrentDateStr);
@@ -136,15 +141,16 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
     public IActionResult OnPostDeleteReservation()
     {
-        CurrentPlayer = currentPlayerService.GetCurrentUser();
-        if (CurrentPlayer == null) return RedirectToPage(nameof(Login));
+        var user = currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
+        CurrentPlayer = user;
 
         Console.WriteLine(StartTime);
         // Find the reservation
         var reservation = db.Reservations.Include(reservation => reservation.Player)
             .FirstOrDefault(x => x.Id == ReservationId);
 
-        if (reservation == null || reservation.Player.Id != CurrentPlayer.Id)
+        if (reservation?.Player != null && reservation.Player.Id != CurrentPlayer.Id)
         {
             ModelState.AddModelError("", "Reservierung nicht gefunden oder Zugriff verweigert.");
             return RedirectToPage(new { date = CurrentDate.ToString("yyyy-MM-dd") });

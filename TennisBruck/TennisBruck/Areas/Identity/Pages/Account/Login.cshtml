@@ -2,7 +2,7 @@
 @model LoginModel
 
 @{
-    ViewData["Title"] = "Log in";
+    ViewData["Title"] = "Login";
 }
 
 <link rel="stylesheet" href="~/css/areas/login.css" asp-append-version="true"/>
@@ -15,19 +15,19 @@
             <div class="auth-local">
                 <section>
                     <form id="account" method="post">
-                        <h2 class="auth-subtitle">Use a local account</h2>
+                        <h2 class="auth-subtitle">Verwenden ein lokales Konto</h2>
 
                         <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
 
                         <div class="form-group">
-                            <label asp-for="Input.Email" class="form-label">Email address</label>
+                            <label asp-for="Input.Email" class="form-label">E-mail Adresse</label>
                             <input asp-for="Input.Email" class="form-input" autocomplete="username" aria-required="true"
                                    placeholder="name@example.com"/>
                             <span asp-validation-for="Input.Email" class="validation-error"></span>
                         </div>
 
                         <div class="form-group">
-                            <label asp-for="Input.Password" class="form-label">Password</label>
+                            <label asp-for="Input.Password" class="form-label">Passwort</label>
                             <input asp-for="Input.Password" class="form-input" autocomplete="current-password"
                                    aria-required="true" placeholder="••••••••"/>
                             <span asp-validation-for="Input.Password" class="validation-error"></span>
@@ -40,11 +40,11 @@
                             </label>
                         </div>
 
-                        <button id="login-submit" type="submit" class="btn-submit">Log in</button>
+                        <button id="login-submit" type="submit" class="btn-submit">Login</button>
 
                         <div class="auth-links">
-                            <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
-                            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register as a new user</a>
+                            <a id="forgot-password" asp-page="./ForgotPassword">Passwort vergessen?</a>
+                            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Zur Registrierung</a>
                             @* <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email *@
                             @*     confirmation</a> *@
                         </div>
@@ -54,13 +54,13 @@
 
             <div class="auth-external">
                 <section>
-                    <h2 class="auth-subtitle">Use another service</h2>
+                    <h2 class="auth-subtitle">Nutze einen anderen Dienst</h2>
                     @{
                         if ((Model.ExternalLogins?.Count ?? 0) == 0)
                         {
                             <div class="external-empty">
-                                <p>No external authentication services configured.</p>
-                                <a href="https://go.microsoft.com/fwlink/?LinkID=532715">Learn how to set this up</a>.
+                                <p>Es sind keine externen Authentifizierungsdienste konfiguriert.</p>
+                                <a href="https://go.microsoft.com/fwlink/?LinkID=532715">Erfahre wie dies einzurichten ist.</a>.
                             </div>
                         }
                         else
@@ -73,7 +73,7 @@
                                         <button type="submit" class="btn-external" name="provider"
                                                 value="@provider.Name"
                                                 title="Log in using your @provider.DisplayName account">
-                                            Continue with @provider.DisplayName
+                                            Weiter mit @provider.DisplayName
                                         </button>
                                     }
                                 </div>
