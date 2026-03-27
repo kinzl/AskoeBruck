@@ -238,16 +238,18 @@ public class Hallplan(
     public IActionResult OnPostChangePlayingState()
     {
         InitValues();
-        var playerId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        var user = currentPlayerService.GetCurrentUser();
+        if (user == null) return RedirectToPage("/Account/Login", new { area = "Identity" });
 
         var player = db.Players
             .Include(x => x.IdentityUser)
-            .Single(x => x.IdentityUserId == playerId);
+            .Single(x => x.IdentityUserId == user.IdentityUserId);
         var hallPlanEntity = db.HallPlanEntities
             .Include(hallPlanEntity => hallPlanEntity.Registrations)
             .ThenInclude(hallPlanRegistration => hallPlanRegistration.Player)
             .Single(x => x.Id == SelectedHallPlanEntity!.Id);
-        var isRegistered = hallPlanEntity.Registrations.SingleOrDefault(x => x.Player.IdentityUserId == playerId);
+        var isRegistered =
+            hallPlanEntity.Registrations.SingleOrDefault(x => x.Player.IdentityUserId == user.IdentityUserId);
 
         if (isRegistered == null)
         {
@@ -259,7 +261,8 @@ public class Hallplan(
         }
         else
         {
-            var hallplanRegistration = hallPlanEntity.Registrations.Single(x => x.Player.IdentityUserId == playerId);
+            var hallplanRegistration =
+                hallPlanEntity.Registrations.Single(x => x.Player.IdentityUserId == user.IdentityUserId);
             hallPlanEntity.Registrations.Remove(hallplanRegistration);
         }
 
