@@ -14,31 +14,29 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
     <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
-    <link rel="stylesheet" href="~/css/hallplan.css" asp-append-version="true">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/hallplan.css" asp-append-version="true">
     <script src="~/js/hallplan.js" asp-append-version="true" defer></script>
 </head>
 <body>
 
 <header class="app-header">
     <div class="header-top-bar">
-        <form method="post" asp-page-handler="Back" style="margin: 0;">
+        <form method="post" asp-page-handler="Back" class="form-no-margin">
             <button type="submit" class="btn-back-header">← Übersicht</button>
         </form>
     </div>
     <h1 class="app-title">🎾 @(Model.SelectedHallPlanEntity?.Name ?? "Hallenplan")</h1>
-    <p style="color: var(--text-muted); margin-top: 10px;">Verschiebe Spieler einfach per Drag & Drop</p>
+    <p class="header-subtitle">Verschiebe Spieler einfach per Drag & Drop</p>
 </header>
 
 <main class="main-container" id="main-content" data-me-id="@Model.LoggedInPlayer?.Id">
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+    <div class="top-dashboard-grid">
 
-        <section class="modern-card" style="margin: 0;">
-            <label
-                style="font-size: 0.85rem; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 8px;">Gewählter
-                Platz / Bewerb</label>
-            <form method="post" asp-page-handler="SelectHallPlan" style="margin: 0;">
+        <section class="modern-card card-no-margin">
+            <label class="input-label">Gewählter Platz / Bewerb</label>
+            <form method="post" asp-page-handler="SelectHallPlan" class="form-no-margin">
                 <select asp-for="HallPlanId" class="custom-select" onchange="this.form.submit()">
                     <option value="">Bitte auswählen...</option>
                     @foreach (var item in Model.HallPlanEntity)
@@ -51,16 +49,14 @@
 
         @if (Model.SelectedHallPlanEntity != null)
         {
-            <section class="modern-card"
-                     style="margin: 0; display: flex; justify-content: space-between; align-items: center;">
+            <section class="modern-card card-no-margin card-status-flex">
                 <div>
-                    <span
-                        style="font-size: 0.85rem; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 5px;">Mein Status</span>
-                    <h3 style="margin: 0; font-size: 1.2rem; color: @(Model.IsLoggedInPlayerPlaying ? "var(--nav-bg)" : "var(--text-muted)");">
+                    <span class="status-label">Mein Status</span>
+                    <h3 class="status-heading @(Model.IsLoggedInPlayerPlaying ? "status-active" : "status-paused")">
                         @(Model.IsLoggedInPlayerPlaying ? "✅ Eingeteilt" : "⏸️ Pausiert")
                     </h3>
                 </div>
-                <form method="post" asp-page-handler="ChangePlayingState" id="statusForm" style="margin: 0;">
+                <form method="post" asp-page-handler="ChangePlayingState" id="statusForm" class="form-no-margin">
                     <label class="switch">
                         <input type="checkbox" onchange="this.form.submit()"
                                @(Model.IsLoggedInPlayerPlaying ? "checked" : "")>
@@ -118,10 +114,9 @@
             </div>
         </section>
 
-        <section class="modern-card" style="border-left: 4px solid var(--accent-color);">
-            <h2 class="section-title" style="margin-bottom: 5px;">🔄 Ersatzbank (Kein Abo)</h2>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Ziehe einen Spieler von hier
-                auf den Spielplan, um jemanden zu ersetzen.</p>
+        <section class="modern-card card-highlight-left">
+            <h2 class="section-title compact">🔄 Ersatzbank (Kein Abo)</h2>
+            <p class="section-description">Ziehe einen Spieler von hier auf den Spielplan, um jemanden zu ersetzen.</p>
 
             <div class="substitute-bench">
                 @if (Model.NotRegisteredPlayers != null && Model.NotRegisteredPlayers.Any())
@@ -131,16 +126,14 @@
                         <div class="player-slot draggable-substitute"
                              draggable="true"
                              data-player-id="@sub.Id">
-                            <div class="avatar-mini"
-                                 style="background: #cbd5e1; color: #475569;">@sub.ToString().Substring(0, 1)</div>
+                            <div class="avatar-mini avatar-substitute">@sub.ToString().Substring(0, 1)</div>
                             <span class="player-name">@sub</span>
                         </div>
                     }
                 }
                 else
                 {
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Aktuell keine Ersatzspieler
-                        verfügbar.</p>
+                    <p class="empty-state-text">Aktuell keine Ersatzspieler verfügbar.</p>
                 }
             </div>
         </section>
@@ -148,7 +141,7 @@
 
     @if (User.IsInRole("Admin"))
     {
-        <section class="modern-card" style="margin-top: 20px;">
+        <section class="modern-card admin-section">
             <h2 class="section-title">🛠️ Administrator Werkzeuge</h2>
 
             <div class="admin-grid">
@@ -156,17 +149,15 @@
                 {
                     <div class="admin-box">
                         <h4>Zeitraum generieren</h4>
-                        <form method="post" class="admin-form"
-                              style="display: flex; flex-direction: column; gap: 10px;">
+                        <form method="post" class="form-col">
                             <input type="hidden" name="HallPlanId" value="@Model.HallPlanId"/>
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-grid-2">
                                 <input type="date" name="startDate" value="@DateTime.Today.ToString("yyyy-MM-dd")"
-                                       class="input-field"
-                                       style="min-width: 0; padding-left: 10px; padding-right: 10px;" required/>
+                                       class="input-field input-date" required/>
                                 <input type="date" name="endDate"
-                                       value="@DateTime.Today.AddMonths(6).ToString("yyyy-MM-dd")" class="input-field"
-                                       style="min-width: 0; padding-left: 10px; padding-right: 10px;" required/>
+                                       value="@DateTime.Today.AddMonths(6).ToString("yyyy-MM-dd")" 
+                                       class="input-field input-date" required/>
                             </div>
 
                             <select name="frequencyDays" class="custom-select" required>
@@ -183,8 +174,7 @@
 
                     <div class="admin-box">
                         <h4>Spieler fest ins Abo hinzufügen</h4>
-                        <form method="post" asp-page-handler="AddPlayerToHallplan"
-                              style="display: flex; flex-direction: column; gap: 10px;">
+                        <form method="post" asp-page-handler="AddPlayerToHallplan" class="form-col">
                             <input type="hidden" name="HallPlanId" value="@Model.HallPlanId"/>
                             <select name="playerId" class="custom-select" required>
                                 <option value="">Spieler wählen...</option>
@@ -202,8 +192,7 @@
 
                     <div class="admin-box">
                         <h4>Spieler entfernen</h4>
-                        <form method="post" asp-page-handler="RemovePlayerFromAbo"
-                              style="display: flex; flex-direction: column; gap: 10px;">
+                        <form method="post" asp-page-handler="RemovePlayerFromAbo" class="form-col">
                             <select name="PlayerIdToRemove" class="custom-select" required>
                                 <option value="">Spieler wählen...</option>
 
@@ -213,31 +202,25 @@
                                 }
                             </select>
 
-                            <button type="submit" class="btn-action"
-                                    style="width: auto; background-color: red">
-                                Entfernen
-                            </button>
+                            <button type="submit" class="btn-action btn-danger">Entfernen</button>
                         </form>
                     </div>
                 }
 
-                <div class="admin-box" style="grid-column: 1 / -1;">
+                <div class="admin-box admin-box-full">
                     <h4>Neuen Bewerb/Platz anlegen</h4>
-                    <form method="post" asp-page-handler="CreateCompetition" style="display: flex; gap: 10px;">
+                    <form method="post" asp-page-handler="CreateCompetition" class="form-row">
                         <input type="text" name="competitionName" placeholder="Name (z.B. Halle West)"
                                class="input-field" required/>
-                        <button class="btn-action" style="width: auto;">Erstellen
-                        </button>
+                        <button class="btn-action btn-auto">Erstellen</button>
                     </form>
-                    <form method="post" asp-page-handler="DeleteSelectedHallplan" style="display: flex; gap: 10px;">
-                        @if (Model.SelectedHallPlanEntity != null)
-                        {
-                            <button class="btn-action"
-                                    style="width: auto; background-color: red">Diesen Hallenplan
-                                löschen
-                            </button>
-                        }
-                    </form>
+                    
+                    @if (Model.SelectedHallPlanEntity != null)
+                    {
+                        <form method="post" asp-page-handler="DeleteSelectedHallplan" class="form-row" style="margin-top: 10px;">
+                            <button class="btn-action btn-danger btn-auto">Diesen Hallenplan löschen</button>
+                        </form>
+                    }
                 </div>
             </div>
         </section>
