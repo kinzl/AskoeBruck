@@ -3,6 +3,7 @@ MobileDragDrop.polyfill({
 });
 window.addEventListener('touchmove', function () {
 }, {passive: false});
+
 document.addEventListener("DOMContentLoaded", () => {
     const draggablePlayers = document.querySelectorAll(".draggable-player, .draggable-substitute");
     let draggedPlayer = null;
@@ -11,38 +12,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const myPlayerId = document.getElementById("main-content")?.dataset.meId;
 
     // ==========================================
-    // NEU: AUTO-SCROLL LOGIK (EDGE SCROLLING)
+    // AUTO-SCROLL LOGIK (EDGE SCROLLING)
     // ==========================================
     let isDragging = false;
-    let scrollDirection = 0; // -1 = hoch, 1 = runter, 0 = stopp
-    const scrollSpeed = 15;  // Wie schnell gescrollt wird (Pixel pro Frame)
-    const scrollThreshold = 100; // Ab wie vielen Pixeln vor dem Rand der Scroll startet
+    let scrollDirection = 0;
+    const scrollSpeed = 15;
+    const scrollThreshold = 100;
 
     function performAutoScroll() {
         if (!isDragging) return;
-
-        if (scrollDirection !== 0) {
-            window.scrollBy(0, scrollDirection * scrollSpeed);
-        }
-
-        // requestAnimationFrame sorgt für flüssiges Scrollen passend zur Framerate deines Monitors
+        if (scrollDirection !== 0) window.scrollBy(0, scrollDirection * scrollSpeed);
         requestAnimationFrame(performAutoScroll);
     }
 
-    // Wir überwachen das gesamte Fenster, um zu wissen, wo die Maus ist
     document.addEventListener("dragover", (e) => {
         if (!isDragging) return;
-
         const y = e.clientY;
         const windowHeight = window.innerHeight;
 
-        if (y < scrollThreshold) {
-            scrollDirection = -1; // Maus ist oben -> Nach oben scrollen
-        } else if (windowHeight - y < scrollThreshold) {
-            scrollDirection = 1;  // Maus ist unten -> Nach unten scrollen
-        } else {
-            scrollDirection = 0;  // Maus ist in der Mitte -> Stehen bleiben
-        }
+        if (y < scrollThreshold) scrollDirection = -1;
+        else if (windowHeight - y < scrollThreshold) scrollDirection = 1;
+        else scrollDirection = 0;
     });
     // ==========================================
 
@@ -54,7 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
             player.style.opacity = "0.5";
             player.style.boxShadow = "0 0 0 2px var(--accent-color)";
 
-            // Start Auto-Scroll
             isDragging = true;
             requestAnimationFrame(performAutoScroll);
         });
@@ -64,7 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
             player.style.boxShadow = "none";
             draggedPlayer = null;
 
-            // Stopp Auto-Scroll
             isDragging = false;
             scrollDirection = 0;
         });
@@ -100,10 +88,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const oldTargetHTML = target.innerHTML;
                 const oldTargetPlayerId = target.dataset.playerId;
-                const oldDraggedHTML = draggedPlayer.innerHTML;
-                const oldDraggedPlayerId = draggedPlayer.dataset.playerId;
 
-                // 1. VISUELLES UPDATE
+                // 1. VISUELLES UPDATE (Optimiert)
                 if (isFromBench) {
                     target.innerHTML = draggedPlayer.innerHTML;
                     target.dataset.playerId = draggedPlayer.dataset.playerId;
@@ -114,22 +100,31 @@ document.addEventListener("DOMContentLoaded", () => {
                     draggedPlayer.dataset.playerId = oldTargetPlayerId;
                 }
 
-                // 2. FARBE KORRIGIEREN
+                // 2. FARBE KORRIGIEREN (Auf die neue CSS-Klasse 'slot-me' angepasst!)
                 if (myPlayerId) {
-                    if (target.dataset.playerId === myPlayerId) target.classList.add("player-slot-me");
-                    else target.classList.remove("player-slot-me");
+                    if (target.dataset.playerId === myPlayerId) target.classList.add("slot-me");
+                    else target.classList.remove("slot-me");
 
                     if (!isFromBench) {
-                        if (draggedPlayer.dataset.playerId === myPlayerId) draggedPlayer.classList.add("player-slot-me");
-                        else draggedPlayer.classList.remove("player-slot-me");
+                        if (draggedPlayer.dataset.playerId === myPlayerId) draggedPlayer.classList.add("slot-me");
+                        else draggedPlayer.classList.remove("slot-me");
                     }
                 }
 
-                // 3. BACKEND ANFRAGE
+                // 3. BACKEND ANFRAGE (URL Repariert!)
                 const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
+                if (!token) {
+                    alert("Sicherheitstoken fehlt. Bitte lade die Seite neu.");
+                    return;
+                }
+
                 try {
-                    const response = await fetch("?handler=SwapPlayers", {
+                    // WICHTIG: Baut die URL sauber zusammen, damit Parameter (wie HallPlanId) nicht verloren gehen!
+                    const targetUrl = new URL(window.location.href);
+                    targetUrl.searchParams.set("handler", "SwapPlayers");
+
+                    const response = await fetch(targetUrl.toString(), {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -143,10 +138,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         }),
                     });
 
-                    if (!response.ok) throw new Error("Fehler beim Speichern in der DB");
+                    if (!response.ok) {
+                        throw new Error(`Server antwortete mit Status ${response.status}`);
+                    }
 
                 } catch (error) {
-                    console.error(error);
+                    console.error("Fetch-Fehler:", error);
                     alert("Es gab einen Fehler beim Speichern. Die Seite wird neu geladen.");
                     window.location.reload();
                 }

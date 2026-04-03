@@ -39,9 +39,8 @@ public class Hallplan(
         SelectedHallPlanEntity = db.HallPlanEntities.SingleOrDefault(x => x.Id == HallPlanId);
 
         HallPlanDays = db.HallPlanDays
-            .Where(x => x.HallPlanId == HallPlanId)
             .Include(x => x.Players)
-            .ThenInclude(x => x.Player)
+            .Where(x => x.HallPlanId == HallPlanId)
             .OrderBy(x => x.PlayDate)
             .ToList();
 
@@ -76,24 +75,32 @@ public class Hallplan(
         // Fall 1: Normaler Tausch (Beide Spieler sind schon im Plan auf einem Platz)
         if (data.Court1Id.HasValue && data.Court2Id.HasValue)
         {
-            var playerCourt1 = await db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+            // db.Set<T>() greift auf die Tabelle zu, auch ohne DbSet-Eigenschaft im Context!
+            var playerCourt1 = await db.HallPlanDayPlayers
+                .Include(pc => pc.Player)
                 .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player1Id && pc.HallPlanDay.Id == data.Court1Id);
 
-            var playerCourt2 = await db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+            var playerCourt2 = await db.HallPlanDayPlayers
+                .Include(pc => pc.Player)
                 .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player2Id && pc.HallPlanDay.Id == data.Court2Id);
 
             if (playerCourt1 != null && playerCourt2 != null)
             {
-                var tempPlayer = playerCourt1.Player;
-                playerCourt1.Player = playerCourt2.Player;
-                playerCourt2.Player = tempPlayer;
+                // Wir holen uns die echten Spieler-Objekte aus der Datenbank
+                var tempPlayer = await db.Players.FindAsync(data.Player1Id);
+                var player2 = await db.Players.FindAsync(data.Player2Id);
+
+                // Und weisen sie über Kreuz neu zu
+                playerCourt1.Player = player2!;
+                playerCourt2.Player = tempPlayer!;
+
                 await db.SaveChangesAsync();
             }
         }
         // Fall 2: Spieler 1 kommt von der Bank, Spieler 2 ist auf dem Platz
         else if (!data.Court1Id.HasValue && data.Court2Id.HasValue)
         {
-            var playerCourt2 = await db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+            var playerCourt2 = await db.HallPlanDayPlayers
                 .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player2Id && pc.HallPlanDay.Id == data.Court2Id);
 
             if (playerCourt2 != null)
@@ -101,7 +108,7 @@ public class Hallplan(
                 var benchPlayer = await db.Players.FindAsync(data.Player1Id);
                 if (benchPlayer != null)
                 {
-                    playerCourt2.Player = benchPlayer; // Ersatzspieler übernimmt den Platz!
+                    playerCourt2.Player = benchPlayer;
                     await db.SaveChangesAsync();
                 }
             }
@@ -109,7 +116,7 @@ public class Hallplan(
         // Fall 3: Spieler 2 kommt von der Bank (falls man den Platz-Spieler auf die Bank zieht)
         else if (data.Court1Id.HasValue && !data.Court2Id.HasValue)
         {
-            var playerCourt1 = await db.HallEntities.Include(pc => pc.Player).Include(pc => pc.HallPlanDay)
+            var playerCourt1 = await db.HallPlanDayPlayers
                 .FirstOrDefaultAsync(pc => pc.Player.Id == data.Player1Id && pc.HallPlanDay.Id == data.Court1Id);
 
             if (playerCourt1 != null)
@@ -123,7 +130,6 @@ public class Hallplan(
             }
         }
 
-        // Wenn wir in einer Razor Page via Fetch ankommen, geben wir ein einfaches JSON-Ok zurück
         return new JsonResult(new { success = true });
     }
 

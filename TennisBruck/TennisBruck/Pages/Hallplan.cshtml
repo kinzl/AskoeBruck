@@ -74,44 +74,37 @@
         <section class="modern-card">
             <h2 class="section-title">📅 Spielplan Übersicht</h2>
 
-            <div class="table-responsive">
-                <table class="modern-table">
-                    <thead>
-                    <tr>
-                        <th>Datum</th>
-                        <th>Position 1</th>
-                        <th>Position 2</th>
-                        <th>Position 3</th>
-                        <th>Position 4</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @foreach (var court in Model.HallPlanDays)
-                    {
-                        <tr>
-                            <td class="date-col">
-                                <span class="date-day">@court.PlayDate.ToString("dd")</span>
-                                <span class="date-month">@court.PlayDate.ToString("MMM")</span>
-                            </td>
+            <div class="mobile-schedule-compact">
+                @foreach (var court in Model.HallPlanDays)
+                {
+                    <div class="match-day-row">
+
+                        <div class="date-sidebar">
+                            <span class="day-num">@court.PlayDate.ToString("dd")</span>
+                            <span class="month-text">@court.PlayDate.ToString("MMM")</span>
+                        </div>
+
+                        <div class="players-2x2-grid">
                             @foreach (var playerEntry in court.Players)
                             {
                                 bool isMe = Model.LoggedInPlayer != null && playerEntry.Player.Id == Model.LoggedInPlayer.Id;
-                                string highlightClass = isMe ? "player-slot-me" : "";
+                                string highlightClass = isMe ? "slot-me" : "";
 
-                                <td class="drop-zone" data-day-id="@court.Id">
-                                    <div class="player-slot draggable-player @highlightClass"
+                                <div class="drop-zone compact-drop" data-day-id="@court.Id">
+                                    <div class="player-slot draggable-player compact-player @highlightClass"
                                          draggable="true"
                                          data-player-id="@playerEntry.Player.Id"
                                          data-court-id="@court.Id">
-                                        <div class="avatar-mini">@playerEntry.Player.ToString().Substring(0, 1)</div>
-                                        <span class="player-name">@playerEntry.Player</span>
+                                        <div class="avatar-micro">@playerEntry.Player.ToString().Substring(0, 1)</div>
+                                        <span class="player-name-micro">@playerEntry.Player.ToString()</span>
                                     </div>
-                                </td>
+
+                                </div>
                             }
-                        </tr>
-                    }
-                    </tbody>
-                </table>
+                        </div>
+
+                    </div>
+                }
             </div>
         </section>
 
@@ -120,7 +113,7 @@
             <p class="section-description">Ziehe einen Spieler von hier auf den Spielplan, um jemanden zu ersetzen.</p>
 
             <div class="substitute-bench">
-                @if (Model.NotRegisteredPlayers != null && Model.NotRegisteredPlayers.Any())
+                @if (Model.NotRegisteredPlayers.Any())
                 {
                     foreach (var sub in Model.NotRegisteredPlayers)
                     {

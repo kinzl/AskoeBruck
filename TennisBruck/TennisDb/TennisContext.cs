@@ -32,6 +32,7 @@ public class TennisContext : IdentityDbContext<IdentityUser>, IDataProtectionKey
     public DbSet<GroupTeam> GroupTeams { get; set; }
     public DbSet<HallPlanEntity> HallPlanEntities { get; set; }
     public DbSet<HallPlanDay> HallPlanDays { get; set; }
+    public DbSet<HallPlanDayPlayer> HallPlanDayPlayers { get; set; }
     public DbSet<HallPlanRegistration> HallPlanRegistrations { get; set; }
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
     public DbSet<AvailabilitySlot> AvailabilitySlots { get; set; }

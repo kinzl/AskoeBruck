@@ -17,11 +17,10 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
         // 1. ALTE LOGIK ENTFERNT: Wir reißen nicht mehr bei jedem Start das Haus ab!
         await DropAllTables(db);
         // await db.Database.EnsureDeletedAsync(cancellationToken);
-        await db.Database.EnsureCreatedAsync(cancellationToken);
 
         // 2. NEUE LOGIK: Wir wenden ausstehende Updates (Migrationen) sanft an
         Console.WriteLine("Prüfe auf Datenbank-Updates...");
-        // await db.Database.MigrateAsync(cancellationToken);
+        await db.Database.MigrateAsync(cancellationToken);
         Console.WriteLine("Datenbank ist auf dem neuesten Stand!");
 
         // 3. SEEDING: Standard-Daten anlegen (falls sie noch nicht existieren)
