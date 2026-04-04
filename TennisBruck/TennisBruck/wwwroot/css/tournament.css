@@ -855,3 +855,80 @@ input:focus, select:focus {
 .btn-generate:hover {
     background-color: #2a3158;
 }
+
+/* ==========================================
+   MOBILE LAYOUT (RESPONSIVE)
+   ========================================== */
+@media (max-width: 768px) {
+    /* Header and Cards */
+    .app-header {
+        padding: 30px 15px 40px 15px;
+    }
+    
+    .main-container {
+        padding: 0 10px;
+        margin-top: -20px;
+    }
+    
+    .modern-card {
+        padding: 15px;
+    }
+
+    /* Wrap competition actions and title */
+    .competition-info-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    /* Grids */
+    .pairs-grid-container {
+        grid-template-columns: 1fr;
+    }
+
+    .players-flex-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .plus-symbol {
+        margin-top: 0;
+        margin-bottom: 5px;
+    }
+
+    .group-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Match Scorecards */
+    .match-scorecard {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .match-action-form {
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    /* Form toolbars wrapping */
+    .group-generator-toolbar {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .admin-time-form {
+        flex-wrap: wrap;
+    }
+
+    .admin-create-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .bracket-col {
+        width: 220px; /* Slightly narrower bracket columns on mobile */
+    }
+}

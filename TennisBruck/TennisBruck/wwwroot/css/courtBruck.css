@@ -523,3 +523,21 @@ body {
 .btn-delete-res:active {
     background-color: #fee2e2;
 }
+
+/* ==========================================
+   MOBILE LAYOUT (RESPONSIVE)
+   ========================================== */
+@media (max-width: 768px) {
+    .app-header {
+        padding: 30px 15px 40px 15px;
+    }
+
+    .main-container {
+        padding: 0 10px;
+        margin-top: -20px;
+    }
+
+    .modern-card {
+        padding: 15px;
+    }
+}

@@ -73,3 +73,21 @@ body {
     color: #cddc39;
     margin-bottom: 10px;
 }
+
+/* ==========================================
+   MOBILE LAYOUT (RESPONSIVE)
+   ========================================== */
+@media (max-width: 768px) {
+    .dark-header-section {
+        padding: 30px 15px 40px 15px;
+    }
+
+    .main-content-container {
+        padding: 0 10px;
+        margin-top: -20px;
+    }
+
+    .hallenplan-card {
+        padding: 15px;
+    }
+}
