@@ -65,7 +65,7 @@
                     </p>
                 </div>
 
-                <form method="post">
+                <form method="post" class="competition-action-form">
                     <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
                     @if (Model.SelectedCompetition.RegistrationUntil >= DateTime.Now)
                     {

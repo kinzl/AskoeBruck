@@ -856,6 +856,13 @@ input:focus, select:focus {
     background-color: #2a3158;
 }
 
+.competition-action-form {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
 /* ==========================================
    MOBILE LAYOUT (RESPONSIVE)
    ========================================== */
@@ -864,14 +871,28 @@ input:focus, select:focus {
     .app-header {
         padding: 30px 15px 40px 15px;
     }
-    
+
     .main-container {
         padding: 0 10px;
         margin-top: -20px;
     }
-    
+
     .modern-card {
         padding: 15px;
+    }
+
+    /* Neu: Card Header umbrechen ("Gruppe hinzufügen" etc.) */
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .card-header form,
+    .card-header .btn-action {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
     }
 
     /* Wrap competition actions and title */
@@ -879,6 +900,18 @@ input:focus, select:focus {
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
+    }
+
+    /* Neu: Den Button und den Spieler-Badge sauber stapeln */
+    .competition-action-form {
+        flex-direction: column;
+        align-items: stretch; /* Zieht den Button auf 100% Breite */
+        width: 100%;
+    }
+
+    .competition-action-form .badge-count {
+        text-align: center;
+        padding: 10px;
     }
 
     /* Grids */
@@ -919,16 +952,25 @@ input:focus, select:focus {
         width: 100%;
     }
 
+    /* Neu: Admin Formular für Datum/Zeit reparieren */
     .admin-time-form {
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .admin-time-form input[type="date"],
+    .admin-time-form input[type="time"],
+    .admin-time-form button {
+        width: 100%; /* Zieht Inputs und Button auf die volle Breite */
     }
 
     .admin-create-form {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .bracket-col {
-        width: 220px; /* Slightly narrower bracket columns on mobile */
+        width: 220px;
     }
 }
