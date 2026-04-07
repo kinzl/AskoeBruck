@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Group = TennisDb.Group;
 
 namespace TennisBruck.Services;
@@ -15,7 +15,7 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
         var userManager = _scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
         // 1. ALTE LOGIK ENTFERNT: Wir reißen nicht mehr bei jedem Start das Haus ab!
-        await DropAllTables(db);
+        // await DropAllTables(db);
         // await db.Database.EnsureDeletedAsync(cancellationToken);
 
         // 2. NEUE LOGIK: Wir wenden ausstehende Updates (Migrationen) sanft an
@@ -25,8 +25,12 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
 
         // 3. SEEDING: Standard-Daten anlegen (falls sie noch nicht existieren)
         await SeedAdminUserAndPlayer(db, userManager, roleManager);
-        await SeedPlayer(db);
-        SeedCompetition(db);
+        
+        if (!db.Players.Any(p => p.Firstname == "Alice" && p.Lastname == "Smith"))
+        {
+            await SeedPlayer(db);
+            SeedCompetition(db);
+        }
 
         await db.SaveChangesAsync(cancellationToken);
     }
