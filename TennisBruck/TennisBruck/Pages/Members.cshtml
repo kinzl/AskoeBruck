@@ -58,7 +58,7 @@
                             <input id="lastnameInput" name="lastname" class="form-input" required/>
                         </div>
                         <div class="form-group">
-                            <label for="usernameInput">Benutzername</label>
+                            <label for="usernameInput">ITN</label>
                             <input id="usernameInput" name="username" class="form-input" required/>
                         </div>
                         <div class="form-group">
@@ -93,7 +93,7 @@
                     <th>Nachname</th>
                     @if (User.IsInRole("Admin"))
                     {
-                        <th>Benutzername</th>
+                        <th>ITN</th>
                         <th>Email</th>
                         <th style="text-align: center;">Admin</th>
                         <th style="text-align: center;">Löschen</th>
@@ -109,7 +109,7 @@
 
                         @if (User.IsInRole("Admin"))
                         {
-                            <td style="color: var(--text-muted);">@player.Username</td>
+                            <td style="color: var(--text-muted);">@player.Itn</td>
                             <td style="color: var(--text-muted);">@player.IdentityUser?.Email</td>
 
                             <td style="text-align: center;">

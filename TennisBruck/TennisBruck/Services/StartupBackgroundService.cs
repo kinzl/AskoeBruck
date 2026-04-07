@@ -68,7 +68,6 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
                 {
                     Firstname = "Emil",
                     Lastname = "Kinzl",
-                    Username = "kinzle",
                     IdentityUserId = adminUser.Id
                 };
 
@@ -96,7 +95,6 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
     }
 
     private async Task DropAllTables(TennisContext db)
-
     {
         var sql = @"
 
@@ -135,43 +133,37 @@ END $$;";
         db.Players.Add(new Player()
         {
             Firstname = "Alice",
-            Lastname = "Smith",
-            Username = "asmith"
+            Lastname = "Smith"
         });
 
         db.Players.Add(new Player()
         {
             Firstname = "Max",
-            Lastname = "Kammerer",
-            Username = "kammerem"
+            Lastname = "Kammerer"
         });
 
         db.Players.Add(new Player()
         {
             Firstname = "Stefan",
-            Lastname = "Ecker",
-            Username = "EckerS"
+            Lastname = "Ecker"
         });
 
         db.Players.Add(new Player()
         {
             Firstname = "Gerald",
-            Lastname = "Wimmer",
-            Username = "WimmerG"
+            Lastname = "Wimmer"
         });
 
         db.Players.Add(new Player()
         {
             Firstname = "Bernhard",
-            Lastname = "Repp",
-            Username = "ReppB"
+            Lastname = "Repp"
         });
 
         db.Players.Add(new Player()
         {
             Firstname = "Stefan",
-            Lastname = "Hofer",
-            Username = "HoferS"
+            Lastname = "Hofer"
         });
         db.SaveChanges();
         return Task.CompletedTask;
@@ -269,9 +261,9 @@ END $$;";
         db.SaveChanges(); // TeamId wird benötigt für TeamPlayer FK
 
 // Spieler zu Team zuweisen
-        var player1 = db.Players.First(x => x.Username == "asmith");
-        var player2 = db.Players.First(x => x.Username == "kinzle");
-        var player3 = db.Players.First(x => x.Username == "kammerem");
+        var player1 = db.Players.First(x => x.Id == 1);
+        var player2 = db.Players.First(x => x.Id == 2);
+        var player3 = db.Players.First(x => x.Id == 3);
 
         db.TeamPlayer.AddRange(new[]
         {

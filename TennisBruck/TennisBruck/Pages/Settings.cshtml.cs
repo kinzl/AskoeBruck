@@ -25,7 +25,6 @@ public class Settings(
         CurrentPlayer = currentPlayerService.GetCurrentUser()!;
         CurrentPlayer.Firstname = body.Firstname;
         CurrentPlayer.Lastname = body.Lastname;
-        CurrentPlayer.Username = body.Username;
         db.SaveChanges();
 
         return RedirectToPage(nameof(Settings), new { infoText = "Daten gespeichert" });

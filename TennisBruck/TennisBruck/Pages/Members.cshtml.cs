@@ -33,8 +33,7 @@ public class Members(
         var player = new Player
         {
             Firstname = body.Firstname,
-            Lastname = body.Lastname,
-            Username = body.Username
+            Lastname = body.Lastname
         };
         db.Players.Add(player);
         db.SaveChanges();

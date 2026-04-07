@@ -96,6 +96,8 @@ builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddHttpClient<EmailService>();
 // builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CurrentPlayerService>();
+builder.Services.AddHttpClient<OetvScraperService>();
+builder.Services.AddHostedService<ItnSyncBackgroundService>();
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>

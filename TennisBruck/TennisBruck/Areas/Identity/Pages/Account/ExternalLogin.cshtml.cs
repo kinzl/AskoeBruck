@@ -183,8 +183,7 @@ namespace TennisBruck.Areas.Identity.Pages.Account
                         {
                             IdentityUserId = user.Id,
                             Firstname = firstName,
-                            Lastname = lastName,
-                            Username = $"{firstName}{lastName}"
+                            Lastname = lastName
                         };
 
                         _db.Players.Add(newPlayer);
