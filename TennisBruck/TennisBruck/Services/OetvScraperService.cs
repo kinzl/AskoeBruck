@@ -85,24 +85,57 @@ public class OetvScraperService(HttpClient httpClient, ILogger<OetvScraperServic
             response.EnsureSuccessStatusCode();
 
             var jsonContent = await response.Content.ReadAsStringAsync();
-            using var document = System.Text.Json.JsonDocument.Parse(jsonContent);
+            using var document = JsonDocument.Parse(jsonContent);
             
             var root = document.RootElement;
             if (root.TryGetProperty("success", out var successElement) && successElement.GetBoolean() == true)
             {
                 if (root.TryGetProperty("data", out var dataElement) && dataElement.TryGetProperty("players", out var playersArray))
                 {
-                    var matchingPlayers = new List<System.Text.Json.JsonElement>();
+                    var matchingPlayers = new List<JsonElement>();
                     
                     foreach (var player in playersArray.EnumerateArray())
                     {
+                        bool clubMatches = false;
+                        bool nameMatches = false;
+
                         if (player.TryGetProperty("clubName", out var clubNameElement))
                         {
                             var clubName = clubNameElement.GetString() ?? "";
-                            if (clubName.Equals(targetClubName, StringComparison.OrdinalIgnoreCase))
+                            
+                            // Because the ÖTV API often returns broken character encodings for special characters like 'Ö'
+                            // (e.g. ASK Bruck - Peuerbach), a strict Equals check will fail. 
+                            // We split targetClubName into tokens and ensure the API clubName contains the safe ones.
+                            var tokens = targetClubName.Split(new[] { ' ', '-' }, StringSplitOptions.RemoveEmptyEntries);
+                            clubMatches = true;
+                            foreach (var token in tokens)
                             {
-                                matchingPlayers.Add(player);
+                                // Skip checking tokens with special characters to avoid encoding traps
+                                if (token.Contains("Ö", StringComparison.OrdinalIgnoreCase) || 
+                                    token.Contains("ö", StringComparison.OrdinalIgnoreCase)) continue;
+                                    
+                                if (!clubName.Contains(token, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    clubMatches = false;
+                                    break;
+                                }
                             }
+                        }
+
+                        if (player.TryGetProperty("firstname", out var fnElement) && 
+                            player.TryGetProperty("lastname", out var lnElement))
+                        {
+                            var apiFirstname = fnElement.GetString() ?? "";
+                            var apiLastname = lnElement.GetString() ?? "";
+                            
+                            nameMatches = apiFirstname.Trim().Equals(firstName.Trim(), StringComparison.OrdinalIgnoreCase) && 
+                                          apiLastname.Trim().Equals(lastName.Trim(), StringComparison.OrdinalIgnoreCase);
+                        }
+
+                        // Enforce match on club AND exact match on first/last name
+                        if (clubMatches && nameMatches)
+                        {
+                            matchingPlayers.Add(player);
                         }
                     }
 
