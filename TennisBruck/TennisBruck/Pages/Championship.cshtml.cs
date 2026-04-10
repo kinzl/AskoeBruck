@@ -184,7 +184,7 @@ public class Championship(
         }
 
         db.SaveChanges();
-        return RedirectToPage(new { Message = $"Beim Bewerb angemeldet" });
+        return RedirectToPage(new { Message = $"Du hast dich beim Bewerb {SelectedCompetition.Name} angemeldet" });
     }
 
     public IActionResult OnPostUnregister()
@@ -213,7 +213,7 @@ public class Championship(
         }
 
         db.SaveChanges();
-        return RedirectToPage(new { Message = "Vom Bewerb abgemeldet" });
+        return RedirectToPage(new { Message = $"Du hast dich vom Bewerb {SelectedCompetition!.Name} abgemeldet" });
     }
 
     #endregion
@@ -222,6 +222,7 @@ public class Championship(
 
     public IActionResult OnPostCreateGroup()
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         InitValues();
         db.Groups.Add(new Group
         {
@@ -240,19 +241,21 @@ public class Championship(
 
         db.SaveChanges();
 
-        return RedirectToPage();
+        return RedirectToPage(new { Message = "Neue Gruppe erstellt" });
     }
 
     public IActionResult OnPostDeleteGroup(int groupId)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         var selectedGroup = db.Groups.Single(x => x.Id == groupId);
         db.Groups.Remove(selectedGroup);
         db.SaveChanges();
-        return RedirectToPage();
+        return RedirectToPage(new { Message = $"Gruppe {selectedGroup.GroupName} gelöscht" });
     }
 
     public IActionResult OnPostSaveGroups()
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         InitValues();
 
         // Delete old matches
@@ -304,7 +307,7 @@ public class Championship(
         var group = db.Groups.Single(x => x.Id == groupId);
         group.MaxAmount++;
         db.SaveChanges();
-        return RedirectToPage();
+        return RedirectToPage(new { Message = $"{group.GroupName} vergrößert" });
     }
 
     public IActionResult OnPostDecreaseGroupSize(int groupId)
@@ -314,13 +317,14 @@ public class Championship(
         if (group.MaxAmount == 1) return RedirectToPage();
         group.MaxAmount--;
         db.SaveChanges();
-        return RedirectToPage();
+        return RedirectToPage(new { Message = $"{group.GroupName} verkleinert" });
     }
 
     #endregion
 
     public IActionResult OnPostAddSinglePlayer(int teamId, int groupId)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         var group = db.Groups
             .Include(g => g.Competition)
             .Single(g => g.Id == groupId);
@@ -337,10 +341,8 @@ public class Championship(
             );
 
         if (existingGroupTeam != null && existingGroupTeam.GroupId == groupId)
-        {
-            // optional: TempData["Message"] = "Spieler ist bereits in dieser Gruppe";
-            return RedirectToPage();
-        }
+            return RedirectToPage(new { Message = "Spieler ist bereits in dieser Gruppe" });
+
 
         if (existingGroupTeam != null)
         {
@@ -360,20 +362,22 @@ public class Championship(
         db.GroupTeams.Add(groupTeam);
         db.SaveChanges();
 
-        return RedirectToPage();
+        return RedirectToPage(new { Message = $"{team} in {group.GroupName} hinzugefügt" });
     }
 
     public IActionResult OnPostRemoveTeamFromGroup(int groupId, int teamId)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         var groupTeam = db.GroupTeams
             .Include(gt => gt.Team)
-            .ThenInclude(t => t.TeamPlayers)
+            .ThenInclude(t => t.TeamPlayers).Include(groupTeam => groupTeam.Group)
             .Single(gt => gt.GroupId == groupId && gt.TeamId == teamId);
 
         db.GroupTeams.Remove(groupTeam);
 
         db.SaveChanges();
-        return RedirectToPage();
+        return RedirectToPage(new
+            { Message = $"{groupTeam.Team} von {groupTeam.Group.GroupName} entfernt" });
     }
 
     #region Match Management
@@ -420,7 +424,7 @@ public class Championship(
         }
 
         return RedirectToPage(new
-            { Message = "Spiele wurden gespeichert" });
+            { Message = "Spiel wurde gespeichert" });
     }
 
     public async Task<IActionResult> OnPostDeleteMatchAsync(int matchId)
@@ -439,13 +443,8 @@ public class Championship(
             return RedirectToPage();
         }
 
-        // --- NEU: Normale Sätze ECHT aus der Datenbank löschen ---
-        if (match.Sets != null && match.Sets.Any())
-        {
-            db.Sets.RemoveRange(match.Sets);
-        }
+        if (match.Sets != null && match.Sets.Any()) db.Sets.RemoveRange(match.Sets);
 
-        // Alles sauber zurücksetzen
         match.Sets = null;
         match.IsWalkover = false;
         match.WalkoverTeamId = null;
@@ -453,9 +452,7 @@ public class Championship(
 
         await db.SaveChangesAsync();
 
-        Message = "Das Match wurde erfolgreich zurückgesetzt und ist wieder offen.";
-        // Passe den Redirect an deine Route an, falls nötig
-        return RedirectToPage();
+        return RedirectToPage(new { Message = "Das Match wurde erfolgreich zurückgesetzt und ist wieder offen." });
     }
 
     #endregion
@@ -541,7 +538,7 @@ public class Championship(
         }
 
         db.SaveChanges();
-        return RedirectToPage();
+        return RedirectToPage(new { Message = "Zuteilung wurde gespeichert" });
     }
 
     public IActionResult OnPostSavePairs(List<PlayerCompetitionPairs> pairs)
@@ -562,8 +559,7 @@ public class Championship(
                 .Any(t => t.TeamPlayers.Any(tp => tp.PlayerId == player1Id || tp.PlayerId == player2Id)
                           && t.CompetitionId == SelectedCompetition!.Id);
 
-            if (exists)
-                continue; // Spieler bereits vergeben
+            if (exists) continue;
 
             // Neues Doppel-Team erstellen
             var team = new Team
@@ -580,7 +576,7 @@ public class Championship(
         }
 
         db.SaveChanges();
-        return RedirectToPage();
+        return RedirectToPage(new { Message = "Teams wurden gespeichert" });
     }
 
     public IActionResult OnPostSaveNewDate(string newDate, string newTime)
@@ -600,7 +596,6 @@ public class Championship(
 
     public async Task<IActionResult> OnPostGiveWalkoverAsync(int matchId)
     {
-        // Lade das Match inklusive der Teams und deren Spieler
         var match = await db.Matches
             .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
             .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
@@ -612,18 +607,15 @@ public class Championship(
         var currentUser = await userManager.GetUserAsync(User);
         if (currentUser == null) return Unauthorized();
 
-        // Gehört der User zu Team 1 oder Team 2?
         bool isTeam1 = match.Team1 != null &&
                        match.Team1.TeamPlayers.Any(p => p.Player.IdentityUserId == currentUser.Id);
         bool isTeam2 = match.Team2 != null &&
                        match.Team2.TeamPlayers.Any(p => p.Player.IdentityUserId == currentUser.Id);
 
-        if (!isTeam1 && !isTeam2) return Forbid(); // User spielt in diesem Match gar nicht mit
+        if (!isTeam1 && !isTeam2) return Forbid();
 
-        // Walkover setzen
         match.IsWalkover = true;
 
-        // Wer hat aufgegeben und wer hat gewonnen?
         if (match is { Team1: not null, Team2: not null })
         {
             match.WalkoverTeamId = isTeam1 ? match.Team1.Id : match.Team2.Id;
@@ -632,11 +624,9 @@ public class Championship(
 
         await db.SaveChangesAsync();
 
-        Message = "Du hast das Match aufgegeben. Der Sieg geht per w.o. an die Gegner.";
-        return RedirectToPage(new { Message });
+        return RedirectToPage(new { Message = "Du hast das Match aufgegeben. Der Sieg geht per w.o. an die Gegner." });
     }
 
-// 2. Für den Admin (wählt aus, welches Team W.O. gegeben hat)
     public async Task<IActionResult> OnPostAdminWalkoverAsync(int matchId, int walkoverTeamId)
     {
         var match = await db.Matches
@@ -649,13 +639,11 @@ public class Championship(
         match.IsWalkover = true;
         match.WalkoverTeamId = walkoverTeamId;
 
-        // Der Sieger ist das Team, das NICHT aufgegeben hat
         match.Winner = match.Team1 != null && match.Team1.Id == walkoverTeamId ? match.Team2 : match.Team1;
 
         await db.SaveChangesAsync();
 
-        Message = "Match wurde durch Admin als w.o. gewertet.";
-        return RedirectToPage();
+        return RedirectToPage(new { Message = "Match wurde durch Admin als w.o. gewertet." });
     }
 
     public async Task<IActionResult> OnPostWithdrawPlayerAsync(int playerId, int competitionId)
@@ -682,14 +670,8 @@ public class Championship(
 
         var teamIds = userTeams.Select(t => t.Id).ToList();
 
-        if (!teamIds.Any())
-        {
-            Message = "Spieler ist in keinen Teams dieses Bewerbs.";
-            return RedirectToPage(new { selectedCompetitionId = competitionId });
-        }
+        if (!teamIds.Any()) return RedirectToPage(new { Message = "Spieler ist in keinen Teams dieses Bewerbs." });
 
-        // 2. Finde alle noch NICHT GESPIELTEN Matches für diese Teams in diesem Bewerb
-        // (Wir holen auch Team1 und Team2 dazu, falls wir sie gleich brauchen)
         var unplayedMatches = await db.Matches
             .Include(x => x.Winner)
             .Include(x => x.Team1)
@@ -697,27 +679,18 @@ public class Championship(
             .Where(m => teamIds.Contains(m.Team1.Id) || teamIds.Contains(m.Team2.Id))
             .ToListAsync();
 
-        // 3. Setze alle diese Matches automatisch auf w.o.
         foreach (var match in unplayedMatches)
         {
             match.IsWalkover = true;
-
-            // Welches Team hat das W.O. verursacht? (Das Team des abgemeldeten Spielers)
             bool team1Withdrew = teamIds.Contains(match.Team1.Id);
 
             match.WalkoverTeamId = team1Withdrew ? match.Team1.Id : match.Team2.Id;
             match.WinnerTeamId = team1Withdrew ? match.Team2.Id : match.Team1.Id;
         }
 
-        // 4. (Optional) Markiere den Spieler in der Anmeldeliste als abgemeldet
-        // Falls du die HasWithdrawn-Spalte schon in 'RegisteredCompetitionPlayers' hast:
-
         var registration = await db.TournamentRegistrations
             .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.PlayerId == playerId);
-        if (registration != null)
-        {
-            registration.HasWithdrawn = true;
-        }
+        if (registration != null) registration.HasWithdrawn = true;
 
         await db.SaveChangesAsync();
         return RedirectToPage(new
@@ -736,44 +709,34 @@ public class Championship(
         {
             var entry = new GroupTableEntry { GroupTeam = groupTeam };
 
-            // HIER filtern wir die Matches für das aktuelle Team (das ist "teamMatches")
             var teamMatches = groupMatches.Where(m =>
                 m.Team1.Id == groupTeam.TeamId || m.Team2.Id == groupTeam.TeamId).ToList();
 
             entry.MatchesPlayed = teamMatches.Count;
 
-            // Jetzt werten wir diese Matches aus
             foreach (var match in teamMatches)
             {
-                // Greife sicher auf die ID zu
                 int team1Id = match.Team1.Id;
                 bool isTeam1 = team1Id == groupTeam.TeamId;
 
                 if (match.IsWalkover)
                 {
-                    // LOGIK FÜR W.O. MATCHES
-                    if (match.IsWalkover)
-                    {
-                        // LOGIK FÜR W.O. MATCHES
-                        // Der Gewinner ist das Team, das in diesem Match NICHT w.o. gegeben hat!
-                        bool isWinner = match.WalkoverTeamId != groupTeam.TeamId;
+                    bool isWinner = match.WalkoverTeamId != groupTeam.TeamId;
 
-                        if (isWinner)
-                        {
-                            entry.Points++; // 1 Siegpunkt
-                            entry.SetsWon += 2; // 2 Sätze
-                            entry.GamesWon += 12; // 12 Games
-                        }
-                        else
-                        {
-                            entry.SetsLost += 2;
-                            entry.GamesLost += 12;
-                        }
+                    if (isWinner)
+                    {
+                        entry.Points++;
+                        entry.SetsWon += 2;
+                        entry.GamesWon += 12;
+                    }
+                    else
+                    {
+                        entry.SetsLost += 2;
+                        entry.GamesLost += 12;
                     }
                 }
                 else if (match.Sets != null && match.Sets.Any())
                 {
-                    // LOGIK FÜR NORMALE MATCHES
                     int setsWonHere = 0;
                     int setsLostHere = 0;
 
@@ -792,7 +755,6 @@ public class Championship(
                     entry.SetsWon += setsWonHere;
                     entry.SetsLost += setsLostHere;
 
-                    // Hat das Team das normale Match gewonnen? Dann gibt es den Punkt!
                     if (setsWonHere > setsLostHere)
                     {
                         entry.Points++;
@@ -803,7 +765,6 @@ public class Championship(
             table.Add(entry);
         }
 
-        // Die Tabelle nach Punkten, dann Satzdifferenz, dann Gamedifferenz sortieren
         return table
             .OrderByDescending(e => e.Points)
             .ThenByDescending(e => e.SetDifference)
@@ -813,19 +774,15 @@ public class Championship(
 
     public async Task<IActionResult> OnPostGenerateGroupsAsync(int competitionId, int targetGroupSize)
     {
-        // Sicherheitscheck
         if (targetGroupSize < 2) targetGroupSize = 2;
 
-        // 1. Alle angemeldeten Spieler holen
         var players = await db.TournamentRegistrations
             .Where(p => p.CompetitionId == competitionId)
             .ToListAsync();
 
         if (!players.Any()) return RedirectToPage(new { id = competitionId });
 
-        // 2. ALTE Gruppen löschen (Reset)
         var oldGroups = await db.Groups
-            // Falls du die Spieler-Liste in der Gruppe includen musst, damit EF sie beim Löschen sauber trennt:
             .Include(g => g.GroupTeams)
             .Include(g => g.Matches)
             .Where(g => g.CompetitionId == competitionId)
@@ -837,10 +794,8 @@ public class Championship(
 
         await db.SaveChangesAsync();
 
-        // 3. Wieviele NEUE Gruppen brauchen wir?
         int numberOfGroups = (int)Math.Ceiling((double)players.Count / targetGroupSize);
 
-        // 4. NEUE Gruppen im Arbeitsspeicher anlegen (noch nicht in der DB!)
         var newGroups = new List<Group>();
         for (int i = 0; i < numberOfGroups; i++)
         {
@@ -853,7 +808,6 @@ public class Championship(
             });
         }
 
-        // 5. Spieler zufällig mischen
         var random = new Random();
         var shuffledPlayers = db.Teams.Where(x => x.CompetitionId == competitionId).ToList();
 
@@ -863,7 +817,7 @@ public class Championship(
         {
             int groupIndex = i % numberOfGroups;
 
-            db.GroupTeams.Add(new GroupTeam()
+            db.GroupTeams.Add(new GroupTeam
             {
                 Group = newGroups[groupIndex],
                 TeamId = shuffledPlayers[i].Id
@@ -873,22 +827,18 @@ public class Championship(
         db.Groups.AddRange(newGroups);
         await db.SaveChangesAsync();
 
-        return RedirectToPage(new { id = competitionId });
+        return RedirectToPage(new { Message = "Gruppen wurden erstellt" });
     }
 
     public async Task<IActionResult> OnPostGeneratePairsAsync(int championshipId)
     {
-        // 1. Alle angemeldeten Spieler holen
         var players = await db.TournamentRegistrations
             .Where(p => p.CompetitionId == championshipId)
             .Include(x => x.Player)
             .ToListAsync();
 
-        // Bei weniger als 2 Spielern können wir kein Doppel bilden
         if (players.Count < 2) return RedirectToPage(new { id = championshipId });
 
-        // 2. ALTE Teams/Paare löschen (Reset-Funktion)
-        // Passe "GroupTeams" an den Namen deiner Tabelle an, in der die Doppel-Teams gespeichert werden!
         var oldTeams = await db.Teams.Where(x => x.CompetitionId == championshipId).ToListAsync();
         var oldGroupTeams = await db.GroupTeams
             .Where(t => t.Group.CompetitionId == championshipId)
@@ -898,19 +848,16 @@ public class Championship(
         db.Teams.RemoveRange(oldTeams);
         await db.SaveChangesAsync();
 
-        // 3. Spieler zufällig mischen
         var rng = new Random();
         var shuffledPlayers = players.OrderBy(x => rng.Next()).ToList();
 
         List<Team> newTeams = [];
 
-        // 4. In 2er-Schritten durch die Liste gehen
         for (int i = 0; i < shuffledPlayers.Count - 1; i += 2)
         {
             var player1 = shuffledPlayers[i];
             var player2 = shuffledPlayers[i + 1];
 
-            // Neues Team erstellen
             var team = new Team
             {
                 CompetitionId = championshipId,
@@ -920,12 +867,9 @@ public class Championship(
             newTeams.Add(team);
         }
 
-        // Info: Wenn es z.B. 15 Spieler gibt, wird der 15. Spieler (Index 14) von der 
-        // Schleife (wegen i < Count - 1) ignoriert und bekommt noch kein Team.
-
         db.Teams.AddRange(newTeams);
         await db.SaveChangesAsync();
 
-        return RedirectToPage(new { id = championshipId });
+        return RedirectToPage(new { Message = "Paare wurden generiert" });
     }
 }

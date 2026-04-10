@@ -10,12 +10,12 @@ public class Settings(
     SignInManager<IdentityUser> signInManager)
     : PageModel
 {
-    public string? InfoText { get; set; }
+    public string? Message { get; set; }
     [BindProperty] public required Player CurrentPlayer { get; set; }
 
-    public IActionResult OnGet(string? infoText)
+    public IActionResult OnGet(string? message)
     {
-        InfoText = infoText;
+        Message = message;
         CurrentPlayer = currentPlayerService.GetCurrentUser()!;
         return Page();
     }
@@ -27,25 +27,17 @@ public class Settings(
         CurrentPlayer.Lastname = body.Lastname;
         db.SaveChanges();
 
-        return RedirectToPage(nameof(Settings), new { infoText = "Daten gespeichert" });
+        return RedirectToPage(nameof(Settings), new { Message = "Daten gespeichert" });
     }
 
     public async Task<IActionResult> OnPostChangePasswordAsync(string oldPassword, string newPassword,
         string newPasswordRepeat)
     {
-        // Check if passwords Match each other
         if (newPassword != newPasswordRepeat)
-        {
-            InfoText = "Die neuen Passwörter stimmen nicht überein!";
-            return Page(); // Bleibt auf der Seite und zeigt den Fehler
-        }
+            return RedirectToPage(new { Message = "Die neuen Passwörter stimmen nicht überein!" });
 
-        //get the Identity-User
         var user = await userManager.GetUserAsync(User);
-        if (user == null)
-        {
-            return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
-        }
+        if (user == null) return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
 
         var changePasswordResult = await userManager.ChangePasswordAsync(user, oldPassword, newPassword);
 
@@ -53,17 +45,15 @@ public class Settings(
         {
             foreach (var error in changePasswordResult.Errors)
             {
-                InfoText += error.Description + " ";
+                Message += error.Description + " ";
             }
 
-            return Page();
+            return RedirectToPage(new { Message });
         }
 
-        // Success
         await signInManager.RefreshSignInAsync(user);
 
-        InfoText = "Dein Passwort wurde erfolgreich geändert! ✅";
-        return Page();
+        return RedirectToPage(new { Message = "Dein Passwort wurde erfolgreich geändert!" });
     }
 
     public IActionResult OnPostBack()

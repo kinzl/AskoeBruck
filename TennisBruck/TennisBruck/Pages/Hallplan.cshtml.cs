@@ -9,10 +9,10 @@ public class Hallplan(
 {
     public Player LoggedInPlayer { get; set; } = null!;
 
-    [BindProperty] public List<HallPlanDay> HallPlanDays { get; set; } = new();
+    [BindProperty] public List<HallPlanDay> HallPlanDays { get; set; } = [];
 
-    public IEnumerable<Player> NotRegisteredPlayers { get; set; } = new List<Player>();
-    public IEnumerable<Player> RegisteredPlayers { get; set; } = new List<Player>();
+    public IEnumerable<Player> NotRegisteredPlayers { get; set; } = [];
+    public IEnumerable<Player> RegisteredPlayers { get; set; } = [];
     public required IEnumerable<HallPlanEntity> HallPlanEntity { get; set; }
     [BindProperty] public int HallPlanId { get; set; }
     public bool IsLoggedInPlayerPlaying { get; set; }

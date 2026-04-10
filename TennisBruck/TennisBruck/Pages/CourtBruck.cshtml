@@ -26,6 +26,22 @@
 
     <h1 class="app-title">🎾 Platz reservieren</h1>
     <p style="color: var(--text-muted); margin-top: 10px;">Wähle deinen Wunschtermin für die Anlage Bruck</p>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        var alertBg = Model.IsError ? "#fee2e2" : "#dcfce7";
+        var alertColor = Model.IsError ? "#991b1b" : "#166534";
+        var alertBorder = Model.IsError ? "#ef4444" : "#22c55e";
+        var alertIcon = Model.IsError ? "⚠️" : "✅";
+
+        <div
+            style="background-color: @alertBg; color: @alertColor; border-left: 4px solid @alertBorder; padding: 15px; margin: 20px auto 0 auto; max-width: 600px; border-radius: var(--border-radius-sm); font-weight: 500; text-align: left; box-shadow: var(--shadow-soft); display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.2rem;">@alertIcon</span>
+            <span>@Model.Message</span>
+        </div>
+    }
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 </header>
 
 <main class="main-container">
@@ -50,51 +66,50 @@
 
         </div>
 
-        @if (User.IsInRole("Admin"))
-        {
-            <div
-                style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent-color); border-radius: var(--border-radius-sm); padding: 20px; margin-bottom: 25px;">
-                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: var(--nav-bg);">🏆 Event /
-                    Block-Reservierung eintragen</h3>
 
-                <form method="post" asp-page-handler="CreateEvent"
-                      style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+        <div
+            style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent-color); border-radius: var(--border-radius-sm); padding: 20px; margin-bottom: 25px;">
+            <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: var(--nav-bg);">
+                Block-Reservierung eintragen</h3>
 
-                    <input type="hidden" name="CurrentDateStr" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"/>
+            <form method="post" asp-page-handler="CreateEvent"
+                  style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
 
+                <input type="hidden" name="currentDateStr" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"/>
+                @if (User.IsInRole("Admin"))
+                {
                     <div style="flex: 1; min-width: 150px;">
                         <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Event
                             Name</label>
-                        <input type="text" name="EventName" required placeholder="z.B. Meisterschaft"
+                        <input type="text" name="eventName" placeholder="z.B. Meisterschaft"
                                style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
                     </div>
+                }
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Platz</label>
+                    <select name="courtNumber"
+                            style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                        <option value="1">Platz 1</option>
+                        <option value="2">Platz 2</option>
+                        <option value="3">Platz 3</option>
+                    </select>
+                </div>
 
-                    <div>
-                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Platz</label>
-                        <select name="CourtNumber"
-                                style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
-                            <option value="1">Platz 1</option>
-                            <option value="2">Platz 2</option>
-                            <option value="3">Platz 3</option>
-                        </select>
-                    </div>
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Von</label>
+                    <input type="time" name="startTimeStr" required
+                           style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                </div>
 
-                    <div>
-                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Von</label>
-                        <input type="time" name="StartTimeStr" required
-                               style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
-                    </div>
+                <div>
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Bis</label>
+                    <input type="time" name="endTimeStr" required
+                           style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                </div>
 
-                    <div>
-                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Bis</label>
-                        <input type="time" name="EndTimeStr" required
-                               style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
-                    </div>
-
-                    <button type="submit" class="btn-action btn-accent" style="padding: 9px 20px;">Reservieren</button>
-                </form>
-            </div>
-        }
+                <button type="submit" class="btn-action btn-accent" style="padding: 9px 20px;">Reservieren</button>
+            </form>
+        </div>
 
         <div class="table-responsive">
             <table class="court-table">
@@ -121,7 +136,7 @@
                                 <td class="slot-available">
                                     <form method="post" asp-page-handler="CreateReservation"
                                           style="margin: 0; display: flex; justify-content: center;">
-                                        <input type="hidden" name="CourtNumber" value="@court"/>
+                                        <input type="hidden" name="courtNumber" value="@court"/>
                                         <input type="hidden" name="StartTime" value="@timeSlot.Time"/>
                                         <button type="submit" class="btn-reserve" title="Jetzt reservieren">+</button>
                                     </form>

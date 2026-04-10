@@ -1,5 +1,3 @@
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
-
 namespace TennisBruck.Pages;
 
 public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerService)
@@ -12,11 +10,14 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
     [BindProperty] public int CourtNumber { get; set; }
     [BindProperty] public DateTime StartTime { get; set; }
     [BindProperty] public int ReservationId { get; set; }
+    [BindProperty] public string? Message { get; set; }
+    [BindProperty] public bool IsError { get; set; }
 
-    public async Task<IActionResult> OnGet(string? date)
+    public async Task<IActionResult> OnGet(string? date, string? message, bool isError = false)
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser()!;
-
+        Message = message;
+        IsError = isError;
         // Parse the date or default to today
         CurrentDate = string.IsNullOrEmpty(date) ? DateTime.Today : DateTime.Parse(date);
 
@@ -51,7 +52,6 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         return Reservations.FirstOrDefault(r => r.CourtNumber == courtNumber && r.StartTime == startTime);
     }
 
-    // Wir fügen string? eventName als Parameter hinzu. ASP.NET fängt das automatisch aus dem HTML (name="eventName") ab!
     public IActionResult OnPostCreateReservation(string? eventName)
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser()!;
@@ -62,11 +62,13 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
         if (existing != null)
         {
-            ModelState.AddModelError("", "Dieser Zeitraum ist bereits reserviert.");
-            return RedirectToPage(new { date = StartTime.ToString("yyyy-MM-dd") });
+            return RedirectToPage(new
+            {
+                date = StartTime.ToString("yyyy-MM-dd"),
+                message = "Dieser Zeitraum ist bereits reserviert, Termin konnte nicht gebucht werden.", isError = true
+            });
         }
 
-        // Add a new reservation
         var newReservation = new Reservation
         {
             CourtNumber = CourtNumber,
@@ -75,62 +77,73 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
             Player = CurrentPlayer!
         };
 
-        // Wir prüfen: Wurde ein Text eingegeben UND ist der eingeloggte User wirklich ein Admin?
         if (!string.IsNullOrWhiteSpace(eventName) && User.IsInRole("Admin"))
         {
             newReservation.EventName =
-                eventName.Trim(); // .Trim() entfernt aus Versehen getippte Leerzeichen am Anfang/Ende
+                eventName.Trim();
         }
 
         db.Reservations.Add(newReservation);
         db.SaveChanges();
 
-        return RedirectToPage(new { date = StartTime.ToString("yyyy-MM-dd") });
+        return RedirectToPage(new
+            { date = StartTime.ToString("yyyy-MM-dd"), message = "Termin wurde erfolgreich reserviert!" });
     }
 
-    public IActionResult OnPostCreateEvent(int CourtNumber, string EventName, string StartTimeStr, string EndTimeStr,
-        string CurrentDateStr)
+    public IActionResult OnPostCreateEvent(int courtNumber, string? eventName, string startTimeStr, string endTimeStr,
+        string currentDateStr)
     {
-        // Sicherheitscheck
         if (!User.IsInRole("Admin")) return RedirectToPage();
 
         CurrentPlayer = currentPlayerService.GetCurrentUser()!;
 
         // Datum und Zeiten aus den Strings parsen
-        var date = DateTime.Parse(CurrentDateStr);
-        var startTime = DateTime.Parse(StartTimeStr).TimeOfDay;
-        var endTime = DateTime.Parse(EndTimeStr).TimeOfDay;
+        var date = DateTime.Parse(currentDateStr);
+        var startTime = DateTime.Parse(startTimeStr).TimeOfDay;
+        var endTime = DateTime.Parse(endTimeStr).TimeOfDay;
 
         // Genaue DateTime Objekte für Start und Ende bauen
         var startDateTime = date.Add(startTime);
         var endDateTime = date.Add(endTime);
 
+        // Prüfen, ob irgendein Slot in dem Zeitraum bereits reserviert ist
+        var hasConflict = db.Reservations.Any(r =>
+            r.CourtNumber == courtNumber &&
+            r.StartTime >= startDateTime &&
+            r.StartTime < endDateTime);
+
+        if (hasConflict)
+        {
+            return RedirectToPage(new
+            {
+                date = currentDateStr,
+                message =
+                    "Dieser Zeitraum ist bereits teilweise oder vollständig reserviert. Termin konnte nicht gebucht werden.",
+                isError = true
+            });
+        }
+
         // WICHTIG: Schleife, die alle 30 Minuten durchgeht, bis die Endzeit erreicht ist
         for (var time = startDateTime; time < endDateTime; time = time.AddMinutes(30))
         {
-            // Prüfen, ob dieser spezifische 30-Min-Block schon belegt ist
-            var existing = db.Reservations.FirstOrDefault(r => r.CourtNumber == CourtNumber && r.StartTime == time);
-
-            // Wenn er frei ist, legen wir die Reservierung an
-            if (existing == null)
+            var newReservation = new Reservation
             {
-                var newReservation = new Reservation
-                {
-                    CourtNumber = CourtNumber,
-                    StartTime = time,
-                    EndTime = time.AddMinutes(30),
-                    Player = CurrentPlayer,
-                    EventName = EventName.Trim() // Hier setzen wir das Event für jeden Block!
-                };
+                CourtNumber = courtNumber,
+                StartTime = time,
+                EndTime = time.AddMinutes(30),
+                Player = CurrentPlayer,
+                EventName = eventName?.Trim() ??
+                            CurrentPlayer.ToString() // Hier setzen wir das Event für jeden Block!
+            };
 
-                db.Reservations.Add(newReservation);
-            }
+            db.Reservations.Add(newReservation);
         }
 
         // Alles auf einmal in der Datenbank speichern
         db.SaveChanges();
 
-        return RedirectToPage(new { date = CurrentDateStr });
+        return RedirectToPage(new
+            { date = currentDateStr, message = "Die Block-Reservierung wurde erfolgreich angelegt!" });
     }
 
     public IActionResult OnPostDeleteReservation()
@@ -144,13 +157,19 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
         if (reservation?.Player != null && reservation.Player.Id != CurrentPlayer.Id)
         {
-            ModelState.AddModelError("", "Reservierung nicht gefunden oder Zugriff verweigert.");
-            return RedirectToPage(new { date = CurrentDate.ToString("yyyy-MM-dd") });
+            return RedirectToPage(new
+            {
+                date = CurrentDate.ToString("yyyy-MM-dd"),
+                message = "Reservierung nicht gefunden oder Zugriff verweigert.", isError = true
+            });
         }
 
         db.Reservations.Remove(reservation);
         db.SaveChanges();
 
-        return RedirectToPage(new { date = reservation.StartTime.ToString("yyyy-MM-dd") });
+        return RedirectToPage(new
+        {
+            date = reservation.StartTime.ToString("yyyy-MM-dd"), message = "Reservierung wurde erfolgreich gelöscht."
+        });
     }
 }

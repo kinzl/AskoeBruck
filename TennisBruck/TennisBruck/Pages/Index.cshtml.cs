@@ -51,6 +51,7 @@ public class IndexModel(ILogger<IndexModel> logger, CurrentPlayerService current
 
     public IActionResult OnPostChampionship()
     {
+        logger.LogInformation("OnPostChampionship");
         return new RedirectToPageResult(nameof(Championship));
     }
 }

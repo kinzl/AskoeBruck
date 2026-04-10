@@ -12,12 +12,12 @@ public class Members(
 {
     public required Player LoggedInPlayer { get; set; }
     public required List<Player> AllPlayers { get; set; }
-    public string? InfoBox { get; set; }
+    public string? Message { get; set; }
     public List<string> AdminUserIds { get; set; } = [];
 
-    public async Task<IActionResult> OnGet(string? infoBox)
+    public async Task<IActionResult> OnGet(string? message)
     {
-        InfoBox = infoBox;
+        Message = message;
         LoggedInPlayer = currentPlayerService.GetCurrentUser()!;
         AllPlayers = db.Players.Include(x => x.IdentityUser).ToList();
         var adminUsers = await userManager.GetUsersInRoleAsync("Admin");
@@ -38,8 +38,7 @@ public class Members(
         db.Players.Add(player);
         db.SaveChanges();
 
-        return new RedirectToPageResult(nameof(Members),
-            new { infoBox = $"Benutzer wurde erstellt, das Passwort ist {password}" });
+        return RedirectToPage(new { Message = $"Benutzer wurde erstellt, das Passwort ist {password}" });
     }
 
     public IActionResult OnPostDeleteUser(int playerId)
@@ -49,13 +48,7 @@ public class Members(
         var player = db.Players.Single(x => x.Id == playerId);
         db.Players.Remove(player);
         db.SaveChanges();
-        return RedirectToPage(nameof(Members),
-            new { InfoBox = $"Benutzer {player.Firstname} {player.Lastname} wurde gelöscht." });
-    }
-
-    public IActionResult OnPostBack()
-    {
-        return RedirectToPage(nameof(Index));
+        return RedirectToPage(new { Message = $"Benutzer {player.Firstname} {player.Lastname} wurde gelöscht." });
     }
 
     public async Task<IActionResult> OnPostChangeAdminAsync(int user)
@@ -75,14 +68,19 @@ public class Members(
             {
                 await userManager.RemoveFromRoleAsync(player.IdentityUser, "Admin");
                 logger.LogInformation("Demoted User {User} from Admin.", player.IdentityUser.Email);
+                return RedirectToPage(new { Message = $"{player} wurde zum Admin befördert" });
             }
-            else
-            {
-                await userManager.AddToRoleAsync(player.IdentityUser, "Admin");
-                logger.LogInformation("Promoted User {User} to Admin.", player.IdentityUser.Email);
-            }
+
+            await userManager.AddToRoleAsync(player.IdentityUser, "Admin");
+            logger.LogInformation("Promoted User {User} to Admin.", player.IdentityUser.Email);
+            return RedirectToPage(new { Message = $"{player} wurden die Admin berechtigungen entzogen" });
         }
 
-        return RedirectToPage();
+        return RedirectToPage(new { Message = "Ein Fehler ist aufgetreten" });
+    }
+
+    public IActionResult OnPostBack()
+    {
+        return RedirectToPage(nameof(Index));
     }
 }
