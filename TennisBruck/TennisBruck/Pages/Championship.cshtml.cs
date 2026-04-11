@@ -54,10 +54,15 @@ public class Championship(
                         m.Team2.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id))
             .ToList();
 
-        Matches = db.KnockoutMatch.ToList();
         if (selectedCompetitionId != 0)
         {
             SelectedCompetition = Competitions.FirstOrDefault(c => c.Id == selectedCompetitionId);
+
+            Matches = db.KnockoutMatch
+                .Include(x => x.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                .Include(x => x.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                .Where(x => x.CompetitionId == selectedCompetitionId)
+                .ToList();
 
             IsRegistered = db.TournamentRegistrations
                 .Where(x => x.Competition.Id == SelectedCompetition!.Id)
@@ -386,14 +391,21 @@ public class Championship(
     {
         try
         {
+            var currentUser = currentPlayerService.GetCurrentUser();
+            if (currentUser == null) return Unauthorized();
+
             int setsWonPlayer1 = 0;
             int setsWonPlayer2 = 0;
             var match = db.Matches
                 .Include(x => x.Sets)
-                .Include(x => x.Team1)
-                .Include(x => x.Team2)
+                .Include(x => x.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                .Include(x => x.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
                 .Include(x => x.Group)
                 .Single(x => x.Id == matchId);
+
+            bool isTeam1 = match.Team1 != null && match.Team1.TeamPlayers.Any(p => p.Player.Id == currentUser.Id);
+            bool isTeam2 = match.Team2 != null && match.Team2.TeamPlayers.Any(p => p.Player.Id == currentUser.Id);
+            if (!isTeam1 && !isTeam2 && !User.IsInRole("Admin")) return Forbid();
             var sets = score.Split(" ");
             for (var i = 0; i < sets.Length; i++)
             {
@@ -429,6 +441,7 @@ public class Championship(
 
     public async Task<IActionResult> OnPostDeleteMatchAsync(int matchId)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         // WICHTIG: .Include(m => m.Sets) hinzufügen, damit er die Sätze auch findet!
         var match = await db.Matches
             .Include(m => m.Sets)
@@ -464,6 +477,7 @@ public class Championship(
 
     public IActionResult OnPostCreateBracket()
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         InitValues();
         if (!_knownBrackets.Contains(SelectedSize)) return RedirectToPage();
 
@@ -473,7 +487,7 @@ public class Championship(
 
     private void UpdateBracket(int size)
     {
-        db.KnockoutMatch.ExecuteDelete();
+        db.KnockoutMatch.Where(k => k.CompetitionId == SelectedCompetition!.Id).ExecuteDelete();
         db.SaveChanges();
         int closest = _knownBrackets.First(k => k >= size);
         int byes = closest - size;
@@ -517,6 +531,7 @@ public class Championship(
 
     public IActionResult OnPostApplyUserInputs()
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         InitValues();
 
         foreach (var match in Matches)
@@ -543,6 +558,7 @@ public class Championship(
 
     public IActionResult OnPostSavePairs(List<PlayerCompetitionPairs> pairs)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         InitValues();
 
         foreach (var pair in pairs)
@@ -581,6 +597,7 @@ public class Championship(
 
     public IActionResult OnPostSaveNewDate(string newDate, string newTime)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         InitValues();
 
         var selectedCompetition = db.Competitions.Single(x => x.Id == SelectedCompetition!.Id);
@@ -629,6 +646,7 @@ public class Championship(
 
     public async Task<IActionResult> OnPostAdminWalkoverAsync(int matchId, int walkoverTeamId)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         var match = await db.Matches
             .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
             .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(teamPlayer => teamPlayer.Player)
@@ -648,6 +666,14 @@ public class Championship(
 
     public async Task<IActionResult> OnPostWithdrawPlayerAsync(int playerId, int competitionId)
     {
+        var currentUser = await userManager.GetUserAsync(User);
+        if (currentUser == null) return Unauthorized();
+        
+        var playerToWithdraw = await db.Players.FindAsync(playerId);
+        if (playerToWithdraw == null) return NotFound();
+        
+        if (playerToWithdraw.IdentityUserId != currentUser.Id && !User.IsInRole("Admin")) return Forbid();
+
         return await WithDrawPlayer(playerId, competitionId);
     }
 
@@ -774,6 +800,7 @@ public class Championship(
 
     public async Task<IActionResult> OnPostGenerateGroupsAsync(int competitionId, int targetGroupSize)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         if (targetGroupSize < 2) targetGroupSize = 2;
 
         var players = await db.TournamentRegistrations

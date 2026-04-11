@@ -7,7 +7,7 @@ using Resend;
 using TennisContext = TennisDb.TennisContext;
 using TennisBruck.Pages.Filter;
 
-string corsKey = "_myCorsKey";
+
 string swaggerVersion = "v1";
 string swaggerTitle = "TennisBruck";
 string restClientFolder = Environment.CurrentDirectory;
@@ -32,10 +32,6 @@ builder.Services
     .AddSwaggerGen(x => x.SwaggerDoc(
         swaggerVersion,
         new OpenApiInfo { Title = swaggerTitle, Version = swaggerVersion }
-    ))
-    .AddCors(options => options.AddPolicy(
-        corsKey,
-        x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()
     ))
     .AddRestClientGenerator(options => options
             .SetFolder(restClientFolder)
@@ -122,7 +118,7 @@ var app = builder.Build();
 
 #region -------------------------------------------- Middleware pipeline
 
-if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -132,8 +128,6 @@ if (app.Environment.IsDevelopment())
     app.UseRestClientGenerator();
     app.UseSwaggerUI(x => x.SwaggerEndpoint($"/swagger/{swaggerVersion}/swagger.json", swaggerTitle));
 }
-
-app.UseCors(corsKey);
 
 #endregion
 
@@ -157,7 +151,6 @@ void ConnectToPostgresDb()
     connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("POSTGRES_DATABASE"))
         .Replace("myUsername", Environment.GetEnvironmentVariable("POSTGRES_USER"))
         .Replace("myPassword", Environment.GetEnvironmentVariable("POSTGRES_PASSWORD"));
-    Console.WriteLine($"Connection string: {connectionString}");
 // connectionString = "Host=localhost;Port=5432;Database=mydatabase;Username=myuser;Password=mypassword";
     builder.Services.AddDbContext<TennisContext>(options =>
         options.UseNpgsql(connectionString));
@@ -170,7 +163,6 @@ void ConnectToNeonDb()
         .Replace("neonDbUsername", Environment.GetEnvironmentVariable("NEONDB_USERNAME"))
         .Replace("neonDbPassword", Environment.GetEnvironmentVariable("NEONDB_PASSWORD"))
         .Replace("neonDbHost", Environment.GetEnvironmentVariable("NEONDB_HOST"));
-    Console.WriteLine($"Connection string: {connectionString}");
 // connectionString = "Host=localhost;Port=5432;Database=mydatabase;Username=myuser;Password=mypassword";
     builder.Services.AddDbContext<TennisContext>(options =>
         options.UseNpgsql(connectionString));

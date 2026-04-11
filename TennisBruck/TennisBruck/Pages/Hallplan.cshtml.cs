@@ -72,6 +72,11 @@ public class Hallplan(
 
     public async Task<IActionResult> OnPostSwapPlayersAsync([FromBody] SwapRequestData data)
     {
+        var currentUser = currentPlayerService.GetCurrentUser();
+        if (currentUser == null) return Unauthorized();
+        if (currentUser.Id != data.Player1Id && currentUser.Id != data.Player2Id && !User.IsInRole("Admin")) 
+            return Forbid();
+
         // Fall 1: Normaler Tausch (Beide Spieler sind schon im Plan auf einem Platz)
         if (data.Court1Id.HasValue && data.Court2Id.HasValue)
         {
@@ -135,6 +140,7 @@ public class Hallplan(
 
     public IActionResult OnPostCreateCompetition(string? competitionName)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         if (string.IsNullOrWhiteSpace(competitionName))
             return RedirectToPage(nameof(Hallplan));
 
@@ -151,6 +157,7 @@ public class Hallplan(
 
     public IActionResult OnPostGeneratePlan(DateTime startDate, DateTime endDate, int frequencyDays)
     {
+        if (!User.IsInRole("Admin")) return Forbid();
         logger.LogInformation("Starting plan generation");
         if (frequencyDays < 1) frequencyDays = 7;
 
@@ -277,6 +284,10 @@ public class Hallplan(
 
     public IActionResult OnPostAddPlayerToHallplan(int playerId)
     {
+        var currentUser = currentPlayerService.GetCurrentUser();
+        if (currentUser == null) return Unauthorized();
+        if (currentUser.Id != playerId && !User.IsInRole("Admin")) return Forbid();
+
         InitValues();
         if (playerId == 0) return RedirectToPage(nameof(Hallplan), new { HallPlanId });
 
@@ -325,6 +336,10 @@ public class Hallplan(
 
     public async Task<IActionResult> OnPostRemovePlayerFromAboAsync(int playerIdToRemove)
     {
+        var currentUser = currentPlayerService.GetCurrentUser();
+        if (currentUser == null) return Unauthorized();
+        if (currentUser.Id != playerIdToRemove && !User.IsInRole("Admin")) return Forbid();
+
         InitValues();
         var player = await db.Players.FirstOrDefaultAsync(p => p.Id == playerIdToRemove);
 

@@ -5,10 +5,12 @@ namespace TennisBruck.Controller;
 public class SwapPlayerController : ControllerBase
 {
     private TennisContext _db;
+    private readonly CurrentPlayerService _currentPlayerService;
 
-    public SwapPlayerController(TennisContext db)
+    public SwapPlayerController(TennisContext db, CurrentPlayerService currentPlayerService)
     {
         _db = db;
+        _currentPlayerService = currentPlayerService;
     }
 
     [HttpPost]
@@ -30,13 +32,23 @@ public class SwapPlayerController : ControllerBase
             return BadRequest("Invalid data format.");
         }
 
-        // Find the first court and player association
+        var currentUser = _currentPlayerService.GetCurrentUser();
+        if (currentUser == null) return Unauthorized("Invalid user");
+
+        var court1 = await _db.Court.FindAsync(court1Id);
+        if (court1 == null) return BadRequest("Court not found");
+
+        bool isRegistered = await _db.HallPlanRegistrations
+            .AnyAsync(r => r.PlayerId == currentUser.Id && r.HallPlanId == court1.HallPlanId);
+
+        if (!isRegistered && !User.IsInRole("Admin")) 
+            return StatusCode(StatusCodes.Status403Forbidden, "You must be registered to this Hallplan to swap players.");
+
         var playerCourt1 = await _db.HallEntities
             .Include(pc => pc.Player)
             .Include(pc => pc.HallPlanDay)
             .FirstOrDefaultAsync(pc => pc.Player.Id == player1Id && pc.HallPlanDay.Id == court1Id);
 
-        // Find the second court and player association
         var playerCourt2 = await _db.HallEntities
             .Include(pc => pc.Player)
             .Include(pc => pc.HallPlanDay)
