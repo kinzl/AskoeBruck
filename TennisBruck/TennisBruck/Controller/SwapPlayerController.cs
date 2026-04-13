@@ -59,25 +59,35 @@ public class SwapPlayerController : ControllerBase
             return BadRequest("One or both players not found in specified courts.");
         }
 
-        // Remove both entries from the database
-        _db.HallEntities.Remove(playerCourt1);
-        _db.HallEntities.Remove(playerCourt2);
-        await _db.SaveChangesAsync();
-
-        // Re-add entries with swapped court and player assignments
-        _db.HallEntities.Add(new HallEntity
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+        try
         {
-            Player = _db.Players.Single(x => x.Id == player2Id),
-            HallPlanDay = _db.Court.Single(x => x.Id == court1Id)
-        });
+            // Remove both entries from the database
+            _db.HallEntities.Remove(playerCourt1);
+            _db.HallEntities.Remove(playerCourt2);
+            await _db.SaveChangesAsync();
 
-        _db.HallEntities.Add(new HallEntity
+            // Re-add entries with swapped court and player assignments
+            _db.HallEntities.Add(new HallEntity
+            {
+                Player = playerCourt2.Player,
+                HallPlanDay = playerCourt1.HallPlanDay
+            });
+
+            _db.HallEntities.Add(new HallEntity
+            {
+                Player = playerCourt1.Player,
+                HallPlanDay = playerCourt2.HallPlanDay
+            });
+
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return Ok();
+        }
+        catch (Exception ex)
         {
-            Player = _db.Players.Single(x => x.Id == player1Id),
-            HallPlanDay = _db.Court.Single(x => x.Id == court2Id)
-        });
-
-        await _db.SaveChangesAsync();
-        return Ok();
+            await transaction.RollbackAsync();
+            return StatusCode(StatusCodes.Status500InternalServerError, "Error swapping players.");
+        }
     }
 }

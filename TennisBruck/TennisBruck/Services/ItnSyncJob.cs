@@ -1,42 +1,29 @@
-using Microsoft.EntityFrameworkCore;
-using TennisDb;
+using Quartz;
 
 namespace TennisBruck.Services;
 
-public class ItnSyncBackgroundService(IServiceProvider serviceProvider, ILogger<ItnSyncBackgroundService> logger)
-    : BackgroundService
+public class ItnSyncJob(IServiceProvider serviceProvider, ILogger<ItnSyncJob> logger) : IJob
 {
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public async Task Execute(IJobExecutionContext context)
     {
-        logger.LogInformation("ITN Sync Background Service is starting.");
-
-        // Wait a few seconds before the first run so the application can fully start
-        await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
-
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            try
-            {
-                await SyncItnScoresAsync(stoppingToken);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "An error occurred while syncing ITN scores.");
-            }
-
-            // Sleep for 24 hours (or whatever interval is desired)
-            await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
+            await SyncItnScoresAsync(context.CancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while syncing ITN scores.");
         }
     }
 
     private async Task SyncItnScoresAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Starting ITN sync process...");
+        logger.LogInformation("Starting ITN sync process via Quartz...");
 
         // Create a new scope to resolve scoped services like DbContext
         using var scope = serviceProvider.CreateScope();
         
-        var dbContext = scope.ServiceProvider.GetRequiredService<TennisContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<TennisDb.TennisContext>();
         var scraperService = scope.ServiceProvider.GetRequiredService<OetvScraperService>();
 
         // Find ALL players so we can map those without a URL

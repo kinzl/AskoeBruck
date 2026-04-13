@@ -20,11 +20,12 @@ public class Settings(
         return Page();
     }
 
-    public IActionResult OnPostChangeSettings(RegistrationDto body)
+    public IActionResult OnPostChangeSettings(string firstname, string lastname, string? nuLigaPlayerUrl)
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser()!;
-        CurrentPlayer.Firstname = body.Firstname;
-        CurrentPlayer.Lastname = body.Lastname;
+        CurrentPlayer.Firstname = firstname;
+        CurrentPlayer.Lastname = lastname;
+        CurrentPlayer.NuLigaPlayerUrl = nuLigaPlayerUrl;
         db.SaveChanges();
 
         return RedirectToPage(nameof(Settings), new { Message = "Daten gespeichert" });

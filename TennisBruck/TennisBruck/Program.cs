@@ -6,6 +6,9 @@ using Microsoft.OpenApi.Models;
 using Resend;
 using TennisContext = TennisDb.TennisContext;
 using TennisBruck.Pages.Filter;
+using Quartz;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 
 string swaggerVersion = "v1";
@@ -17,10 +20,7 @@ DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages()
-    .AddMvcOptions(options =>
-    {
-        options.Filters.Add<ZombieUserFilter>();
-    });
+    .AddMvcOptions(options => { options.Filters.Add<ZombieUserFilter>(); });
 Console.WriteLine($"Current Environment: {builder.Environment.EnvironmentName}");
 
 #region -------------------------------------------- ConfigureServices
@@ -90,7 +90,31 @@ builder.Services.AddHttpClient<EmailService>();
 // builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CurrentPlayerService>();
 builder.Services.AddHttpClient<OetvScraperService>();
-builder.Services.AddHostedService<ItnSyncBackgroundService>();
+
+builder.Services.AddQuartz(q =>
+{
+    var jobKey = new JobKey("ItnSyncJob");
+    q.AddJob<ItnSyncJob>(opts => opts.WithIdentity(jobKey));
+    q.AddTrigger(opts => opts
+        .ForJob(jobKey)
+        .WithIdentity("ItnSyncJob-trigger")
+        .WithCronSchedule("0 0 3 * * ?"));
+});
+builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.Identity?.Name ?? httpContext.Request.Headers.Host.ToString(),
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 40,
+                QueueLimit = 0,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+});
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -129,11 +153,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(x => x.SwaggerEndpoint($"/swagger/{swaggerVersion}/swagger.json", swaggerTitle));
 }
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+}
+
 #endregion
 
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

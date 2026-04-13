@@ -67,10 +67,19 @@
                 <div class="form-group">
                     <label for="EmailOrPhone">E-Mail Adresse</label>
                     <input type="email" id="EmailOrPhone" name="EmailOrPhone" value="@Model.CurrentPlayer.IdentityUser?.Email"
-                           required class="form-input">
+                           required class="form-input" disabled>
                 </div>
 
-                <button type="submit" class="btn-action btn-accent">Daten Speichern</button>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="NuLigaPlayerUrl">ÖTV Profil URL (Optional)</label>
+                    <input type="url" id="NuLigaPlayerUrl" name="NuLigaPlayerUrl" value="@Model.CurrentPlayer.NuLigaPlayerUrl"
+                           class="form-input" placeholder="https://www.oetv.at/spieler/NU...">
+                    <small style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px; display: block;">
+                        Wird für die automatische ITN-Aktualisierung benötigt.
+                    </small>
+                </div>
+
+                <button type="submit" class="btn-action btn-accent" style="margin-top: 15px;">Daten Speichern</button>
             </form>
         </section>
 

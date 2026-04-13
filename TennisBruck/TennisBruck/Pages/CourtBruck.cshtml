@@ -96,14 +96,14 @@
                 </div>
 
                 <div>
-                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Von</label>
-                    <input type="time" name="startTimeStr" required
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Von (HH:mm)</label>
+                    <input type="text" name="startTimeStr" required pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" placeholder="08:30" title="Zeit im Format HH:mm (z.B. 08:30)"
                            style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
                 </div>
 
                 <div>
-                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Bis</label>
-                    <input type="time" name="endTimeStr" required
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Bis (HH:mm)</label>
+                    <input type="text" name="endTimeStr" required pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" placeholder="10:00" title="Zeit im Format HH:mm (z.B. 10:00)"
                            style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
                 </div>
 

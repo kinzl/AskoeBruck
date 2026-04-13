@@ -2,7 +2,6 @@
 @model TennisBruck.Pages.PartnerBoardModel
 
 @{
-    // Wir schalten das Standard-Layout ab, damit wir eine 100% saubere Datei haben
     Layout = null;
 }
 
@@ -33,7 +32,7 @@
 </div>
 
 <div class="main-content-container">
-    @if (Model.MyFixedMatches != null && Model.MyFixedMatches.Any())
+    @if (Model.MyFixedMatches.Any())
     {
         <div class="hallenplan-card mb-4" style="background-color: #f8fafc; border-left: 6px solid #10b981;">
             <h5 class="fw-bold mb-3" style="color: #0f172a;">
