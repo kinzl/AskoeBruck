@@ -91,3 +91,11 @@ body {
         padding: 15px;
     }
 }
+.alert-success-pb { background-color: #e8f5e9; border-left: 5px solid #4caf50; border-radius: 8px; }
+.alert-icon-pb { color: #4caf50; }
+.alert-text-pb { color: #2e7d32; }
+.card-highlight { background-color: #f8fafc; border-left: 6px solid #10b981; }
+.text-dark-blue { color: #0f172a; }
+.text-navy { color: #1a1e36; }
+.text-slate { color: #475569; }
+.badge-fixed { background-color: #10b981; font-size: 0.9rem; padding: 8px 12px; }

@@ -99,6 +99,13 @@ builder.Services.AddQuartz(q =>
         .ForJob(jobKey)
         .WithIdentity("ItnSyncJob-trigger")
         .WithCronSchedule("0 0 3 * * ?"));
+
+    var cleanupKey = new JobKey("CleanupReservationsJob");
+    q.AddJob<CleanupReservationsJob>(opts => opts.WithIdentity(cleanupKey));
+    q.AddTrigger(opts => opts
+        .ForJob(cleanupKey)
+        .WithIdentity("CleanupReservationsJob-trigger")
+        .WithCronSchedule("0 0 1 * * ?"));
 });
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 

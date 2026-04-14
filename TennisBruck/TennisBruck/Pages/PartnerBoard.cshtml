@@ -18,10 +18,9 @@
 <body>
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show shadow-sm mt-3" role="alert"
-         style="background-color: #e8f5e9; border-left: 5px solid #4caf50; border-radius: 8px;">
-        <i class="bi bi-check-circle-fill me-2" style="color: #4caf50;"></i>
-        <strong style="color: #2e7d32;">@TempData["SuccessMessage"]</strong>
+    <div class="alert alert-success alert-dismissible fade show shadow-sm mt-3 alert-success-pb" role="alert">
+        <i class="bi bi-check-circle-fill me-2 alert-icon-pb"></i>
+        <strong class="alert-text-pb">@TempData["SuccessMessage"]</strong>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
@@ -34,8 +33,8 @@
 <div class="main-content-container">
     @if (Model.MyFixedMatches.Any())
     {
-        <div class="hallenplan-card mb-4" style="background-color: #f8fafc; border-left: 6px solid #10b981;">
-            <h5 class="fw-bold mb-3" style="color: #0f172a;">
+        <div class="hallenplan-card mb-4 card-highlight">
+            <h5 class="fw-bold mb-3 text-dark-blue">
                 <i class="bi bi-calendar-check-fill text-success me-2"></i> Meine fixierten Matches
             </h5>
 
@@ -47,16 +46,16 @@
                         <div>
                             @if (match.PlayerId == Model.CurrentPlayerId)
                             {
-                                <strong style="color: #1a1e36;">Du</strong>
+                                <strong class="text-navy">Du</strong>
                                 <label>spielst gegen einen Partner</label>
                                 <div class="small text-success fw-bold mt-1"> Dein Gesuch wurde angenommen!</div>
                             }
                             else
                             {
                                 <strong
-                                    style="color: #1a1e36;">@(match.Player?.ToString() ?? "Ein Spieler")</strong>
+                                    class="text-navy">@(match.Player?.ToString() ?? "Ein Spieler")</strong>
                                 <label> spielt gegen </label>
-                                <strong style="color: #1a1e36;"> Dich </strong>
+                                <strong class="text-navy"> Dich </strong>
                                 <div class="small text-muted mt-1"> Du hast zugesagt.</div>
                             }
 
@@ -65,15 +64,14 @@
                             </div>
                         </div>
 
-                        <span class="badge"
-                              style="background-color: #10b981; font-size: 0.9rem; padding: 8px 12px;">Fixiert ✔</span>
+                        <span class="badge badge-fixed">Fixiert ✔</span>
                     </div>
                 }
             </div>
         </div>
     }
     <div class="hallenplan-card d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold" style="color: #475569;">Verfügbare Zeiten</h5>
+        <h5 class="mb-0 fw-bold text-slate">Verfügbare Zeiten</h5>
         <button type="button" class="btn-limone" data-bs-toggle="modal" data-bs-target="#createSlotModal">
             + Zeit eintragen
         </button>
@@ -85,7 +83,7 @@
         {
             <div class="text-center py-5">
                 <div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
-                <h5 class="fw-bold" style="color: #1a1e36;">Aktuell keine Gesuche!</h5>
+                <h5 class="fw-bold text-navy">Aktuell keine Gesuche!</h5>
                 <p class="text-muted mb-0">Sei der Erste und trage ein, wann du Zeit hast.</p>
             </div>
         }
@@ -94,7 +92,7 @@
             <div class="list-group list-group-flush">
                 @foreach (var dayGroup in Model.SlotsByDay)
                 {
-                    <h6 class="fw-bold mt-3 mb-2" style="color: #1a1e36;">
+                    <h6 class="fw-bold mt-3 mb-2 text-navy">
                         <i class="bi bi-calendar-event me-2 text-muted"></i>
                         @dayGroup.Key.ToString("dd. MMMM yyyy")
                     </h6>
@@ -147,7 +145,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold" style="color: #1a1e36;">Wann hast du Zeit?</h5>
+                <h5 class="modal-title fw-bold text-navy">Wann hast du Zeit?</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" asp-page-handler="CreateSlot">

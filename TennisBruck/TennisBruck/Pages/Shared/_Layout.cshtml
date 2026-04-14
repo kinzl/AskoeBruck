@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="utf-8"/>
@@ -6,6 +6,7 @@
     <title>@ViewData["Title"] - TennisBruck</title>
 
     <partial name="_PwaHeaders"/>
+    <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
 </head>
 <body class="d-flex flex-column min-vh-100">
 
@@ -18,9 +19,9 @@
 
 <footer class="site-footer">
     <div class="container">
-        <p style="margin-bottom: 8px;">&copy; 2026 Tennis Club ASKÖ Bruck-Peuerbach. Alle Rechte vorbehalten.</p>
+        <p class="footer-copy">&copy; 2026 Tennis Club ASKÖ Bruck-Peuerbach. Alle Rechte vorbehalten.</p>
 
-        <div class="flex-center-gap" style="justify-content: center;">
+        <div class="flex-center-gap footer-links">
             <a asp-page="/Impressum">Impressum</a>
             <span>|</span>
             <a asp-page="/DataProtection">Datenschutz</a>
@@ -30,24 +31,4 @@
     </div>
 </footer>
 </body>
-</html>
-<style>
-    .site-footer {
-        text-align: center;
-        padding: 1.5rem 0;
-        width: 100%;
-        margin-top: auto;
-        font-size: 0.875rem;
-        color: #6c757d; /* Ein schönes, dezentes Grau */
-    }
-
-    .site-footer a {
-        color: #6c757d;
-        text-decoration: none;
-    }
-
-    .site-footer a:hover {
-        color: #212529; /* Wird beim Drüberfahren dunkel */
-        text-decoration: underline;
-    }
-</style>
+</html>

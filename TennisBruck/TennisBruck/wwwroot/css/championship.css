@@ -796,6 +796,22 @@ input:focus, select:focus {
     margin-top: 20px; /* Rutscht etwas runter, damit es zwischen den Dropdowns steht */
 }
 
+/* Utils specifically for the Championship */
+.border-divider {
+    font-weight: bold;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.player-select.disabled-look {
+    background-color: #e9ecef;
+}
+
+.hidden {
+    display: none;
+}
+
 /* Container für die gesamte Auslosungs-Leiste */
 .group-generator-toolbar {
     display: flex;

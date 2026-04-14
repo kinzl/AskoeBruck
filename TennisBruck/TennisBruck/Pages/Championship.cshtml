@@ -12,10 +12,9 @@
     <title>Vereinsmeisterschaft Bruck</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
     <script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
     <script src="https://underscorejs.org/underscore-min.js"></script>
-    <link rel="stylesheet" href="~/css/tournament.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="../wwwroot/css/championship.css" asp-append-version="true"/>
     <script src="js/toggleVisibility.js"></script>
     <script src="js/tournament.js"></script>
 </head>
@@ -130,11 +129,11 @@
                             var currentTeam = (Model.RegisteredTeams != null && i < Model.RegisteredTeams.Count) ? Model.RegisteredTeams[i] : null;
                             var firstPlayer = currentTeam?.TeamPlayers?.ElementAtOrDefault(0)?.Player;
                             var secondPlayer = currentTeam?.TeamPlayers?.ElementAtOrDefault(1)?.Player;
+                            var pairIndex = i + 1;
 
                             <div class="pair-card">
-                                <div
-                                    style="font-weight: bold; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; margin-bottom: 15px;">
-                                    Paar @(i + 1)
+                                <div class="border-divider">
+                                    Paar @pairIndex
                                 </div>
 
                                 @if (currentTeam != null && User.IsInRole("Admin"))
@@ -160,7 +159,7 @@
                                         }
                                         else
                                         {
-                                            <div class="player-select" style="background-color: #e9ecef;">
+                                            <div class="player-select disabled-look">
                                                 @(firstPlayer != null ? firstPlayer.ToString() : "Offen")
                                             </div>
                                         }
@@ -185,7 +184,7 @@
                                         }
                                         else
                                         {
-                                            <div class="player-select" style="background-color: #e9ecef;">
+                                            <div class="player-select disabled-look">
                                                 @(secondPlayer != null ? secondPlayer.ToString() : "Offen")
                                             </div>
                                         }
@@ -529,7 +528,7 @@
             </button>
         </div>
 
-        <div id="infoBox" style="display: none;">
+        <div id="infoBox" class="hidden">
             <section class="modern-card mb-24">
                 <div class="card-header">
                     <h2>📋 Teilnehmerliste (@Model.RegisteredCompetitionPlayers.Count)</h2>

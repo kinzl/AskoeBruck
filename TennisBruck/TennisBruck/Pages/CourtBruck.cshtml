@@ -25,18 +25,12 @@
     </div>
 
     <h1 class="app-title">🎾 Platz reservieren</h1>
-    <p style="color: var(--text-muted); margin-top: 10px;">Wähle deinen Wunschtermin für die Anlage Bruck</p>
+    <p class="header-subtitle">Wähle deinen Wunschtermin für die Anlage Bruck</p>
 
     @if (!string.IsNullOrEmpty(Model.Message))
     {
-        var alertBg = Model.IsError ? "#fee2e2" : "#dcfce7";
-        var alertColor = Model.IsError ? "#991b1b" : "#166534";
-        var alertBorder = Model.IsError ? "#ef4444" : "#22c55e";
-        var alertIcon = Model.IsError ? "⚠️" : "✅";
-
-        <div
-            style="background-color: @alertBg; color: @alertColor; border-left: 4px solid @alertBorder; padding: 15px; margin: 20px auto 0 auto; max-width: 600px; border-radius: var(--border-radius-sm); font-weight: 500; text-align: left; box-shadow: var(--shadow-soft); display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 1.2rem;">@alertIcon</span>
+        <div class="alert-box @(Model.IsError ? "alert-error" : "alert-success")">
+            <span class="alert-icon">@(Model.IsError ? "⚠️" : "✅")</span>
             <span>@Model.Message</span>
         </div>
     }
@@ -49,46 +43,38 @@
 
         <div class="date-nav-wrapper">
 
-            <a href="?date=@Model.CurrentDate.AddDays(-1).ToString("yyyy-MM-dd")" class="btn-date"
-               style="text-decoration: none;">
+            <a href="?date=@Model.CurrentDate.AddDays(-1).ToString("yyyy-MM-dd")" class="btn-date">
                 ◀ Gestern
             </a>
 
-            <form method="get" style="margin: 0; display: inline-block;">
+            <form method="get" class="date-picker-form">
                 <input type="date" name="date" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"
                        class="date-picker-input" onchange="this.form.submit()">
             </form>
 
-            <a href="?date=@Model.CurrentDate.AddDays(1).ToString("yyyy-MM-dd")" class="btn-date"
-               style="text-decoration: none;">
+            <a href="?date=@Model.CurrentDate.AddDays(1).ToString("yyyy-MM-dd")" class="btn-date">
                 Morgen ▶
             </a>
 
         </div>
 
 
-        <div
-            style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid var(--accent-color); border-radius: var(--border-radius-sm); padding: 20px; margin-bottom: 25px;">
-            <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: var(--nav-bg);">
-                Block-Reservierung eintragen</h3>
+        <div class="admin-panel">
+            <h3 class="admin-panel-title">Block-Reservierung eintragen</h3>
 
-            <form method="post" asp-page-handler="CreateEvent"
-                  style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <form method="post" asp-page-handler="CreateEvent" class="admin-form">
 
                 <input type="hidden" name="currentDateStr" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"/>
                 @if (User.IsInRole("Admin"))
                 {
-                    <div style="flex: 1; min-width: 150px;">
-                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Event
-                            Name</label>
-                        <input type="text" name="eventName" placeholder="z.B. Meisterschaft"
-                               style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                    <div class="form-group-flex">
+                        <label class="form-label">Event Name</label>
+                        <input type="text" name="eventName" placeholder="z.B. Meisterschaft" class="form-input">
                     </div>
                 }
                 <div>
-                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Platz</label>
-                    <select name="courtNumber"
-                            style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                    <label class="form-label">Platz</label>
+                    <select name="courtNumber" class="form-input">
                         <option value="1">Platz 1</option>
                         <option value="2">Platz 2</option>
                         <option value="3">Platz 3</option>
@@ -96,15 +82,13 @@
                 </div>
 
                 <div>
-                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Von (HH:mm)</label>
-                    <input type="text" name="startTimeStr" required pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" placeholder="08:30" title="Zeit im Format HH:mm (z.B. 08:30)"
-                           style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                    <label class="form-label">Von (HH:mm)</label>
+                    <input type="text" name="startTimeStr" required pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" placeholder="08:30" title="Zeit im Format HH:mm (z.B. 08:30)" class="form-input">
                 </div>
 
                 <div>
-                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Bis (HH:mm)</label>
-                    <input type="text" name="endTimeStr" required pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" placeholder="10:00" title="Zeit im Format HH:mm (z.B. 10:00)"
-                           style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                    <label class="form-label">Bis (HH:mm)</label>
+                    <input type="text" name="endTimeStr" required pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" placeholder="10:00" title="Zeit im Format HH:mm (z.B. 10:00)" class="form-input">
                 </div>
 
                 <button type="submit" class="btn-action btn-accent" style="padding: 9px 20px;">Reservieren</button>
@@ -134,8 +118,7 @@
                             if (reservation == null)
                             {
                                 <td class="slot-available">
-                                    <form method="post" asp-page-handler="CreateReservation"
-                                          style="margin: 0; display: flex; justify-content: center;">
+                                    <form method="post" asp-page-handler="CreateReservation" class="cell-form">
                                         <input type="hidden" name="courtNumber" value="@court"/>
                                         <input type="hidden" name="StartTime" value="@timeSlot.Time"/>
                                         <button type="submit" class="btn-reserve" title="Jetzt reservieren">+</button>
@@ -161,7 +144,7 @@
 
                                     <td class="@tdClass">
 
-                                        <div style="margin-bottom: 5px; font-weight: bold;">
+                                        <div class="reserved-name">
                                             @reservation.DisplayName
                                         </div>
 

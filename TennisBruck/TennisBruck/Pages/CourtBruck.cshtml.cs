@@ -21,16 +21,6 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         // Parse the date or default to today
         CurrentDate = string.IsNullOrEmpty(date) ? DateTime.Today : DateTime.Parse(date);
 
-        var oldSlots = await db.Reservations
-            .Where(s => s.StartTime.Date < DateTime.Today)
-            .ToListAsync();
-
-        if (oldSlots.Any())
-        {
-            db.Reservations.RemoveRange(oldSlots);
-            await db.SaveChangesAsync();
-        }
-
         Reservations = db.Reservations
             .Include(r => r.Player)
             .Where(r => r.StartTime.Date == CurrentDate.Date)

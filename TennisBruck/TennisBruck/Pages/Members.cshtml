@@ -21,7 +21,7 @@
 
 <header class="app-header">
     <div class="header-top-bar">
-        <form method="post" style="margin: 0;">
+        <form method="post" class="m-0">
             <button type="submit" asp-page-handler="Back" class="btn-back-header">
                 ← Übersicht
             </button>
@@ -29,7 +29,7 @@
     </div>
 
     <h1 class="app-title">👥 Mitgliederverzeichnis</h1>
-    <p style="color: var(--text-muted); margin-top: 10px;">Eingeloggt als:
+    <p class="header-subtitle">Eingeloggt als:
         <strong>@Model.LoggedInPlayer.ToString()</strong></p>
 </header>
 
@@ -37,16 +37,15 @@
 
     @if (User.IsInRole("Admin"))
     {
-        <section class="modern-card" style="border-left: 4px solid var(--accent-color);">
-            <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
-                <h2 style="font-size: 1.2rem;">🛠️ Admin-Tools</h2>
+        <section class="modern-card card-admin">
+            <div class="card-header card-header-compact">
+                <h2 class="text-admin-title">🛠 Admin-Tools</h2>
                 <button id="createUserButton" class="btn-action btn-accent" onclick="toggleCreateUser()" type="button">
                     + Benutzer erstellen
                 </button>
             </div>
 
-            <div id="createUser"
-                 style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <div id="createUser" class="admin-invite-form">
                 <form method="post">
                     <div class="form-grid">
                         <div class="form-group">
@@ -66,7 +65,7 @@
                             <input id="emailOrPhoneInput" name="emailOrPhone" class="form-input" required type="email"/>
                         </div>
                     </div>
-                    <div style="text-align: right;">
+                    <div class="text-right">
                         <button type="submit" class="btn-action" asp-page-handler="CreateUser">Benutzer in DB anlegen
                         </button>
                     </div>
@@ -95,8 +94,8 @@
                     {
                         <th>ITN</th>
                         <th>Email</th>
-                        <th style="text-align: center;">Admin</th>
-                        <th style="text-align: center;">Löschen</th>
+                        <th class="text-center">Admin</th>
+                        <th class="text-center">Löschen</th>
                     }
                 </tr>
                 </thead>
@@ -104,16 +103,16 @@
                 @foreach (var player in Model.AllPlayers)
                 {
                     <tr>
-                        <td style="font-weight: 500;">@player.Firstname</td>
-                        <td style="font-weight: 500;">@player.Lastname</td>
+                        <td class="fw-500">@player.Firstname</td>
+                        <td class="fw-500">@player.Lastname</td>
 
                         @if (User.IsInRole("Admin"))
                         {
-                            <td style="color: var(--text-muted);">@player.Itn</td>
-                            <td style="color: var(--text-muted);">@player.IdentityUser?.Email</td>
+                            <td class="text-muted">@player.Itn</td>
+                            <td class="text-muted">@player.IdentityUser?.Email</td>
 
-                            <td style="text-align: center;">
-                                <form method="post" asp-page-handler="ChangeAdmin" style="margin: 0;">
+                            <td class="text-center">
+                                <form method="post" asp-page-handler="ChangeAdmin" class="m-0">
                                     <input type="hidden" name="user" value="@player.Id"/>
                                     <label class="switch" title="Admin-Rechte umschalten">
                                         <input type="checkbox" onclick="this.form.submit()"
@@ -123,8 +122,8 @@
                                 </form>
                             </td>
 
-                            <td style="text-align: center;">
-                                <form method="post" style="margin: 0; display: inline-block;">
+                            <td class="text-center">
+                                <form method="post" class="m-0 inline-block">
                                     <button class="btn-danger-icon" name="playerId" value="@player.Id" type="submit"
                                             asp-page-handler="DeleteUser"
                                             onclick="return confirm('Möchtest du @player.Firstname wirklich komplett aus dem System löschen?');"

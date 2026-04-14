@@ -190,3 +190,7 @@ body {
         padding: 15px;
     }
 }
+.btn-login { width: auto; padding: 8px 20px; border-radius: 20px; }
+.card-internal { justify-content: center; background: #e2e8f0; border: 2px dashed #cbd5e1; box-shadow: none; }
+.opacity-50 { opacity: 0.5; }
+.text-muted { color: var(--text-muted); }
