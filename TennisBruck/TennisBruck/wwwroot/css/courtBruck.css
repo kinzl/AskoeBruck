@@ -186,261 +186,43 @@ body {
     border: 1px solid #e2e8f0;
     border-left: 4px solid var(--accent-color);
     border-radius: var(--border-radius-sm);
-    padding: 20px;
-    margin-bottom: 25px;
+    padding: 12px;
+    margin-bottom: 20px;
 }
 
 .admin-panel-title {
     margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 1.1rem;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
     color: var(--nav-bg);
 }
 
 .admin-form {
     display: flex;
-    gap: 15px;
+    gap: 8px;
     flex-wrap: wrap;
     align-items: flex-end;
 }
 
 .form-group-flex {
     flex: 1;
-    min-width: 150px;
+    min-width: 120px;
 }
 
 .form-label {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-weight: bold;
     color: var(--text-muted);
 }
 
 .form-input {
     width: 100%;
-    padding: 8px;
+    padding: 6px;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     box-sizing: border-box;
-}
-
-.cell-form {
-    margin: 0;
-    display: flex;
-    justify-content: center;
-}
-
-.reserved-name {
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-/* --- COURT TABLE --- */
-.table-responsive {
-    overflow-x: auto;
-    border-radius: var(--border-radius-sm);
-    border: 1px solid #e2e8f0;
-}
-
-.court-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: center;
-    min-width: 600px;
-}
-
-.court-table th {
-    background-color: var(--nav-bg);
-    color: white;
-    padding: 10px;
     font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* HIER IST DIE WICHTIGSTE ÄNDERUNG: Höhe von 80px auf 45px reduziert und Padding verkleinert */
-.court-table td {
-    padding: 8px 5px; /* Etwas Luft oben und unten */
-    border: 1px solid #e2e8f0;
-    vertical-align: middle;
-    /* min-height greift bei Tabellenzellen oft nicht direkt, daher steuern wir es über das Padding */
-    font-size: 0.9rem;
-}
-
-.time-col {
-    background-color: #f8fafc;
-    font-weight: 800;
-    color: var(--text-muted);
-    width: 60px;
-}
-
-/* --- RESERVATION SLOTS --- */
-.slot-available {
-    background-color: #ffffff;
-    transition: background 0.2s;
-}
-
-.slot-available:hover {
-    background-color: #f8fafc;
-}
-
-.slot-reserved {
-    background-color: #e2e8f0;
-    color: var(--nav-bg);
-    font-weight: 600;
-    border-left: 4px solid var(--text-muted);
-    position: relative;
-}
-
-.slot-my-reservation {
-    background-color: #dcfce7;
-    border-left: 4px solid #166534;
-    color: #166534;
-}
-
-.slot-event {
-    background-color: #fef3c7;
-    border-left: 4px solid #d97706;
-    color: #b45309;
-}
-
-/* --- BUTTONS & INPUTS IN TABLE --- */
-/* Auch den Plus-Button etwas kleiner gemacht, damit er in die flache Zeile passt */
-.btn-reserve {
-    background: var(--accent-color);
-    color: var(--nav-bg);
-    border: none;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    font-size: 1.1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-}
-
-.btn-reserve:hover {
-    transform: scale(1.1);
-    background: var(--accent-hover);
-}
-
-/* Den Löschen-Button auch etwas kompakter gemacht */
-.btn-delete-res {
-    background: #fee2e2;
-    color: #ef4444;
-    border: none;
-    padding: 3px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.75rem;
-    margin-top: 3px;
-    font-weight: bold;
-    transition: 0.2s;
-}
-
-.btn-delete-res:hover {
-    background: #ef4444;
-    color: white;
-}
-
-.admin-event-input {
-    width: 90%;
-    padding: 6px;
-    margin-bottom: 8px;
-    border: 1px dashed #cbd5e1;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    background: #f8fafc;
-    text-align: center;
-}
-
-.admin-event-input:focus {
-    outline: none;
-    border-color: var(--nav-bg);
-    background: white;
-}
-
-
-
-body {
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f1f5f9;
-    color: #334155;
-    overflow-x: hidden; /* Verhindert seitliches Scrollen der GANZEN Seite */
-}
-
-/* =========================================================
-   HEADER & LAYOUT
-   ========================================================= */
-.app-header {
-    background-color: var(--nav-bg);
-    color: white;
-    padding: 20px 15px;
-    text-align: center;
-}
-
-.header-top-bar {
-    margin-bottom: 10px;
-    text-align: left;
-}
-
-.btn-back-header {
-    background-color: transparent;
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 20px;
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.btn-back-header:hover { background-color: rgba(255, 255, 255, 0.1); }
-
-.app-title {
-    margin: 0;
-    font-size: 1.6rem;
-    font-weight: 800;
-}
-
-.main-container {
-    padding: 15px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.modern-card {
-    background-color: white;
-    border-radius: var(--border-radius-sm);
-    padding: 15px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-@media (min-width: 768px) {
-    .modern-card { padding: 25px; } /* Mehr Luft auf dem PC */
-}
-
-
-
-/* =========================================================
-   ADMIN FORMULAR (Überschreibt die Inline-Styles für Mobile)
-   ========================================================= */
-/* Bricht die flex-items auf dem Handy in 100% Breite um */
-@media (max-width: 650px) {
-    form[asp-page-handler="CreateEvent"] > div {
-        flex: 1 1 100% !important;
-    }
-    .btn-action.btn-accent {
-        width: 100%;
-        margin-top: 5px;
-    }
 }
 
 .btn-action.btn-accent {
@@ -449,13 +231,15 @@ body {
     border: none;
     border-radius: 8px;
     font-weight: 600;
-    font-size: 1rem;
-    padding: 12px 24px;
+    font-size: 0.9rem;
+    padding: 8px 16px;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    width: 100%; /* Default width for small screens */
+    margin-top: 10px;
 }
 
 .btn-action.btn-accent:hover {
@@ -469,24 +253,42 @@ body {
     box-shadow: 0 2px 4px -1px rgba(16, 185, 129, 0.4);
 }
 
-/* =========================================================
-   DIE HALLENPLAN-TABELLE (Mobile-optimiert mit Sticky Col)
-   ========================================================= */
+@media (min-width: 650px) {
+    .btn-action.btn-accent {
+        width: auto;
+        margin-top: 0;
+        padding: 8px 24px;
+    }
+}
+
+.cell-form {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.reserved-name {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+/* --- COURT TABLE (Compacted Layout for Mobile) --- */
 .table-responsive {
     width: 100%;
-    overflow-x: auto; /* Aktiviert horizontales Scrollen */
-    -webkit-overflow-scrolling: touch; /* Butterweiches Scrollen auf iOS */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border: 1px solid #e2e8f0;
     border-radius: var(--border-radius-sm);
+    margin-bottom: 20px;
 }
 
 .court-table {
     width: 100%;
-    border-collapse: separate; /* Wichtig für Sticky-Borders */
+    border-collapse: separate;
     border-spacing: 0;
-    min-width: 500px; /* Erzwingt die Breite, damit auf dem Handy gescrollt werden MUSS */
     background-color: white;
-    font-size: 0.9rem;
+    font-size: 0.75rem; /* Reduced base font size */
+    table-layout: fixed; /* Ensures even distribution without min-width forcing horizontal scroll */
 }
 
 .court-table thead tr {
@@ -494,8 +296,23 @@ body {
     color: white;
 }
 
-.court-table th, .court-table td {
-    padding: 12px 10px;
+.court-table th {
+    background-color: var(--nav-bg);
+    color: white;
+    padding: 6px 2px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    text-align: center;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.court-table td {
+    padding: 4px 2px; /* Extremely compressed height */
     border-bottom: 1px solid #e2e8f0;
     border-right: 1px solid #e2e8f0;
     text-align: center;
@@ -506,46 +323,32 @@ body {
 .court-table th.time-col,
 .court-table td.time-col {
     position: sticky;
-    left: 0; /* Klebt am linken Rand */
+    left: 0;
     background-color: var(--nav-bg);
     color: white;
     font-weight: 700;
-    width: 60px;
-    border-right: 2px solid #000; /* Starke Trennlinie zum scrollbaren Bereich */
+    width: 45px; /* Thinner */
+    border-right: 2px solid #000;
 }
 
-/* Z-Index Fix: Der Tabellenkopf links oben muss immer ganz vorne sein */
 .court-table th.time-col { z-index: 3; }
 .court-table td.time-col { z-index: 2; }
 
-/* =========================================================
-   RESERVIERUNGS-SLOTS (Zellen-Design)
-   ========================================================= */
+/* --- RESERVATION SLOTS --- */
 .slot-available {
-    background-color: white;
+    background-color: #ffffff;
+    transition: background 0.2s;
 }
 
-.btn-reserve {
-    background-color: var(--accent-color);
-    color: var(--nav-bg);
-    border: none;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    font-size: 1.3rem;
-    font-weight: 800;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.slot-available:hover {
+    background-color: #f8fafc;
 }
 
-/* Zustände der gebuchten Plätze */
 .slot-reserved {
     background-color: var(--slot-reserved-bg);
     color: var(--slot-reserved-text);
-    font-size: 0.85rem;
+    font-weight: 600;
+    position: relative;
 }
 
 .slot-my-reservation {
@@ -558,49 +361,83 @@ body {
     color: var(--slot-event-text);
 }
 
-/* Text-Container in der Zelle (verhindert, dass lange Namen das Layout sprengen) */
 .slot-reserved div,
 .slot-my-reservation div,
 .slot-event div {
-    max-width: 100px;
+    /* Limit the width using 100% of the cell minus minimal padding */
+    width: 100%;
     margin: 0 auto;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Schneidet zu lange Namen mit "..." ab */
+    text-overflow: ellipsis;
+    font-size: 0.7rem; /* Tiny text */
+}
+
+/* --- BUTTONS IN TABLE --- */
+.btn-reserve {
+    background: var(--accent-color);
+    color: var(--nav-bg);
+    border: none;
+    width: 24px; /* Tiny plus button */
+    height: 24px;
+    border-radius: 50%;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.btn-reserve:hover {
+    transform: scale(1.1);
+    background: var(--accent-hover);
 }
 
 .btn-delete-res {
-    background-color: white;
+    background: white;
     color: var(--danger-color);
     border: 1px solid var(--danger-color);
+    padding: 2px 2px;
     border-radius: 4px;
-    padding: 6px 10px;
-    font-size: 0.75rem;
-    font-weight: 700;
     cursor: pointer;
+    font-size: 0.65rem; /* Tiny text */
+    margin-top: 4px;
+    font-weight: bold;
+    transition: 0.2s;
     width: 100%;
-    margin-top: 8px;
-    transition: background-color 0.2s;
+    max-width: 60px; /* Don't make it too wide if the cell flexes */
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
 }
 
-.btn-delete-res:active {
-    background-color: #fee2e2;
+.btn-delete-res:hover {
+    background: var(--danger-color);
+    color: white;
 }
 
 /* ==========================================
    MOBILE LAYOUT (RESPONSIVE)
    ========================================== */
 @media (max-width: 768px) {
+    body {
+        overflow-x: hidden; /* Avoid site-wide scrolling */
+    }
+
     .app-header {
         padding: 30px 15px 40px 15px;
     }
 
     .main-container {
         padding: 0 10px;
-        margin-top: -20px;
+        margin-top: -30px;
     }
 
     .modern-card {
-        padding: 15px;
+        padding: 10px; /* Less padding on the surrounding card on mobile */
     }
 }
