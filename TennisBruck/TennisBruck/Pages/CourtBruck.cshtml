@@ -43,18 +43,14 @@
 
         <div class="date-nav-wrapper">
 
-            <a href="?date=@Model.CurrentDate.AddDays(-1).ToString("yyyy-MM-dd")" class="btn-date">
-                ◀ Gestern
-            </a>
+            <a href="?date=@Model.CurrentDate.AddDays(-1).ToString("yyyy-MM-dd")" class="btn-date">◀</a>
 
             <form method="get" class="date-picker-form">
                 <input type="date" name="date" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"
                        class="date-picker-input" onchange="this.form.submit()">
             </form>
 
-            <a href="?date=@Model.CurrentDate.AddDays(1).ToString("yyyy-MM-dd")" class="btn-date">
-                Morgen ▶
-            </a>
+            <a href="?date=@Model.CurrentDate.AddDays(1).ToString("yyyy-MM-dd")" class="btn-date">▶</a>
 
         </div>
 
@@ -82,16 +78,16 @@
                 </div>
 
                 <div>
-                    <label class="form-label">Von (HH:mm)</label>
-                    <input type="text" name="startTimeStr" required pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" placeholder="08:30" title="Zeit im Format HH:mm (z.B. 08:30)" class="form-input">
+                    <label class="form-label" min="@DateTime.Today.ToString("yyyy-MM-dd")">Von (Uhrzeit)</label>
+                    <input type="time" name="startTimeStr" required class="form-input">
                 </div>
 
                 <div>
-                    <label class="form-label">Bis (HH:mm)</label>
-                    <input type="text" name="endTimeStr" required pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" placeholder="10:00" title="Zeit im Format HH:mm (z.B. 10:00)" class="form-input">
+                    <label class="form-label">Bis (Uhrzeit)</label>
+                    <input type="time" name="endTimeStr" required class="form-input">
                 </div>
 
-                <button type="submit" class="btn-action btn-accent">Reservieren</button>
+                <button type="submit" class="btn-action btn-accent" style="padding: 9px 20px;">Reservieren</button>
             </form>
         </div>
 
