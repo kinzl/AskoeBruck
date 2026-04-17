@@ -25,8 +25,8 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
 
         // 3. SEEDING: Standard-Daten anlegen (falls sie noch nicht existieren)
         await SeedAdminUserAndPlayer(db, userManager, roleManager);
-        
-        if (!db.Players.Any(p => p.Firstname == "Alice" && p.Lastname == "Smith"))
+
+        if (db.Players.Any())
         {
             await SeedPlayer(db);
             SeedCompetition(db);

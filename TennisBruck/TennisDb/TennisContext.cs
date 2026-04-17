@@ -40,6 +40,6 @@ public class TennisContext : IdentityDbContext<IdentityUser>, IDataProtectionKey
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        builder.Entity<Player>().HasQueryFilter(p => !p.IsActive);
+        builder.Entity<Player>().HasQueryFilter(p => p.IsActive);
     }
 }
