@@ -531,6 +531,9 @@ namespace TennisDb.Migrations
                     b.Property<string>("IdentityUserId")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal?>("Itn")
                         .HasColumnType("numeric");
 

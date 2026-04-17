@@ -14,4 +14,5 @@ public partial class Player
     public decimal? Itn { get; set; }
     public DateTime? LastItnUpdate { get; set; }
     public string? NuLigaPlayerUrl { get; set; }
+    public bool IsActive { get; set; } = true;
 }

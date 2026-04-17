@@ -36,4 +36,10 @@ public class TennisContext : IdentityDbContext<IdentityUser>, IDataProtectionKey
     public DbSet<HallPlanRegistration> HallPlanRegistrations { get; set; }
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
     public DbSet<AvailabilitySlot> AvailabilitySlots { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        builder.Entity<Player>().HasQueryFilter(p => !p.IsActive);
+    }
 }

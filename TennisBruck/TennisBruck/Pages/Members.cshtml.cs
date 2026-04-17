@@ -46,9 +46,12 @@ public class Members(
         if (!User.IsInRole("Admin")) return Forbid();
         logger.LogInformation("OnPostDeleteUser");
         var player = db.Players.Single(x => x.Id == playerId);
-        db.Players.Remove(player);
+
+        // Soft-Delete anstatt echtem Löschen
+        player.IsActive = false;
+
         db.SaveChanges();
-        return RedirectToPage(new { Message = $"Benutzer {player.Firstname} {player.Lastname} wurde gelöscht." });
+        return RedirectToPage(new { Message = $"Benutzer {player.Firstname} {player.Lastname} wurde deaktiviert." });
     }
 
     public async Task<IActionResult> OnPostChangeAdminAsync(int user)

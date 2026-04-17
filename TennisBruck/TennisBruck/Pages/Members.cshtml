@@ -123,14 +123,17 @@
                             </td>
 
                             <td class="text-center">
-                                <form method="post" class="m-0 inline-block">
-                                    <button class="btn-danger-icon" name="playerId" value="@player.Id" type="submit"
-                                            asp-page-handler="DeleteUser"
-                                            onclick="return confirm('Möchtest du @player.Firstname wirklich komplett aus dem System löschen?');"
-                                            title="User löschen">
-                                        🗑️
-                                    </button>
-                                </form>
+                                @if (player.Id != Model.LoggedInPlayer.Id)
+                                {
+                                    <form method="post" class="m-0 inline-block">
+                                        <button class="btn-danger-icon" name="playerId" value="@player.Id" type="submit"
+                                                asp-page-handler="DeleteUser"
+                                                onclick="return confirm('Möchtest du @player.Firstname wirklich deaktivieren?');"
+                                                title="User deaktivieren">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                }
                             </td>
                         }
                     </tr>
