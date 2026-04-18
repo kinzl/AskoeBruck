@@ -3,11 +3,11 @@ using Group = TennisDb.Group;
 
 namespace TennisBruck.Services;
 
-public class StartupBackgroundService(IServiceProvider provider) : IHostedService
+public class StartupBackgroundService(IServiceProvider provider) : BackgroundService
 {
     private readonly IServiceScope _scope = provider.CreateScope();
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         Console.WriteLine("ExecuteAsync STARTUP SERVICE");
         var db = _scope.ServiceProvider.GetRequiredService<TennisContext>();
@@ -18,9 +18,11 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
         // await DropAllTables(db);
         // await db.Database.EnsureDeletedAsync(cancellationToken);
 
+        await Task.Delay(1000, stoppingToken);
+
         // 2. NEUE LOGIK: Wir wenden ausstehende Updates (Migrationen) sanft an
         Console.WriteLine("Prüfe auf Datenbank-Updates...");
-        await db.Database.MigrateAsync(cancellationToken);
+        await db.Database.MigrateAsync(stoppingToken);
         Console.WriteLine("Datenbank ist auf dem neuesten Stand!");
 
         // 3. SEEDING: Standard-Daten anlegen (falls sie noch nicht existieren)
@@ -32,7 +34,7 @@ public class StartupBackgroundService(IServiceProvider provider) : IHostedServic
             SeedCompetition(db);
         }
 
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesAsync(stoppingToken);
     }
 
     private async Task SeedAdminUserAndPlayer(TennisContext db, UserManager<IdentityUser> userManager,
