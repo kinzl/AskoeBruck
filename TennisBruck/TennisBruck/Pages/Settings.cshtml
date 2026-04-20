@@ -52,7 +52,8 @@
                 <div class="form-row">
                     <div class="form-group mb-0">
                         <label for="Firstname">Vorname</label>
-                        <input type="text" id="Firstname" name="Firstname" value="@Model.CurrentPlayer.Firstname" required
+                        <input type="text" id="Firstname" name="Firstname" value="@Model.CurrentPlayer.Firstname"
+                               required
                                class="form-input">
                     </div>
                     <div class="form-group mb-0">
@@ -64,13 +65,15 @@
 
                 <div class="form-group">
                     <label for="EmailOrPhone">E-Mail Adresse</label>
-                    <input type="email" id="EmailOrPhone" name="EmailOrPhone" value="@Model.CurrentPlayer.IdentityUser?.Email"
+                    <input type="email" id="EmailOrPhone" name="EmailOrPhone"
+                           value="@Model.CurrentPlayer.IdentityUser?.Email"
                            required class="form-input" disabled>
                 </div>
 
                 <div class="form-group mt-15">
                     <label for="NuLigaPlayerUrl">ÖTV Profil URL (Optional)</label>
-                    <input type="url" id="NuLigaPlayerUrl" name="NuLigaPlayerUrl" value="@Model.CurrentPlayer.NuLigaPlayerUrl"
+                    <input type="url" id="NuLigaPlayerUrl" name="NuLigaPlayerUrl"
+                           value="@Model.CurrentPlayer.NuLigaPlayerUrl"
                            class="form-input" placeholder="https://www.oetv.at/spieler/NU...">
                     <small class="form-help-text">
                         Dieser Link führt zu deinem Spielerprofil auf der ÖTV Verbandsseite. (Freiwillig)
@@ -105,6 +108,27 @@
                 </div>
 
                 <button type="submit" class="btn-action">Passwort aktualisieren</button>
+            </form>
+        </section>
+
+        <section class="modern-card" style="border-left: 4px solid var(--danger-color, #ef4444);">
+            <div class="card-header-flex">
+                <div class="icon-box" style="background:#fee2e2;color:#ef4444;">⚠️</div>
+                <h2 style="color: var(--danger-color, #ef4444);">Profil löschen</h2>
+            </div>
+
+            <p class="form-help-text" style="display:block;margin-bottom:15px;line-height:1.4;">
+                Hier kannst du dein Profil deaktivieren. Du wirst aus allen aktiven Ansichten entfernt und sofort
+                abgemeldet. Dieser Vorgang kann nicht eigenständig rückgängig gemacht werden.
+            </p>
+
+            <form method="post" asp-page-handler="DeleteProfile" class="form-col-flex" style="margin-top:auto;">
+                <button type="submit" class="btn-action"
+                        style="background-color:var(--danger-color, #ef4444); color:white; width: 100%; transition: opacity 0.2s;"
+                        onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1"
+                        onclick="return confirm('Möchtest du dein Profil wirklich deaktivieren? Du wirst sofort abgemeldet und dies ist endgültig!');">
+                    Mein Profil löschen
+                </button>
             </form>
         </section>
 

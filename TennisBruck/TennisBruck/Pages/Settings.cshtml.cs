@@ -57,6 +57,20 @@ public class Settings(
         return RedirectToPage(new { Message = "Dein Passwort wurde erfolgreich geändert!" });
     }
 
+    public async Task<IActionResult> OnPostDeleteProfileAsync()
+    {
+        CurrentPlayer = currentPlayerService.GetCurrentUser()!;
+        
+        // Soft delete the profile
+        CurrentPlayer.IsActive = false;
+        await db.SaveChangesAsync();
+
+        // Sign out
+        await signInManager.SignOutAsync();
+
+        return RedirectToPage("/Index");
+    }
+
     public IActionResult OnPostBack()
     {
         return RedirectToPage(nameof(Index));
