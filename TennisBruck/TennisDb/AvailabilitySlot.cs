@@ -24,6 +24,17 @@ public class AvailabilitySlot
 
     public bool IsMatched { get; set; } = false;
 
-    // Auch hier konsequent: PlayerId statt UserId
+    public bool IsDouble { get; set; } = false;
+
+    // Player 2 (Einzel-Gegner oder Doppel-Partner)
     public int? MatchedWithPlayerId { get; set; }
+    [ForeignKey("MatchedWithPlayerId")] public virtual Player? MatchedWithPlayer { get; set; }
+
+    // Player 3 (Gegner 1 beim Doppel)
+    public int? MatchedWithPlayer2Id { get; set; }
+    [ForeignKey("MatchedWithPlayer2Id")] public virtual Player? MatchedWithPlayer2 { get; set; }
+
+    // Player 4 (Gegner 2 beim Doppel)
+    public int? MatchedWithPlayer3Id { get; set; }
+    [ForeignKey("MatchedWithPlayer3Id")] public virtual Player? MatchedWithPlayer3 { get; set; }
 }

@@ -14,6 +14,8 @@ public class PartnerBoardModel(
 
     public async Task<IActionResult> OnGetAsync()
     {
+        CurrentPlayerId = currentPlayerService.GetCurrentUser()!.Id;
+
         var oldSlots = await db.AvailabilitySlots
             .Where(s => s.Date < DateTime.Today)
             .ToListAsync();
@@ -26,6 +28,9 @@ public class PartnerBoardModel(
 
         var availableSlots = await db.AvailabilitySlots
             .Include(s => s.Player)
+            .Include(s => s.MatchedWithPlayer)
+            .Include(s => s.MatchedWithPlayer2)
+            .Include(s => s.MatchedWithPlayer3)
             .Where(s => s.Date >= DateTime.Today && s.IsMatched == false)
             .OrderBy(s => s.Date)
             .ThenBy(s => s.StartTime)
@@ -40,8 +45,14 @@ public class PartnerBoardModel(
         {
             MyFixedMatches = await db.AvailabilitySlots
                 .Include(s => s.Player) // Lade den Ersteller mit
+                .Include(s => s.MatchedWithPlayer)
+                .Include(s => s.MatchedWithPlayer2)
+                .Include(s => s.MatchedWithPlayer3)
                 .Where(s => s.Date >= DateTime.Today && s.IsMatched == true &&
-                            (s.PlayerId == CurrentPlayerId || s.MatchedWithPlayerId == CurrentPlayerId))
+                            (s.PlayerId == CurrentPlayerId || 
+                             s.MatchedWithPlayerId == CurrentPlayerId ||
+                             s.MatchedWithPlayer2Id == CurrentPlayerId ||
+                             s.MatchedWithPlayer3Id == CurrentPlayerId))
                 .OrderBy(s => s.Date)
                 .ThenBy(s => s.StartTime)
                 .ToListAsync();
@@ -58,16 +69,40 @@ public class PartnerBoardModel(
             .Include(s => s.Player)
             .FirstOrDefaultAsync(s => s.Id == slotId);
 
-        // Sicherheits-Check: Nur fixieren, wenn frei und NICHT der eigene Termin
-        if (slot != null && !slot.IsMatched && slot.PlayerId != CurrentPlayerId)
+        // Sicherheits-Check: Nur fixieren, wenn frei
+        if (slot != null && !slot.IsMatched)
         {
-            // 1. Match in der Börse als "Fixiert" markieren
-            slot.IsMatched = true;
-            slot.MatchedWithPlayerId = CurrentPlayerId;
+            if (CurrentPlayerId == slot.PlayerId || 
+                CurrentPlayerId == slot.MatchedWithPlayerId || 
+                CurrentPlayerId == slot.MatchedWithPlayer2Id || 
+                CurrentPlayerId == slot.MatchedWithPlayer3Id)
+            {
+                // Cannot join own match or join twice
+                return RedirectToPage();
+            }
 
-            // 2. Neue Erfolgsmeldung mit einem kleinen Reminder
-            TempData["SuccessMessage"] =
-                "Match erfolgreich fixiert! Vergiss nicht, euch im Hallenplan noch einen Platz zu reservieren.";
+            if (!slot.IsDouble)
+            {
+                slot.MatchedWithPlayerId = CurrentPlayerId;
+                slot.IsMatched = true;
+                TempData["SuccessMessage"] = "Einzel-Match erfolgreich fixiert! Vergiss nicht, euch im Hallenplan noch einen Platz zu reservieren.";
+            }
+            else
+            {
+                if (slot.MatchedWithPlayerId == null) slot.MatchedWithPlayerId = CurrentPlayerId;
+                else if (slot.MatchedWithPlayer2Id == null) slot.MatchedWithPlayer2Id = CurrentPlayerId;
+                else if (slot.MatchedWithPlayer3Id == null)
+                {
+                    slot.MatchedWithPlayer3Id = CurrentPlayerId;
+                    slot.IsMatched = true; // Alle 3 Slots vollendet!
+                    TempData["SuccessMessage"] = "Doppel-Match komplett fixiert! Vergiss nicht, euch im Hallenplan noch einen Platz zu reservieren.";
+                }
+                
+                if (TempData["SuccessMessage"] == null)
+                {
+                    TempData["SuccessMessage"] = "Du wurdest erfolgreich als Mitspieler für das Doppel eingetragen. Es fehlen noch weitere Spieler.";
+                }
+            }
 
             await db.SaveChangesAsync();
         }
@@ -77,7 +112,7 @@ public class PartnerBoardModel(
 
     // Wird aufgerufen, wenn jemand auf "Speichern & Veröffentlichen" klickt
     public async Task<IActionResult> OnPostCreateSlotAsync(DateTime date, TimeSpan startTime, TimeSpan endTime,
-        string message)
+        string message, bool isDouble)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge(); // Zur Login-Seite, falls nicht eingeloggt
@@ -92,6 +127,7 @@ public class PartnerBoardModel(
             StartTime = startTime,
             EndTime = endTime,
             Message = message,
+            IsDouble = isDouble,
             IsMatched = false
         };
 
@@ -111,13 +147,24 @@ public class PartnerBoardModel(
         var dbUser = db.Players.Include(x => x.IdentityUser)
             .SingleOrDefault(x => x.IdentityUser != null && x.IdentityUser.Id == user.Id);
         if (dbUser == null) return Challenge();
-        // Sicherheits-Check: Nur löschen, wenn der Slot existiert UND er wirklich von diesem User erstellt wurde!
-        if (slot != null && slot.PlayerId == dbUser.Id)
+        if (slot == null) return RedirectToPage();
+
+        if (slot.PlayerId == dbUser.Id)
         {
             db.AvailabilitySlots.Remove(slot);
-            await db.SaveChangesAsync();
             TempData["SuccessMessage"] = "Dein Eintrag wurde erfolgreich gelöscht.";
         }
+        else
+        {
+            if (slot.MatchedWithPlayerId == dbUser.Id) slot.MatchedWithPlayerId = null;
+            if (slot.MatchedWithPlayer2Id == dbUser.Id) slot.MatchedWithPlayer2Id = null;
+            if (slot.MatchedWithPlayer3Id == dbUser.Id) slot.MatchedWithPlayer3Id = null;
+
+            slot.IsMatched = false;
+            TempData["SuccessMessage"] = "Du hast dich aus dem Match ausgetragen. Der freie Platz wurde wieder in die Börse gestellt.";
+        }
+
+        await db.SaveChangesAsync();
 
         return RedirectToPage();
     }
