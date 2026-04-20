@@ -1,5 +1,6 @@
 MobileDragDrop.polyfill({
     dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride,
+    holdToDrag: 350 // Erfordert langes Drücken (350ms) vor dem Start des Drag & Drop Events auf Touch-Geräten
 });
 window.addEventListener('touchmove', function () {
 }, {passive: false});
@@ -85,6 +86,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 const court1Id = draggedPlayer.dataset.courtId ? draggedPlayer.dataset.courtId : null;
                 const player2Id = target.dataset.playerId;
                 const court2Id = target.dataset.courtId ? target.dataset.courtId : null;
+
+                // VALIDATION: Verhindern, dass ein Spieler am selben Tag doppelt eingeteilt wird
+                if (court1Id !== court2Id) {
+                    if (court2Id) {
+                        const court2Slots = document.querySelectorAll(`.player-slot[data-court-id="${court2Id}"]`);
+                        for (const slot of court2Slots) {
+                            if (slot !== target && slot.dataset.playerId === player1Id) {
+                                alert("Aktion abgebrochen: Der Spieler ist an diesem Tag / in dieser Partie bereits eingeteilt!");
+                                return;
+                            }
+                        }
+                    }
+
+                    if (court1Id && !isFromBench) {
+                        const court1Slots = document.querySelectorAll(`.player-slot[data-court-id="${court1Id}"]`);
+                        for (const slot of court1Slots) {
+                            if (slot !== draggedPlayer && slot.dataset.playerId === player2Id) {
+                                alert("Aktion abgebrochen: Der getauschte Spieler ist an dem anderen Tag bereits eingeteilt!");
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                if (!confirm("Möchtest du den Spieler wirklich hier eintragen/tauschen?")) {
+                    return;
+                }
 
                 const oldTargetHTML = target.innerHTML;
                 const oldTargetPlayerId = target.dataset.playerId;

@@ -16,16 +16,22 @@ public class Hallplan(
     public required IEnumerable<HallPlanEntity> HallPlanEntity { get; set; }
     [BindProperty] public int HallPlanId { get; set; }
     public bool IsLoggedInPlayerPlaying { get; set; }
+    public string? Message { get; set; }
+    public bool IsError { get; set; }
 
     public HallPlanEntity? SelectedHallPlanEntity { get; set; }
 
-    public IActionResult OnPost()
+    public IActionResult OnPost(string? message = null, bool isError = false)
     {
+        Message = message;
+        IsError = isError;
         return InitValues();
     }
 
-    public IActionResult OnGet()
+    public IActionResult OnGet(string? message = null, bool isError = false)
     {
+        Message = message;
+        IsError = isError;
         return InitValues();
     }
 
@@ -152,7 +158,7 @@ public class Hallplan(
         db.HallPlanEntities.Add(plan);
         db.SaveChanges();
 
-        return RedirectToPage(nameof(Hallplan));
+        return RedirectToPage(nameof(Hallplan), new { message = $"Bewerb '{competitionName}' erfolgreich angelegt." });
     }
 
     public IActionResult OnPostGeneratePlan(DateTime startDate, DateTime endDate, int frequencyDays)
@@ -241,7 +247,7 @@ public class Hallplan(
         db.SaveChanges();
         Console.WriteLine($"Balanced HallPlan erfolgreich generiert (Rhythmus: {frequencyDays} Tage).");
         logger.LogInformation("Plan generation complete");
-        return RedirectToPage(nameof(Hallplan));
+        return RedirectToPage(nameof(Hallplan), new { message = $"Plan erfolgreich generiert (Rhythmus: {frequencyDays} Tage)." });
     }
 
     public IActionResult OnPostChangePlayingState()
@@ -279,7 +285,8 @@ public class Hallplan(
 
         db.SaveChanges();
 
-        return RedirectToPage(nameof(Hallplan));
+        var msg = isRegistered == null ? "Du wurdest in den aktiven Hallenplan eingeteilt." : "Du wurdest auf der Ersatzbank (pausiert) platziert.";
+        return RedirectToPage(nameof(Hallplan), new { message = msg });
     }
 
     public IActionResult OnPostAddPlayerToHallplan(int playerId)
@@ -293,7 +300,7 @@ public class Hallplan(
 
         var exists = db.HallPlanRegistrations.Any(x => x.PlayerId == playerId && x.HallPlanId == HallPlanId);
 
-        if (exists) return RedirectToPage(nameof(Hallplan));
+        if (exists) return RedirectToPage(nameof(Hallplan), new { message = "Spieler ist bereits fest im Abo.", isError = true });
 
         var player = db.Players.Single(x => x.Id == playerId);
         var hallPlanEntity = db.HallPlanEntities.Single(x => x.Id == HallPlanId);
@@ -308,8 +315,7 @@ public class Hallplan(
 
         db.SaveChanges();
 
-
-        return RedirectToPage(nameof(Hallplan));
+        return RedirectToPage(nameof(Hallplan), new { message = $"{player} wurde dauerhaft ins Abo aufgenommen." });
     }
 
     public IActionResult OnPostDeleteSelectedHallplan()
@@ -320,7 +326,7 @@ public class Hallplan(
             db.HallPlanEntities.Single(x => SelectedHallPlanEntity != null && x.Id == SelectedHallPlanEntity.Id);
         db.HallPlanEntities.Remove(hallPlanEntity);
         db.SaveChanges();
-        return RedirectToPage(nameof(Hallplan));
+        return RedirectToPage(nameof(Hallplan), new { message = "Hallenplan wurde erfolgreich gelöscht." });
     }
 
     public IActionResult OnPostBack()
@@ -351,6 +357,6 @@ public class Hallplan(
         var registration = hallPlanEntity.Registrations.Single(x => x.Player.IdentityUserId == player.IdentityUserId);
         db.HallPlanRegistrations.Remove(registration);
         await db.SaveChangesAsync();
-        return RedirectToPage();
+        return RedirectToPage(new { message = "Der Spieler wurde aus dem festen Abo entfernt." });
     }
 }

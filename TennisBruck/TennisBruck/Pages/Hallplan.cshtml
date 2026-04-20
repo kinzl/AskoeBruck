@@ -29,9 +29,17 @@
     </div>
     <h1 class="app-title">🎾 @(Model.SelectedHallPlanEntity?.Name ?? "Hallenplan")</h1>
     <p class="header-subtitle">Verschiebe Spieler einfach per Drag & Drop</p>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert-box @(Model.IsError ? "alert-error" : "alert-success")">
+            <span class="alert-icon">@(Model.IsError ? "⚠️" : "✅")</span>
+            <span>@Model.Message</span>
+        </div>
+    }
 </header>
 
-<main class="main-container" id="main-content" data-me-id="@Model.LoggedInPlayer?.Id">
+<main class="main-container" id="main-content" data-me-id="@Model.LoggedInPlayer.Id">
 
     <div class="top-dashboard-grid">
 
@@ -109,13 +117,13 @@
         </section>
 
         <section class="modern-card card-highlight-left">
-            <h2 class="section-title compact">🔄 Ersatzbank (Kein Abo)</h2>
-            <p class="section-description">Ziehe einen Spieler von hier auf den Spielplan, um jemanden zu ersetzen.</p>
+            <h2 class="section-title compact">🔄 Ersatzbank (Abo-Besitzer)</h2>
+            <p class="section-description">Ziehe einen Spieler mit bestehendem Abo von hier auf den Spielplan, um jemanden zu ersetzen.</p>
 
             <div class="substitute-bench">
-                @if (Model.NotRegisteredPlayers.Any())
+                @if (Model.RegisteredPlayers.Any())
                 {
-                    foreach (var sub in Model.NotRegisteredPlayers)
+                    foreach (var sub in Model.RegisteredPlayers)
                     {
                         <div class="player-slot draggable-substitute"
                              draggable="true"
@@ -127,7 +135,7 @@
                 }
                 else
                 {
-                    <p class="empty-state-text">Aktuell keine Ersatzspieler verfügbar.</p>
+                    <p class="empty-state-text">Aktuell gibt es keine Spieler im Abo.</p>
                 }
             </div>
         </section>
@@ -185,7 +193,7 @@
                     </div>
 
                     <div class="admin-box">
-                        <h4>Spieler entfernen</h4>
+                        <h4>Spieler vom abo entfernen</h4>
                         <form method="post" asp-page-handler="RemovePlayerFromAbo" class="form-col">
                             <select name="PlayerIdToRemove" class="custom-select" required>
                                 <option value="">Spieler wählen...</option>
@@ -212,7 +220,10 @@
                     @if (Model.SelectedHallPlanEntity != null)
                     {
                         <form method="post" asp-page-handler="DeleteSelectedHallplan" class="form-row mt-10">
-                            <button class="btn-action btn-danger btn-auto">Diesen Hallenplan löschen</button>
+                            <button type="submit" class="btn-action btn-danger btn-auto" 
+                                    onclick="return confirm('Möchtest du diesen Hallenplan wirklich komplett löschen? Sämtliche Einträge gehen dabei verloren!');">
+                                Diesen Hallenplan löschen
+                            </button>
                         </form>
                     }
                 </div>
