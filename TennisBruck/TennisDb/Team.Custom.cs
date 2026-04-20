@@ -6,4 +6,9 @@ public partial class Team
     {
         return $"{string.Join("/", TeamPlayers.Select(x => x.Player.ToString()))}";
     }
+
+    public string PlayersToStringWithItn()
+    {
+        return $"{string.Join("/", TeamPlayers.Select(x => x.Player.ToStringWithItn()))}";
+    }
 }

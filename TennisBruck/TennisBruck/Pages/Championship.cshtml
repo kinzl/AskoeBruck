@@ -126,9 +126,9 @@
                     <div class="pairs-grid-container">
                         @for (int i = 0; i < totalPairs; i++)
                         {
-                            var currentTeam = (Model.RegisteredTeams != null && i < Model.RegisteredTeams.Count) ? Model.RegisteredTeams[i] : null;
-                            var firstPlayer = currentTeam?.TeamPlayers?.ElementAtOrDefault(0)?.Player;
-                            var secondPlayer = currentTeam?.TeamPlayers?.ElementAtOrDefault(1)?.Player;
+                            var currentTeam = Model.RegisteredTeams != null && i < Model.RegisteredTeams.Count ? Model.RegisteredTeams[i] : null;
+                            var firstPlayer = currentTeam?.TeamPlayers.ElementAtOrDefault(0)?.Player;
+                            var secondPlayer = currentTeam?.TeamPlayers.ElementAtOrDefault(1)?.Player;
                             var pairIndex = i + 1;
 
                             <div class="pair-card">
@@ -150,9 +150,9 @@
                                                 <option value="">Auswählen...</option>
                                                 @foreach (var registration in Model.RegisteredCompetitionPlayers)
                                                 {
-                                                    bool isSelected = (firstPlayer != null && registration.Player.Id == firstPlayer.Id);
+                                                    bool isSelected = firstPlayer != null && registration.Player.Id == firstPlayer.Id;
                                                     <option value="@registration.Player.Id" selected="@isSelected">
-                                                        @registration.Player.ToString()
+                                                        @registration.Player.ToStringWithItn()
                                                     </option>
                                                 }
                                             </select>
@@ -160,7 +160,7 @@
                                         else
                                         {
                                             <div class="player-select disabled-look">
-                                                @(firstPlayer != null ? firstPlayer.ToString() : "Offen")
+                                                @(firstPlayer != null ? firstPlayer.ToStringWithItn() : "Offen")
                                             </div>
                                         }
                                     </div>
@@ -177,7 +177,7 @@
                                                 {
                                                     bool isSelected = (secondPlayer != null && registration.Player.Id == secondPlayer.Id);
                                                     <option value="@registration.Player.Id" selected="@isSelected">
-                                                        @registration.Player.ToString()
+                                                        @registration.Player.ToStringWithItn()
                                                     </option>
                                                 }
                                             </select>
@@ -185,7 +185,7 @@
                                         else
                                         {
                                             <div class="player-select disabled-look">
-                                                @(secondPlayer != null ? secondPlayer.ToString() : "Offen")
+                                                @(secondPlayer != null ? secondPlayer.ToStringWithItn() : "Offen")
                                             </div>
                                         }
                                     </div>
@@ -286,11 +286,11 @@
                                                     @if (groupTeam != null)
                                                     {
                                                         <option selected="selected"
-                                                                value="@groupTeam.Team.Id">@groupTeam.Team.PlayersToString()</option>
+                                                                value="@groupTeam.Team.Id">@groupTeam.Team.PlayersToStringWithItn()</option>
                                                     }
                                                     @foreach (var team in Model.RegisteredTeams)
                                                     {
-                                                        <option value="@team.Id">@team.PlayersToString()</option>
+                                                        <option value="@team.Id">@team.PlayersToStringWithItn()</option>
                                                     }
                                                 </select>
                                             </form>
@@ -396,7 +396,7 @@
                                                         @foreach (var team in Model.RegisteredTeams)
                                                         {
                                                             <option value="@team.Id"
-                                                                    selected="@(match.Team1?.Id == team.Id)">@team.PlayersToString()</option>
+                                                                    selected="@(match.Team1?.Id == team.Id)">@team.PlayersToStringWithItn()</option>
                                                         }
                                                     </select>
                                                     <select name="Inputs[@index].Team2Id" class="bracket-select">
@@ -404,7 +404,7 @@
                                                         @foreach (var team in Model.RegisteredTeams)
                                                         {
                                                             <option value="@team.Id"
-                                                                    selected="@(match.Team2?.Id == team.Id)">@team.PlayersToString()</option>
+                                                                    selected="@(match.Team2?.Id == team.Id)">@team.PlayersToStringWithItn()</option>
                                                         }
                                                     </select>
                                                 }
@@ -412,17 +412,17 @@
                                                 {
                                                     <div
                                                         class="bracket-team-read-1 @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : "")">
-                                                        @(match.Team1?.PlayersToString() ?? "TBD") @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "✅" : "")
+                                                        @(match.Team1?.PlayersToStringWithItn() ?? "TBD") @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "✅" : "")
                                                     </div>
                                                     <div
                                                         class="bracket-team-read-2 @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : "")">
-                                                        @(match.Team2?.PlayersToString() ?? "TBD") @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "✅" : "")
+                                                        @(match.Team2?.PlayersToStringWithItn() ?? "TBD") @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "✅" : "")
                                                     </div>
                                                 }
 
                                                 @if (match.IsWalkover)
                                                 {
-                                                    var winnerName = match.WalkoverTeamId == match.Team1?.Id ? match.Team2?.PlayersToString() : match.Team1?.PlayersToString();
+                                                    var winnerName = match.WalkoverTeamId == match.Team1?.Id ? match.Team2?.PlayersToStringWithItn() : match.Team1?.PlayersToStringWithItn();
                                                     <div class="bracket-result text-warning fw-bold">w.o.
                                                         (Sieger: @winnerName)
                                                     </div>

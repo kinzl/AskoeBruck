@@ -25,11 +25,10 @@ public class StartupBackgroundService(IServiceProvider provider) : BackgroundSer
         await db.Database.MigrateAsync(stoppingToken);
         Console.WriteLine("Datenbank ist auf dem neuesten Stand!");
 
-        // 3. SEEDING: Standard-Daten anlegen (falls sie noch nicht existieren)
-        await SeedAdminUserAndPlayer(db, userManager, roleManager);
 
-        if (db.Players.Any())
+        if (!db.Players.Any())
         {
+            await SeedAdminUserAndPlayer(db, userManager, roleManager);
             await SeedPlayer(db);
             SeedCompetition(db);
         }
