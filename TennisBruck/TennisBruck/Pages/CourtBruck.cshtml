@@ -55,41 +55,44 @@
         </div>
 
 
-        <div class="admin-panel">
-            <h3 class="admin-panel-title">Block-Reservierung eintragen</h3>
+        @if (Model.CurrentPlayer != null)
+        {
+            <div class="admin-panel">
+                <h3 class="admin-panel-title">Block-Reservierung eintragen</h3>
 
-            <form method="post" asp-page-handler="CreateEvent" class="admin-form">
+                <form method="post" asp-page-handler="CreateEvent" class="admin-form">
 
-                <input type="hidden" name="currentDateStr" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"/>
-                @if (User.IsInRole("Admin"))
-                {
-                    <div class="form-group-flex">
-                        <label class="form-label">Event Name</label>
-                        <input type="text" name="eventName" placeholder="z.B. Meisterschaft" class="form-input">
+                    <input type="hidden" name="currentDateStr" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"/>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div class="form-group-flex">
+                            <label class="form-label">Event Name</label>
+                            <input type="text" name="eventName" placeholder="z.B. Meisterschaft" class="form-input">
+                        </div>
+                    }
+                    <div>
+                        <label class="form-label">Platz</label>
+                        <select name="courtNumber" class="form-input">
+                            <option value="1">Platz 1</option>
+                            <option value="2">Platz 2</option>
+                            <option value="3">Platz 3</option>
+                        </select>
                     </div>
-                }
-                <div>
-                    <label class="form-label">Platz</label>
-                    <select name="courtNumber" class="form-input">
-                        <option value="1">Platz 1</option>
-                        <option value="2">Platz 2</option>
-                        <option value="3">Platz 3</option>
-                    </select>
-                </div>
 
-                <div>
-                    <label class="form-label" min="@DateTime.Today.ToString("yyyy-MM-dd")">Von (Uhrzeit)</label>
-                    <input type="time" name="startTimeStr" required class="form-input">
-                </div>
+                    <div>
+                        <label class="form-label" min="@DateTime.Today.ToString("yyyy-MM-dd")">Von (Uhrzeit)</label>
+                        <input type="time" name="startTimeStr" required class="form-input">
+                    </div>
 
-                <div>
-                    <label class="form-label">Bis (Uhrzeit)</label>
-                    <input type="time" name="endTimeStr" required class="form-input">
-                </div>
+                    <div>
+                        <label class="form-label">Bis (Uhrzeit)</label>
+                        <input type="time" name="endTimeStr" required class="form-input">
+                    </div>
 
-                <button type="submit" class="btn-action btn-accent" style="padding: 9px 20px;">Reservieren</button>
-            </form>
-        </div>
+                    <button type="submit" class="btn-action btn-accent" style="padding: 9px 20px;">Reservieren</button>
+                </form>
+            </div>
+        }
 
         <div class="table-responsive">
             <table class="court-table">
@@ -114,11 +117,14 @@
                             if (reservation == null)
                             {
                                 <td class="slot-available">
-                                    <form method="post" asp-page-handler="CreateReservation" class="cell-form">
-                                        <input type="hidden" name="courtNumber" value="@court"/>
-                                        <input type="hidden" name="StartTime" value="@timeSlot.Time"/>
-                                        <button type="submit" class="btn-reserve" title="Jetzt reservieren">+</button>
-                                    </form>
+                                    @if (Model.CurrentPlayer != null)
+                                    {
+                                        <form method="post" asp-page-handler="CreateReservation" class="cell-form">
+                                            <input type="hidden" name="courtNumber" value="@court"/>
+                                            <input type="hidden" name="StartTime" value="@timeSlot.Time"/>
+                                            <button type="submit" class="btn-reserve" title="Jetzt reservieren">+</button>
+                                        </form>
+                                    }
                                 </td>
                             }
                             else

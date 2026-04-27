@@ -44,7 +44,12 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
     public IActionResult OnPostCreateReservation(string? eventName)
     {
-        CurrentPlayer = currentPlayerService.GetCurrentUser()!;
+        CurrentPlayer = currentPlayerService.GetCurrentUser();
+
+        if (CurrentPlayer == null)
+        {
+            return RedirectToPage(new { date = StartTime.ToString("yyyy-MM-dd"), message = "Bitte melde dich an.", isError = true });
+        }
 
         // Check if the reservation already exists
         var existing = db.Reservations.FirstOrDefault(r =>
@@ -138,7 +143,12 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
     public IActionResult OnPostDeleteReservation()
     {
-        CurrentPlayer = currentPlayerService.GetCurrentUser()!;
+        CurrentPlayer = currentPlayerService.GetCurrentUser();
+
+        if (CurrentPlayer == null)
+        {
+            return RedirectToPage(new { date = CurrentDate.ToString("yyyy-MM-dd"), message = "Bitte melde dich an.", isError = true });
+        }
 
         Console.WriteLine(StartTime);
         // Find the reservation
