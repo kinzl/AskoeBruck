@@ -376,7 +376,7 @@
                     <form method="post">
                         @{
                             // PhaseName is assumed to be string, we group by it.
-                            var phases = Model.Matches.GroupBy(m => m.PhaseName ?? "A-Bewerb").OrderBy(g => g.Key).ToList();
+                            var phases = Model.Matches.GroupBy(m => m.PhaseName).OrderBy(g => g.Key).ToList();
                             int globalInputIndex = 0;
 
                             string activePhase = TempData["ActivePhase"]?.ToString() ?? phases.FirstOrDefault()?.Key ?? "A-Bewerb";
@@ -385,9 +385,8 @@
                         @if (phases.Count > 1)
                         {
                             <div class="competition-pills mb-4 bracket-tabs">
-                                @for (int i = 0; i < phases.Count; i++)
+                                @foreach (var phase in phases)
                                 {
-                                    var phase = phases[i];
                                     var safeKey = phase.Key.Replace(" ", "-");
                                     bool isActive = phase.Key == activePhase;
                                     <button type="button" class="bracket-pill-btn @(isActive ? "active" : "")"
@@ -398,9 +397,9 @@
                             </div>
                         }
 
-                        @for (int phaseIndex = 0; phaseIndex < phases.Count; phaseIndex++)
+                        @for (int i = 0; i < phases.Count; i++)
                         {
-                            var phaseGroup = phases[phaseIndex];
+                            var phaseGroup = phases[i];
                             var phaseGrouped = phaseGroup.GroupBy(m => m.RoundNo).OrderBy(g => g.Key).ToList();
                             var safeKey = phaseGroup.Key.Replace(" ", "-");
                             bool isActive = phaseGroup.Key == activePhase;

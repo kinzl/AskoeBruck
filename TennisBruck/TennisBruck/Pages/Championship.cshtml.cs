@@ -845,7 +845,7 @@ public class Championship(
         var random = new Random();
         var shuffledPlayers = db.Teams.Where(x => x.CompetitionId == competitionId).ToList();
 
-        shuffledPlayers = shuffledPlayers.OrderBy(x => random.Next()).ToList();
+        shuffledPlayers = shuffledPlayers.OrderBy(_ => random.Next()).ToList();
 
         for (int i = 0; i < shuffledPlayers.Count; i++)
         {
@@ -883,7 +883,7 @@ public class Championship(
         await db.SaveChangesAsync();
 
         var rng = new Random();
-        var shuffledPlayers = players.OrderBy(x => rng.Next()).ToList();
+        var shuffledPlayers = players.OrderBy(_ => rng.Next()).ToList();
 
         List<Team> newTeams = [];
 
