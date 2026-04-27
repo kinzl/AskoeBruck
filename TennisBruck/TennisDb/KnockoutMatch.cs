@@ -10,6 +10,7 @@ public class KnockoutMatch : Match
     public bool IsBye { get; set; }
     public Competition Competition { get; set; }
     public int CompetitionId { get; set; }
+    public string PhaseName { get; set; } = "A-Bewerb";
 
     public string SetToString()
     {

@@ -715,6 +715,10 @@ namespace TennisDb.Migrations
                     b.Property<int?>("NextGame")
                         .HasColumnType("integer");
 
+                    b.Property<string>("PhaseName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("RoundNo")
                         .HasColumnType("integer");
 

@@ -103,3 +103,27 @@ $(document).on('ready', function () {
     });
 
 });
+
+/* Outsourced Phase toggler for K.O. stages */
+function switchBracketPhase(event, phaseSafeKey) {
+    // Hide all phases
+    document.querySelectorAll('.bracket-phase-container').forEach(function(el) {
+        el.classList.add('hidden');
+    });
+    
+    // Show selected phase
+    var target = document.getElementById('bracket-phase-' + phaseSafeKey);
+    if (target) {
+        target.classList.remove('hidden');
+    }
+    
+    // Update active state on buttons
+    document.querySelectorAll('.bracket-tabs .bracket-pill-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+    });
+    
+    // Set current button to active
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    }
+}

@@ -990,3 +990,26 @@ input:focus, select:focus {
         width: 220px;
     }
 }
+
+/* Bracket Tabs specifically visible on light card background */
+.bracket-pill-btn {
+    background: transparent;
+    color: var(--nav-bg);
+    border: 2px solid var(--nav-bg);
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.bracket-pill-btn:hover {
+    background: rgba(15, 23, 42, 0.05);
+}
+
+.bracket-pill-btn.active {
+    background: var(--nav-bg);
+    color: var(--text-light);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}

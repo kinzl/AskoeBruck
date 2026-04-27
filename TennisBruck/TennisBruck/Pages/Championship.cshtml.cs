@@ -23,6 +23,7 @@ public class Championship(
     public required List<Match> AllMatches { get; set; }
     public required List<Team> RegisteredTeams { get; set; }
     [BindProperty] public int SelectedSize { get; set; }
+    [BindProperty] public string PhaseName { get; set; } = "A-Bewerb";
 
     [BindProperty] public List<BracketInput> Inputs { get; set; } = [];
 
@@ -481,13 +482,18 @@ public class Championship(
         InitValues();
         if (!_knownBrackets.Contains(SelectedSize)) return RedirectToPage();
 
-        UpdateBracket(SelectedSize);
+        // Default value checks
+        if (string.IsNullOrWhiteSpace(PhaseName)) PhaseName = "A-Bewerb";
+
+        TempData["ActivePhase"] = PhaseName.Trim();
+
+        UpdateBracket(SelectedSize, PhaseName.Trim());
         return RedirectToPage();
     }
 
-    private void UpdateBracket(int size)
+    private void UpdateBracket(int size, string phaseName)
     {
-        db.KnockoutMatch.Where(k => k.CompetitionId == SelectedCompetition!.Id).ExecuteDelete();
+        db.KnockoutMatch.Where(k => k.CompetitionId == SelectedCompetition!.Id && k.PhaseName == phaseName).ExecuteDelete();
         db.SaveChanges();
         int closest = _knownBrackets.First(k => k >= size);
         int byes = closest - size;
@@ -509,6 +515,7 @@ public class Championship(
             db.KnockoutMatch.Add(new KnockoutMatch()
             {
                 CompetitionId = SelectedCompetition!.Id,
+                PhaseName = phaseName,
                 BracketNo = matchId++,
                 RoundNo = round,
                 IsBye = isBye,
@@ -536,7 +543,7 @@ public class Championship(
 
         foreach (var match in Matches)
         {
-            var input = Inputs.FirstOrDefault(i => i.BracketNo == match.BracketNo);
+            var input = Inputs.FirstOrDefault(i => i.MatchId == match.Id);
 
             if (input != null)
             {
