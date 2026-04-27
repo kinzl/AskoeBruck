@@ -48,7 +48,7 @@ body {
 }
 
 .pill-btn {
-    background: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.1);
     color: var(--text-light);
     border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 10px 20px;
@@ -60,14 +60,34 @@ body {
 }
 
 .pill-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 .pill-btn.active {
-    background: var(--accent-color);
+    background-color: var(--accent-color);
     color: var(--nav-bg);
     border-color: var(--accent-color);
     box-shadow: 0 0 15px rgba(217, 249, 93, 0.4);
+}
+
+.pill-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+}
+
+.pill-select option {
+    background-color: var(--card-bg);
+    color: var(--text-dark);
+}
+
+.pill-select.active {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
 /* ==========================================
@@ -302,7 +322,10 @@ body {
 /* ==========================================
    FORMS & INPUTS
    ========================================== */
-input[type="text"], input[type="date"], input[type="time"], select {
+input[type="text"],
+input[type="date"],
+input[type="time"],
+select {
     background: var(--app-bg);
     border: 1px solid #cbd5e1;
     padding: 10px 15px;
@@ -312,7 +335,8 @@ input[type="text"], input[type="date"], input[type="time"], select {
     box-sizing: border-box;
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
     outline: none;
     border-color: var(--nav-bg);
     box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
@@ -770,7 +794,8 @@ input:focus, select:focus {
 }
 
 .player-column {
-    flex: 1; /* Beide Dropdowns werden gleich groß */
+    flex: 1;
+    /* Beide Dropdowns werden gleich groß */
 }
 
 .player-label {
@@ -793,7 +818,8 @@ input:focus, select:focus {
     font-weight: bold;
     font-size: 1.5rem;
     color: #adb5bd;
-    margin-top: 20px; /* Rutscht etwas runter, damit es zwischen den Dropdowns steht */
+    margin-top: 20px;
+    /* Rutscht etwas runter, damit es zwischen den Dropdowns steht */
 }
 
 /* Utils specifically for the Championship */
@@ -817,12 +843,14 @@ input:focus, select:focus {
     display: flex;
     align-items: center;
     gap: 15px;
-    background-color: #f8fafc; /* Sehr helles Grau-Blau */
+    background-color: #f8fafc;
+    /* Sehr helles Grau-Blau */
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     padding: 12px 20px;
     margin-bottom: 25px;
-    max-width: fit-content; /* Passt sich der Breite des Inhalts an */
+    max-width: fit-content;
+    /* Passt sich der Breite des Inhalts an */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
@@ -856,7 +884,8 @@ input:focus, select:focus {
 
 /* Der Auslosen-Button */
 .btn-generate {
-    background-color: #1a1e36; /* Dein dunkles Navy-Blau */
+    background-color: #1a1e36;
+    /* Dein dunkles Navy-Blau */
     color: #ffffff;
     border: none;
     padding: 8px 18px;
@@ -883,6 +912,7 @@ input:focus, select:focus {
    MOBILE LAYOUT (RESPONSIVE)
    ========================================== */
 @media (max-width: 768px) {
+
     /* Header and Cards */
     .app-header {
         padding: 30px 15px 40px 15px;
@@ -921,7 +951,8 @@ input:focus, select:focus {
     /* Neu: Den Button und den Spieler-Badge sauber stapeln */
     .competition-action-form {
         flex-direction: column;
-        align-items: stretch; /* Zieht den Button auf 100% Breite */
+        align-items: stretch;
+        /* Zieht den Button auf 100% Breite */
         width: 100%;
     }
 
@@ -978,7 +1009,8 @@ input:focus, select:focus {
     .admin-time-form input[type="date"],
     .admin-time-form input[type="time"],
     .admin-time-form button {
-        width: 100%; /* Zieht Inputs und Button auf die volle Breite */
+        width: 100%;
+        /* Zieht Inputs und Button auf die volle Breite */
     }
 
     .admin-create-form {

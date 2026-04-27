@@ -178,6 +178,13 @@ END $$;";
     {
         db.Competitions.Add(new Competition
         {
+            Name = "Old Competition",
+            IsSingle = true,
+            RegistrationUntil = DateTime.Now.AddYears(-1),
+            Teams = []
+        });
+        db.Competitions.Add(new Competition
+        {
             Name = "Herren Einzel",
             IsSingle = true,
             RegistrationUntil = DateTime.Now.AddMinutes(1),
