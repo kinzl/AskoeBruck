@@ -1,6 +1,12 @@
 ﻿# Use official ASP.NET Core runtime as base image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
+
+USER root
+RUN apt-get update && apt-get install -y libgssapi-krb5-2
+# Optional: Wieder auf den sicheren App-User wechseln (Standard ab .NET 8)
+USER app
+
 EXPOSE 8080
 EXPOSE 8081
 
