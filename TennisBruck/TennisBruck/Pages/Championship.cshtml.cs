@@ -493,7 +493,8 @@ public class Championship(
 
     private void UpdateBracket(int size, string phaseName)
     {
-        db.KnockoutMatch.Where(k => k.CompetitionId == SelectedCompetition!.Id && k.PhaseName == phaseName).ExecuteDelete();
+        db.KnockoutMatch.Where(k => k.CompetitionId == SelectedCompetition!.Id && k.PhaseName == phaseName)
+            .ExecuteDelete();
         db.SaveChanges();
         int closest = _knownBrackets.First(k => k >= size);
         int byes = closest - size;
@@ -675,10 +676,10 @@ public class Championship(
     {
         var currentUser = await userManager.GetUserAsync(User);
         if (currentUser == null) return Unauthorized();
-        
+
         var playerToWithdraw = await db.Players.FindAsync(playerId);
         if (playerToWithdraw == null) return NotFound();
-        
+
         if (playerToWithdraw.IdentityUserId != currentUser.Id && !User.IsInRole("Admin")) return Forbid();
 
         return await WithDrawPlayer(playerId, competitionId);
