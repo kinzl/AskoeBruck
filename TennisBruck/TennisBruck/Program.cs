@@ -84,6 +84,13 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => { options.SignIn.Re
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<TennisContext>();
 
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+{
+    // Force immediate validation of the security stamp on every request 
+    // so role changes (promoting/demoting admins) log the user out instantly.
+    options.ValidationInterval = TimeSpan.Zero;
+});
+
 builder.Services.AddLogging();
 builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddHttpClient<EmailService>();

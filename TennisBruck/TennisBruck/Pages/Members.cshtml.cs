@@ -70,13 +70,15 @@ public class Members(
             if (isAlreadyAdmin)
             {
                 await userManager.RemoveFromRoleAsync(player.IdentityUser, "Admin");
+                await userManager.UpdateSecurityStampAsync(player.IdentityUser);
                 logger.LogInformation("Demoted User {User} from Admin.", player.IdentityUser.Email);
-                return RedirectToPage(new { Message = $"{player} wurde zum Admin befördert" });
+                return RedirectToPage(new { Message = $"{player} wurden die Admin berechtigungen entzogen" });
             }
 
             await userManager.AddToRoleAsync(player.IdentityUser, "Admin");
+            await userManager.UpdateSecurityStampAsync(player.IdentityUser);
             logger.LogInformation("Promoted User {User} to Admin.", player.IdentityUser.Email);
-            return RedirectToPage(new { Message = $"{player} wurden die Admin berechtigungen entzogen" });
+            return RedirectToPage(new { Message = $"{player} wurde zum Admin befördert" });
         }
 
         return RedirectToPage(new { Message = "Ein Fehler ist aufgetreten" });
