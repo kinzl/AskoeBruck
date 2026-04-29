@@ -51,6 +51,15 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
             return RedirectToPage(new { date = StartTime.ToString("yyyy-MM-dd"), message = "Bitte melde dich an.", isError = true });
         }
 
+        if (StartTime < DateTime.Now)
+        {
+            return RedirectToPage(new
+            {
+                date = StartTime.ToString("yyyy-MM-dd"),
+                message = "Reservierungen in der Vergangenheit sind nicht erlaubt.", isError = true
+            });
+        }
+
         // Check if the reservation already exists
         var existing = db.Reservations.FirstOrDefault(r =>
             r.CourtNumber == CourtNumber && r.StartTime == StartTime);
@@ -88,9 +97,8 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
     public IActionResult OnPostCreateEvent(int courtNumber, string? eventName, string startTimeStr, string endTimeStr,
         string currentDateStr)
     {
-        if (!User.IsInRole("Admin")) return RedirectToPage();
-
-        CurrentPlayer = currentPlayerService.GetCurrentUser()!;
+        CurrentPlayer = currentPlayerService.GetCurrentUser();
+        if (CurrentPlayer == null) return RedirectToPage();
 
         // Datum und Zeiten aus den Strings parsen
         var date = DateTime.Parse(currentDateStr);
@@ -100,6 +108,16 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         // Genaue DateTime Objekte für Start und Ende bauen
         var startDateTime = date.Add(startTime);
         var endDateTime = date.Add(endTime);
+
+        if (startDateTime < DateTime.Now)
+        {
+            return RedirectToPage(new
+            {
+                date = currentDateStr,
+                message = "Reservierungen in der Vergangenheit sind nicht erlaubt.",
+                isError = true
+            });
+        }
 
         // Prüfen, ob irgendein Slot in dem Zeitraum bereits reserviert ist
         var hasConflict = db.Reservations.Any(r =>
@@ -127,8 +145,7 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
                 StartTime = time,
                 EndTime = time.AddMinutes(30),
                 Player = CurrentPlayer,
-                EventName = eventName?.Trim() ??
-                            CurrentPlayer.ToString() // Hier setzen wir das Event für jeden Block!
+                EventName = string.IsNullOrWhiteSpace(eventName) ? null : eventName.Trim()
             };
 
             db.Reservations.Add(newReservation);

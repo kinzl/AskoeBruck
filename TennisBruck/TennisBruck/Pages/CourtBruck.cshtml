@@ -119,11 +119,18 @@
                                 <td class="slot-available">
                                     @if (Model.CurrentPlayer != null)
                                     {
-                                        <form method="post" asp-page-handler="CreateReservation" class="cell-form">
-                                            <input type="hidden" name="courtNumber" value="@court"/>
-                                            <input type="hidden" name="StartTime" value="@timeSlot.Time"/>
-                                            <button type="submit" class="btn-reserve" title="Jetzt reservieren">+</button>
-                                        </form>
+                                        if (timeSlot.Time >= DateTime.Now)
+                                        {
+                                            <form method="post" asp-page-handler="CreateReservation" class="cell-form">
+                                                <input type="hidden" name="courtNumber" value="@court"/>
+                                                <input type="hidden" name="StartTime" value="@timeSlot.Time"/>
+                                                <button type="submit" class="btn-reserve" title="Jetzt reservieren">+</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted" style="opacity: 0.5;">-</span>
+                                        }
                                     }
                                 </td>
                             }
