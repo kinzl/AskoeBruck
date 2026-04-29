@@ -20,15 +20,34 @@ public class Settings(
         return Page();
     }
 
-    public IActionResult OnPostChangeSettings(string firstname, string lastname, string? nuLigaPlayerUrl)
+    public async Task<IActionResult> OnPostChangeSettingsAsync(string firstname, string lastname, string emailOrPhone, string? nuLigaPlayerUrl)
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser()!;
         CurrentPlayer.Firstname = firstname;
         CurrentPlayer.Lastname = lastname;
         CurrentPlayer.NuLigaPlayerUrl = nuLigaPlayerUrl;
-        db.SaveChanges();
 
-        return RedirectToPage(nameof(Settings), new { Message = "Daten gespeichert" });
+        var user = await userManager.GetUserAsync(User);
+        if (user != null && user.Email != emailOrPhone)
+        {
+            var setUserNameResult = await userManager.SetUserNameAsync(user, emailOrPhone);
+            if (!setUserNameResult.Succeeded)
+            {
+                return RedirectToPage(new { Message = "Fehler: Diese E-Mail ist bereits vergeben oder ungültig." });
+            }
+            
+            var setEmailResult = await userManager.SetEmailAsync(user, emailOrPhone);
+            if (!setEmailResult.Succeeded)
+            {
+                return RedirectToPage(new { Message = "Fehler beim Aktualisieren der E-Mail Adresse." });
+            }
+            
+            await signInManager.RefreshSignInAsync(user);
+        }
+
+        await db.SaveChangesAsync();
+
+        return RedirectToPage(nameof(Settings), new { Message = "Daten erfolgreich gespeichert" });
     }
 
     public async Task<IActionResult> OnPostChangePasswordAsync(string oldPassword, string newPassword,
