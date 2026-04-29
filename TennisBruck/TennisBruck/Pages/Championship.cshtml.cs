@@ -222,6 +222,46 @@ public class Championship(
         return RedirectToPage(new { Message = $"Du hast dich vom Bewerb {SelectedCompetition!.Name} abgemeldet" });
     }
 
+    public IActionResult OnPostDeleteTeam(int teamId)
+    {
+        if (!User.IsInRole("Admin")) return Forbid();
+        InitValues();
+
+        var team = db.Teams.Include(t => t.TeamPlayers).SingleOrDefault(t => t.Id == teamId);
+        if (team != null)
+        {
+            // Remove regular matches involving this team
+            var matches = db.Matches.Where(m => m.Team1.Id == teamId || m.Team2.Id == teamId).ToList();
+            db.Matches.RemoveRange(matches);
+            
+            // Unlink from knockout matches
+            var knockoutMatches = db.KnockoutMatch.Where(m => (m.Team1 != null && m.Team1.Id == teamId) || (m.Team2 != null && m.Team2.Id == teamId)).ToList();
+            foreach (var km in knockoutMatches)
+            {
+                if (km.Team1?.Id == teamId) km.Team1 = null;
+                if (km.Team2?.Id == teamId) km.Team2 = null;
+            }
+            
+            // Remove from groups
+            var groupTeams = db.GroupTeams.Where(gt => gt.TeamId == teamId).ToList();
+            db.GroupTeams.RemoveRange(groupTeams);
+
+            db.Teams.Remove(team);
+
+            // If it's a singles competition, also remove the tournament registration for the player
+            if (SelectedCompetition != null && SelectedCompetition.IsSingle)
+            {
+                var playerId = team.TeamPlayers.First().PlayerId;
+                var reg = db.TournamentRegistrations.SingleOrDefault(tr => tr.PlayerId == playerId && tr.CompetitionId == SelectedCompetition.Id);
+                if (reg != null) db.TournamentRegistrations.Remove(reg);
+            }
+
+            db.SaveChanges();
+            return RedirectToPage(new { Message = "Team wurde erfolgreich gelöscht." });
+        }
+        return RedirectToPage(new { Message = "Team nicht gefunden." });
+    }
+
     #endregion
 
     #region Group Management
@@ -488,6 +528,12 @@ public class Championship(
         TempData["ActivePhase"] = PhaseName.Trim();
 
         UpdateBracket(SelectedSize, PhaseName.Trim());
+        return RedirectToPage();
+    }
+
+    public IActionResult OnPostSwitchPhase(string phaseName)
+    {
+        HttpContext.Session.SetString("ActivePhase", phaseName);
         return RedirectToPage();
     }
 

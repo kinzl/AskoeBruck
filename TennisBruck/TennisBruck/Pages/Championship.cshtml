@@ -49,7 +49,8 @@
 
             @if (oldCompetitions.Any())
             {
-                <select name="selectedCompetitionId" class="pill-btn pill-select @(isOldActive ? "active" : "")" onchange="this.form.submit()">
+                <select name="selectedCompetitionId" class="pill-btn pill-select @(isOldActive ? "active" : "")"
+                        onchange="this.form.submit()">
                     <option value="" disabled selected="@(!isOldActive)">Vergangene Turniere</option>
                     @foreach (var competition in oldCompetitions)
                     {
@@ -152,8 +153,19 @@
                             var pairIndex = i + 1;
 
                             <div class="pair-card">
-                                <div class="border-divider">
-                                    Paar @pairIndex
+                                <div class="border-divider d-flex justify-content-between align-items-center">
+                                    <span>Paar @pairIndex</span>
+                                    @if (currentTeam != null && User.IsInRole("Admin"))
+                                    {
+                                        <form method="post" asp-page-handler="DeleteTeam" class="m-0 p-0"
+                                              style="display:inline;">
+                                            <input type="hidden" name="teamId" value="@currentTeam.Id"/>
+                                            <button type="submit" class="btn-delete-icon" title="Team löschen"
+                                                    onclick="return confirm('Möchtest du dieses Team wirklich löschen?');">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    }
                                 </div>
 
                                 @if (currentTeam != null && User.IsInRole("Admin"))
@@ -396,10 +408,11 @@
                     <form method="post">
                         @{
                             // PhaseName is assumed to be string, we group by it.
-                            var phases = Model.Matches.GroupBy(m => m.PhaseName).OrderBy(g => g.Key).ToList();
+                            var phases = Model.Matches.GroupBy(m => m.PhaseName ?? "A-Bewerb").OrderBy(g => g.Key).ToList();
                             int globalInputIndex = 0;
 
-                            string activePhase = TempData["ActivePhase"]?.ToString() ?? phases.FirstOrDefault()?.Key ?? "A-Bewerb";
+                            string? sessionPhase = HttpContext.Session.GetString("ActivePhase");
+                            string activePhase = sessionPhase ?? TempData["ActivePhase"]?.ToString() ?? phases.FirstOrDefault()?.Key ?? "A-Bewerb";
                         }
 
                         @if (phases.Count > 1)
@@ -407,26 +420,24 @@
                             <div class="competition-pills mb-4 bracket-tabs">
                                 @foreach (var phase in phases)
                                 {
-                                    var safeKey = phase.Key.Replace(" ", "-");
                                     bool isActive = phase.Key == activePhase;
-                                    <button type="button" class="bracket-pill-btn @(isActive ? "active" : "")"
-                                            onclick="switchBracketPhase(event, '@safeKey')">
+                                    <button type="submit" asp-page-handler="SwitchPhase" name="phaseName"
+                                            value="@phase.Key" class="bracket-pill-btn @(isActive ? "active" : "")">
                                         @phase.Key
                                     </button>
                                 }
                             </div>
                         }
 
-                        @for (int i = 0; i < phases.Count; i++)
+                        @{
+                            var activePhaseGroup = phases.FirstOrDefault(p => p.Key == activePhase);
+                        }
+                        @if (activePhaseGroup != null)
                         {
-                            var phaseGroup = phases[i];
-                            var phaseGrouped = phaseGroup.GroupBy(m => m.RoundNo).OrderBy(g => g.Key).ToList();
-                            var safeKey = phaseGroup.Key.Replace(" ", "-");
-                            bool isActive = phaseGroup.Key == activePhase;
+                            var phaseGrouped = activePhaseGroup.GroupBy(m => m.RoundNo).OrderBy(g => g.Key).ToList();
 
-                            <div id="bracket-phase-@safeKey"
-                                 class="bracket-phase-container @(isActive ? "" : "hidden")">
-                                <h3 class="mb-4">@phaseGroup.Key</h3>
+                            <div class="bracket-phase-container">
+                                <h3 class="mb-4">@activePhaseGroup.Key</h3>
                                 <div class="bracket-flex mb-24">
                                     @foreach (var round in phaseGrouped)
                                     {
@@ -621,19 +632,34 @@
                 @if (User.IsInRole("Admin"))
                 {
                     <div class="manual-add-wrapper">
-                        <h4 class="manual-add-title">Spieler manuell hinzufügen</h4>
-                        <form method="post" class="manual-add-form">
-                            <select name="playerId">
-                                <option value="">Spieler auswählen...</option>
-                                @foreach (var player in Model.UnregisteredPlayers)
-                                {
-                                    <option value="@player.Id">@player.ToString()</option>
-                                }
-                            </select>
-                            <button asp-page-handler="Register" class="btn-action btn-accent white-space-nowrap">
-                                Hinzufügen
-                            </button>
-                        </form>
+                        <h4 class="manual-add-title">Spieler / Teams verwalten</h4>
+                        <div class="d-flex flex-wrap gap-3">
+                            <form method="post" class="manual-add-form flex-grow-1 m-0">
+                                <select name="playerId">
+                                    <option value="">Spieler hinzufügen...</option>
+                                    @foreach (var player in Model.UnregisteredPlayers)
+                                    {
+                                        <option value="@player.Id">@player.ToString()</option>
+                                    }
+                                </select>
+                                <button asp-page-handler="Register" class="btn-action btn-accent white-space-nowrap">
+                                    Hinzufügen
+                                </button>
+                            </form>
+                            <form method="post" class="manual-add-form flex-grow-1 m-0">
+                                <select name="teamId">
+                                    <option value="">Team / Spieler löschen...</option>
+                                    @foreach (var team in Model.RegisteredTeams)
+                                    {
+                                        <option value="@team.Id">@team.PlayersToStringWithItn()</option>
+                                    }
+                                </select>
+                                <button asp-page-handler="DeleteTeam" class="btn-action btn-danger white-space-nowrap"
+                                        onclick="return confirm('Möchtest du dieses Team wirklich komplett löschen? Alle Matches dieses Teams werden ebenfalls entfernt!');">
+                                    Löschen
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 }
             </section>
