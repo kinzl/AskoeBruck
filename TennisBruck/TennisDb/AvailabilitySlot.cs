@@ -26,6 +26,9 @@ public class AvailabilitySlot
 
     public bool IsDouble { get; set; } = false;
 
+    // Wie viele Spieler werden insgesamt noch gesucht? (1 bis 3)
+    public int NeededPlayers { get; set; } = 1;
+
     // Player 2 (Einzel-Gegner oder Doppel-Partner)
     public int? MatchedWithPlayerId { get; set; }
     [ForeignKey("MatchedWithPlayerId")] public virtual Player? MatchedWithPlayer { get; set; }

@@ -21,6 +21,11 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         // Parse the date or default to today
         CurrentDate = string.IsNullOrEmpty(date) ? DateTime.Today : DateTime.Parse(date);
 
+        if (CurrentDate.Date < DateTime.Today)
+        {
+            CurrentDate = DateTime.Today;
+        }
+
         Reservations = db.Reservations
             .Include(r => r.Player)
             .Where(r => r.StartTime.Date == CurrentDate.Date)

@@ -274,6 +274,9 @@ namespace TennisDb.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int>("NeededPlayers")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PlayerId")
                         .HasColumnType("integer");
 

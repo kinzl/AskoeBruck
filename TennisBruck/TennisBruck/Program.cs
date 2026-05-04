@@ -86,8 +86,6 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => { options.SignIn.Re
 
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>
 {
-    // Force immediate validation of the security stamp on every request 
-    // so role changes (promoting/demoting admins) log the user out instantly.
     options.ValidationInterval = TimeSpan.Zero;
 });
 

@@ -46,6 +46,9 @@ public class Championship(
         Message = message;
         Competitions = db.Competitions.ToList();
 
+        var thisYear = DateTime.Now.Year;
+        var thisYearCompIds = Competitions.Where(c => c.RegistrationUntil.Year == thisYear).Select(c => c.Id).ToList();
+
         PersonalMatches = db.Matches
             .Include(m => m.Group.Competition)
             .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
@@ -53,6 +56,12 @@ public class Championship(
             .Include(m => m.Sets)
             .Where(m => m.Team1.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id) ||
                         m.Team2.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id))
+            .ToList()
+            .Where(m => 
+                (m.Group != null && m.Group.Competition.RegistrationUntil.Year == thisYear) ||
+                (m is KnockoutMatch km && thisYearCompIds.Contains(km.CompetitionId)) ||
+                (m.Sets != null && m.Sets.Any()) || 
+                m.IsWalkover)
             .ToList();
 
         if (selectedCompetitionId != 0)
@@ -482,15 +491,24 @@ public class Championship(
 
     public async Task<IActionResult> OnPostDeleteMatchAsync(int matchId)
     {
-        if (!User.IsInRole("Admin")) return Forbid();
         // WICHTIG: .Include(m => m.Sets) hinzufügen, damit er die Sätze auch findet!
         var match = await db.Matches
             .Include(m => m.Sets)
+            .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+            .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
             .FirstOrDefaultAsync(m => m.Id == matchId);
 
         if (match == null) return NotFound();
 
+        var currentUser = currentPlayerService.GetCurrentUser();
+        if (currentUser == null) return Unauthorized();
+
+        bool isTeam1 = match.Team1 != null && match.Team1.TeamPlayers.Any(p => p.Player.Id == currentUser.Id);
+        bool isTeam2 = match.Team2 != null && match.Team2.TeamPlayers.Any(p => p.Player.Id == currentUser.Id);
         bool isAdmin = User.IsInRole("Admin");
+
+        if (!isTeam1 && !isTeam2 && !isAdmin) return Forbid();
+
         if (match.IsWalkover && !isAdmin)
         {
             Message = "Ein Walkover kann nur vom Admin rückgängig gemacht werden.";

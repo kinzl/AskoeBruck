@@ -23,11 +23,11 @@ function toggleInfo() {
     var infoBox = document.getElementById("infoBox");
     var button = document.getElementById("infoButton");
 
-    if (infoBox.style.display === "none") {
+    if (infoBox.style.display === "none" || infoBox.style.display === "") {
         infoBox.style.display = "block";
-        button.textContent = "Weniger Infos"; // Change text when shown
+        if (button) button.textContent = "Weniger Infos";
     } else {
         infoBox.style.display = "none";
-        button.textContent = "Mehr Infos"; // Change text when hidden
+        if (button) button.textContent = "Mehr Infos";
     }
 }

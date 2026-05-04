@@ -20,9 +20,19 @@ public class EmailService
         message.To.Add(new MailboxAddress("", toEmail));
         message.Subject = subject;
 
-        message.Body = new TextPart("plain")
+        var htmlMessage = $@"
+            <div style=""font-family: Arial, sans-serif; color: #333; line-height: 1.6;"">
+                <p>Ihr Code lautet: <strong>{verificationCode}</strong></p>
+                <hr style=""margin-top: 30px; border: none; border-top: 1px solid #eee;"" />
+                <p style=""font-size: 0.9em; color: #666;"">
+                    <strong>Hinweis:</strong> Dieser Code ist aus Sicherheitsgründen nur für begrenzte Zeit gültig.<br>
+                    Falls du dich gerade nicht anmeldest oder registrierst und diese E-Mail unerwartet erhältst, kannst du sie einfach ignorieren.
+                </p>
+            </div>";
+
+        message.Body = new TextPart("html")
         {
-            Text = "Ihr Code lautet: " + verificationCode
+            Text = htmlMessage
         };
 
         var client = new SmtpClient();
@@ -66,12 +76,22 @@ public class EmailService
 
     public async Task SendEmailWithResendAsync(string to, string subject, string code)
     {
+        var htmlMessage = $@"
+            <div style=""font-family: Arial, sans-serif; color: #333; line-height: 1.6;"">
+                <p>Ihr Code lautet: <strong>{code}</strong></p>
+                <hr style=""margin-top: 30px; border: none; border-top: 1px solid #eee;"" />
+                <p style=""font-size: 0.9em; color: #666;"">
+                    <strong>Hinweis:</strong> Dieser Code ist aus Sicherheitsgründen nur für begrenzte Zeit gültig.<br>
+                    Falls du dich gerade nicht anmeldest oder registrierst und diese E-Mail unerwartet erhältst, kannst du sie einfach ignorieren.
+                </p>
+            </div>";
+
         var payload = new
         {
             from = _from,
             to = new[] { to },
             subject,
-            html = "Ihr code lautet: " + code
+            html = htmlMessage
         };
 
         var json = JsonSerializer.Serialize(payload);

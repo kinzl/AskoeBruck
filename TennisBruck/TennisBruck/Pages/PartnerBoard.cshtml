@@ -16,21 +16,100 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show shadow-sm mt-3 alert-success-pb" role="alert">
-        <i class="bi bi-check-circle-fill me-2 alert-icon-pb"></i>
-        <strong class="alert-text-pb">@TempData["SuccessMessage"]</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="dark-header-section position-relative">
+    <div class="d-flex justify-content-start w-100 px-3 pt-3 position-absolute top-0 start-0">
+        <a href="/" class="back-button position-static">← Übersicht</a>
     </div>
-}
-<div class="dark-header-section">
-    <a href="/" class="back-button">← Übersicht</a>
-    <h1 class="fw-bold mb-2">🎾 Spielpartner-Börse</h1>
+    
+    <h1 class="fw-bold mb-2 mt-4 pt-3">🎾 Spielpartner-Börse</h1>
     <p class="text-white-50">Finde unkompliziert Mitspieler oder trage deine Zeiten ein</p>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert-box-custom alert-success-custom">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>@TempData["SuccessMessage"]</strong>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert-box-custom alert-error-custom">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>@TempData["ErrorMessage"]</strong>
+        </div>
+    }
 </div>
 
 <div class="main-content-container">
+
+    <!-- FILTER BAR -->
+    <div class="hallenplan-card mb-4">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-md-3">
+                <label class="form-label small text-muted mb-1 fw-bold">Datum von</label>
+                <input type="date" name="FilterDateFrom" class="form-control form-control-sm" value="@Model.FilterDateFrom?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label small text-muted mb-1 fw-bold">Datum bis</label>
+                <input type="date" name="FilterDateTo" class="form-control form-control-sm" value="@Model.FilterDateTo?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small text-muted mb-1 fw-bold">Zeit von</label>
+                <input type="time" name="FilterTimeFrom" class="form-control form-control-sm" value="@Model.FilterTimeFrom?.ToString(@"hh\:mm")" />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small text-muted mb-1 fw-bold">Zeit bis</label>
+                <input type="time" name="FilterTimeTo" class="form-control form-control-sm" value="@Model.FilterTimeTo?.ToString(@"hh\:mm")" />
+            </div>
+            <div class="col-12 col-md-2 text-end">
+                <button type="submit" class="btn btn-sm btn-outline-secondary w-100"><i class="bi bi-funnel"></i> Filtern</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- MEINE OFFENEN EINTRÄGE -->
+    @if (Model.MyOpenSlots.Any())
+    {
+        <div class="hallenplan-card mb-4 card-warning-accent">
+            <h5 class="fw-bold mb-3 text-dark-blue">
+                <i class="bi bi-person-lines-fill text-warning me-2"></i> Meine offenen Einträge
+            </h5>
+            <div class="list-group list-group-flush shadow-sm rounded">
+                @foreach (var slot in Model.MyOpenSlots)
+                {
+                    <div class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white">
+                        <div class="w-100 pe-3">
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="badge bg-secondary me-2">@(slot.IsDouble ? "Doppel" : "Einzel")</span>
+                            </div>
+                            <small class="text-muted d-block mb-1">
+                                <i class="bi bi-clock me-1"></i> @slot.Date.ToString("dd.MM.yyyy") | @slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm") Uhr
+                            </small>
+                            <div class="small text-danger fw-bold mt-1">Sucht @slot.NeededPlayers Mitspieler</div>
+                            @if (!string.IsNullOrEmpty(slot.Message))
+                            {
+                                <div class="small fst-italic mt-1 text-secondary pt-1 border-top border-light">"@slot.Message"</div>
+                            }
+                        </div>
+                        <div class="text-end ms-3 flex-shrink-0 d-flex flex-column gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" 
+                                    onclick="openEditModal(@slot.Id, '@slot.Date.ToString("yyyy-MM-dd")', '@slot.StartTime.ToString(@"hh\:mm")', '@slot.EndTime.ToString(@"hh\:mm")', '@slot.NeededPlayers', '@slot.Message')">
+                                <i class="bi bi-pencil-square me-1"></i> Bearbeiten
+                            </button>
+                            <form method="post" asp-page-handler="DeleteSlot" class="m-0">
+                                <input type="hidden" name="SlotId" value="@slot.Id"/>
+                                <button type="submit" class="btn btn-sm btn-outline-danger fw-bold w-100" onclick="return confirm('Möchtest du deinen Eintrag wirklich löschen?');">
+                                    <i class="bi bi-trash3 me-1"></i> Löschen
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- MEINE FIXIERTEN MATCHES -->
     @if (Model.MyFixedMatches.Any())
     {
         <div class="hallenplan-card mb-4 card-highlight">
@@ -41,8 +120,7 @@
             <div class="list-group list-group-flush shadow-sm rounded">
                 @foreach (var match in Model.MyFixedMatches)
                 {
-                    <div
-                        class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white">
+                    <div class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white">
                         <div>
                             <div class="d-flex align-items-center mb-1">
                                 <span class="badge bg-secondary me-2">@(match.IsDouble ? "Doppel" : "Einzel")</span>
@@ -70,7 +148,7 @@
                             <span class="badge badge-fixed mb-2 d-inline-block">Fixiert ✔</span>
                             <form method="post" asp-page-handler="DeleteSlot" class="m-0">
                                 <input type="hidden" name="SlotId" value="@match.Id"/>
-                                <button type="submit" class="btn btn-sm btn-outline-danger fw-bold" onclick="return confirm('Möchtest du wirklich absagen/löschen?');">
+                                <button type="submit" class="btn btn-sm btn-outline-warning fw-bold" onclick="return confirm('Möchtest du wirklich absagen?');">
                                     <i class="bi bi-x-circle me-1"></i> Absagen
                                 </button>
                             </form>
@@ -140,21 +218,11 @@
                                 }
                             </div>
                             <div class="ms-3 d-flex flex-column gap-2 flex-shrink-0">
-                                @if (slot.PlayerId == Model.CurrentPlayerId)
+                                @if (slot.MatchedWithPlayerId == Model.CurrentPlayerId || slot.MatchedWithPlayer2Id == Model.CurrentPlayerId || slot.MatchedWithPlayer3Id == Model.CurrentPlayerId)
                                 {
                                     <form method="post" asp-page-handler="DeleteSlot" class="m-0">
                                         <input type="hidden" name="SlotId" value="@slot.Id"/>
-                                        <button type="submit" class="btn btn-sm btn-outline-danger fw-bold w-100"
-                                                onclick="return confirm('Möchtest du deinen Eintrag wirklich löschen?');">
-                                            <i class="bi bi-trash3 me-1"></i> Löschen
-                                        </button>
-                                    </form>
-                                }
-                                else if (slot.MatchedWithPlayerId == Model.CurrentPlayerId || slot.MatchedWithPlayer2Id == Model.CurrentPlayerId || slot.MatchedWithPlayer3Id == Model.CurrentPlayerId)
-                                {
-                                    <form method="post" asp-page-handler="DeleteSlot" class="m-0">
-                                        <input type="hidden" name="SlotId" value="@slot.Id"/>
-                                        <button type="submit" class="btn btn-sm btn-outline-danger fw-bold w-100"
+                                        <button type="submit" class="btn btn-sm btn-outline-warning fw-bold w-100"
                                                 onclick="return confirm('Möchtest du absagen?');">
                                             <i class="bi bi-x-circle me-1"></i> Absagen
                                         </button>
@@ -210,10 +278,11 @@
                                placeholder="Z.B. Suche Gegner für lockeres Einzel" maxlength="200"/>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-muted small">Spieltyp / Spieleranzahl</label>
-                        <select name="isDouble" class="form-select">
-                            <option value="false">Einzel (Suche 1 Mitspieler)</option>
-                            <option value="true">Doppel (Suche 3 Mitspieler)</option>
+                        <label class="form-label fw-bold text-muted small">Wie viele Mitspieler suchst du noch?</label>
+                        <select name="neededPlayers" class="form-select">
+                            <option value="1">1 Mitspieler (Einzel / Letzter Platz im Doppel)</option>
+                            <option value="2">2 Mitspieler</option>
+                            <option value="3">3 Mitspieler (Komplettes Doppel)</option>
                         </select>
                     </div>
                 </div>
@@ -226,6 +295,68 @@
     </div>
 </div>
 
+<!-- Modal: Eintrag Bearbeiten -->
+<div class="modal fade" id="editSlotModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-navy">Eintrag bearbeiten</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-page-handler="EditSlot">
+                <input type="hidden" id="editSlotId" name="editSlotId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">Datum</label>
+                        <input type="date" id="editDate" name="editDate" class="form-control"
+                               min="@DateTime.Today.ToString("yyyy-MM-dd")" required/>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label fw-bold text-muted small">Von (Uhrzeit)</label>
+                            <input type="time" id="editStartTime" name="editStartTime" class="form-control" required/>
+                        </div>
+                        <div class="col">
+                            <label class="form-label fw-bold text-muted small">Bis (Uhrzeit)</label>
+                            <input type="time" id="editEndTime" name="editEndTime" class="form-control" required/>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">Nachricht (Optional)</label>
+                        <input type="text" id="editMessage" name="editMessage" class="form-control"
+                               maxlength="200"/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">Wie viele Mitspieler suchst du noch?</label>
+                        <select id="editNeededPlayers" name="editNeededPlayers" class="form-select">
+                            <option value="1">1 Mitspieler (Einzel / Letzter Platz im Doppel)</option>
+                            <option value="2">2 Mitspieler</option>
+                            <option value="3">3 Mitspieler (Komplettes Doppel)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="submit" class="btn-limone">Aktualisieren</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function openEditModal(id, date, startTime, endTime, neededPlayers, message) {
+        document.getElementById('editSlotId').value = id;
+        document.getElementById('editDate').value = date;
+        document.getElementById('editStartTime').value = startTime;
+        document.getElementById('editEndTime').value = endTime;
+        document.getElementById('editNeededPlayers').value = neededPlayers;
+        document.getElementById('editMessage').value = message;
+        
+        var editModal = new bootstrap.Modal(document.getElementById('editSlotModal'));
+        editModal.show();
+    }
+</script>
 </body>
 </html>

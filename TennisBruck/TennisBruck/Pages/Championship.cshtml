@@ -128,13 +128,16 @@
             <section class="modern-card">
                 <div class="card-header">
                     <h2>👥 Doppel-Paare Konfigurieren</h2>
-                    <form method="post" class="m-0">
-                        <input type="hidden" name="ChampionshipId" value="@Model.SelectedCompetition.Id"/>
+                    @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < DateTime.Now)
+                    {
+                        <form method="post" class="m-0">
+                            <input type="hidden" name="ChampionshipId" value="@Model.SelectedCompetition.Id"/>
 
-                        <button type="submit" asp-page-handler="GeneratePairs" class="btn-action">
-                            🔀 Doppel-Paare zufällig auslosen
-                        </button>
-                    </form>
+                            <button type="submit" asp-page-handler="GeneratePairs" class="btn-action">
+                                🔀 Doppel-Paare zufällig auslosen
+                            </button>
+                        </form>
+                    }
                 </div>
 
                 @{
@@ -227,7 +230,7 @@
                     </div>
 
                 </form>
-                @if (User.IsInRole("Admin"))
+                @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < DateTime.Now)
                 {
                     <div class="d-flex justify-content-center align-items-center gap-3 mt-4 mb-5">
                         <form method="post" asp-page-handler="SavePairs">
@@ -257,23 +260,25 @@
                     }
                 </div>
 
-                <form method="post">
-                    <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+                @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < DateTime.Now)
+                {
+                    <form method="post">
+                        <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
 
-                    <div class="group-generator-toolbar">
-                        <label for="targetGroupSize" class="toolbar-label">
-                            Wunsch-Gruppengröße:
-                        </label>
+                        <div class="group-generator-toolbar">
+                            <label for="targetGroupSize" class="toolbar-label">
+                                Wunsch-Gruppengröße:
+                            </label>
 
-                        <input type="number" id="targetGroupSize" name="TargetGroupSize"
-                               class="toolbar-input" value="4" min="2" max="10" required/>
+                            <input type="number" id="targetGroupSize" name="TargetGroupSize"
+                                   class="toolbar-input" value="4" min="2" max="10" required/>
 
-                        <button type="submit" asp-page-handler="GenerateGroups" class="btn-generate">
-                            Zufällig Auslosen
-                        </button>
-                    </div>
-                </form>
-
+                            <button type="submit" asp-page-handler="GenerateGroups" class="btn-generate">
+                                Zufällig Auslosen
+                            </button>
+                        </div>
+                    </form>
+                }
                 <div class="group-grid">
                     @foreach (var group in Model.Groups)
                     {
@@ -536,14 +541,14 @@
                     <div class="match-scorecard">
                         <div class="match-players">
                             <span
-                                class="@(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover-winner" : ""))">
+                                class="@(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover-winner" : "")) @(match.Winner?.Id == match.Team1?.Id ? "winner-highlight" : "")">
                                 @match.Team1?.PlayersToString() @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "✅" : "")
                             </span>
 
                             <span class="text-vs">vs</span>
 
                             <span
-                                class="@(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover-winner" : ""))">
+                                class="@(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover-winner" : "")) @(match.Winner?.Id == match.Team2?.Id ? "winner-highlight" : "")">
                                 @match.Team2?.PlayersToString() @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "✅" : "")
                             </span>
                             <span class="badge-phase">
@@ -595,12 +600,12 @@
         }
 
         <div class="toggle-info-wrapper">
-            <button type="button" onclick="toggleInfo()" class="btn-action btn-outline-muted">
+            <button type="button" onclick="toggleInfo()" id="infoButton" class="btn-action btn-outline-muted">
                 ⬇️ Teilnehmer & Alle Spiele einblenden
             </button>
         </div>
 
-        <div id="infoBox" class="hidden">
+        <div id="infoBox" style="display: none;">
             <section class="modern-card mb-24">
                 <div class="card-header">
                     <h2>📋 Teilnehmerliste (@Model.RegisteredCompetitionPlayers.Count)</h2>
