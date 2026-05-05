@@ -1,3 +1,26 @@
+function checkPhaseExists() {
+    var existingPhases = window.existingTournamentPhases || [];
+    var inputElement = document.getElementById("PhaseName");
+    
+    if (!inputElement) return true;
+    
+    var inputPhase = inputElement.value.trim();
+    if (inputPhase === "") {
+        inputPhase = "A-Bewerb"; // Default fallback
+    }
+    
+    if (existingPhases.includes(inputPhase)) {
+        if (!confirm("Der Raster '" + inputPhase + "' existiert bereits. Bisherige Daten in diesem Raster werden überschrieben. Möchtest du wirklich fortfahren?")) {
+            return false;
+        }
+    }
+    
+    // If confirmed or new, submit the form manually by clicking the hidden submit button
+    // This ensures the asp-page-handler tag helper works correctly
+    var btnReal = document.getElementById("btnRealCreateBracket");
+    if (btnReal) btnReal.click();
+}
+
 $(document).on('ready', function () {
     console.log("ready");
     var knownBrackets = [2, 4, 8, 16, 32], // brackets with "perfect" proportions (full fields, no byes)

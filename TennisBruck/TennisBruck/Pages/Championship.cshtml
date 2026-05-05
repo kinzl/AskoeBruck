@@ -133,7 +133,8 @@
                         <form method="post" class="m-0">
                             <input type="hidden" name="ChampionshipId" value="@Model.SelectedCompetition.Id"/>
 
-                            <button type="submit" asp-page-handler="GeneratePairs" class="btn-action">
+                            <button type="submit" asp-page-handler="GeneratePairs" class="btn-action"
+                                    onclick="return confirm('Bisherige Doppel Paare werden gelöscht und neu zugeordnet. Möchtest du das wirklich?');">
                                 🔀 Doppel-Paare zufällig auslosen
                             </button>
                         </form>
@@ -273,7 +274,8 @@
                             <input type="number" id="targetGroupSize" name="TargetGroupSize"
                                    class="toolbar-input" value="4" min="2" max="10" required/>
 
-                            <button type="submit" asp-page-handler="GenerateGroups" class="btn-generate">
+                            <button type="submit" asp-page-handler="GenerateGroups" class="btn-generate"
+                                    onclick="return confirm('Bisher generierte und gespielte Gruppenphase Spiele dieses Bewerbs werden gelöscht. Möchtest wirklich neu auslosen?');">
                                 Zufällig Auslosen
                             </button>
                         </div>
@@ -374,7 +376,8 @@
                 {
                     <form method="post" class="group-save-wrapper">
                         <button type="submit" asp-page-handler="SaveGroups"
-                                class="btn-action btn-accent btn-large-accent-shadow">
+                                class="btn-action btn-accent btn-large-accent-shadow"
+                                onclick="return confirm('Bisher generierte und gespielte Gruppenphase Spiele dieses Bewerbs werden gelöscht. Möchtest wirklich neu auslosen?');">
                             💾 Gruppeneinteilung speichern
                         </button>
                     </form>
@@ -384,6 +387,11 @@
 
 
         var grouped = Model.Matches.GroupBy(m => m.RoundNo).OrderBy(g => g.Key).ToList();
+        
+        var phases = Model.Matches.GroupBy(m => m.PhaseName ?? "A-Bewerb").OrderBy(g => g.Key).ToList();
+        string? sessionPhase = HttpContext.Session.GetString("ActivePhase");
+        string activePhase = sessionPhase ?? TempData["ActivePhase"]?.ToString() ?? phases.FirstOrDefault()?.Key ?? "A-Bewerb";
+        int globalInputIndex = 0;
 
         if (grouped.Any() || User.IsInRole("Admin"))
         {
@@ -402,24 +410,24 @@
                                 <option value="16">Achtelfinale (16)</option>
                                 <option value="32">32er (32)</option>
                             </select>
-                            <button type="submit" asp-page-handler="CreateBracket" class="btn-action">Raster
-                                hinzufügen
+                            <button type="button" class="btn-action" onclick="checkPhaseExists()">
+                                Raster hinzufügen
                             </button>
+                            <button type="submit" id="btnRealCreateBracket" asp-page-handler="CreateBracket" style="display: none;"></button>
+                            @if (phases.Any(p => p.Key == activePhase))
+                            {
+                                <button type="submit" asp-page-handler="DeletePhase" name="phaseToDelete" value="@activePhase" 
+                                        class="btn-action btn-danger ms-2"
+                                        onclick="return confirm('Möchtest du diesen Raster (@activePhase) und alle darin enthaltenen Spiele wirklich unwiderruflich löschen?');">
+                                    🗑️ Raster löschen
+                                </button>
+                            }
                         </form>
                     }
                 </div>
 
                 <div class="bracket-scroll-area">
                     <form method="post">
-                        @{
-                            // PhaseName is assumed to be string, we group by it.
-                            var phases = Model.Matches.GroupBy(m => m.PhaseName ?? "A-Bewerb").OrderBy(g => g.Key).ToList();
-                            int globalInputIndex = 0;
-
-                            string? sessionPhase = HttpContext.Session.GetString("ActivePhase");
-                            string activePhase = sessionPhase ?? TempData["ActivePhase"]?.ToString() ?? phases.FirstOrDefault()?.Key ?? "A-Bewerb";
-                        }
-
                         @if (phases.Count > 1)
                         {
                             <div class="competition-pills mb-4 bracket-tabs">
@@ -442,7 +450,6 @@
                             var phaseGrouped = activePhaseGroup.GroupBy(m => m.RoundNo).OrderBy(g => g.Key).ToList();
 
                             <div class="bracket-phase-container">
-                                <h3 class="mb-4">@activePhaseGroup.Key</h3>
                                 <div class="bracket-flex mb-24">
                                     @foreach (var round in phaseGrouped)
                                     {
@@ -519,7 +526,8 @@
                         @if (User.IsInRole("Admin") && grouped.Any())
                         {
                             <button type="submit" asp-page-handler="ApplyUserInputs"
-                                    class="btn-action btn-accent bracket-save-btn">
+                                    class="btn-action btn-accent bracket-save-btn"
+                                    onclick="return confirm('Bisher zugeiteilte Spieler und gespielte Spieler werden überschrieben. Möchtest du das wirklich?');">
                                 Zuteilung im Raster speichern
                             </button>
                         }
@@ -800,5 +808,9 @@
     }
 
 </main>
+
+<script>
+    window.existingTournamentPhases = @Html.Raw(Json.Serialize(Model.Matches.Select(m => m.PhaseName ?? "A-Bewerb").Distinct().ToList()));
+</script>
 </body>
 </html>

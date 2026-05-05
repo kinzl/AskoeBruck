@@ -20,7 +20,7 @@
     <div class="d-flex justify-content-start w-100 px-3 pt-3 position-absolute top-0 start-0">
         <a href="/" class="back-button position-static">← Übersicht</a>
     </div>
-    
+
     <h1 class="fw-bold mb-2 mt-4 pt-3">🎾 Spielpartner-Börse</h1>
     <p class="text-white-50">Finde unkompliziert Mitspieler oder trage deine Zeiten ein</p>
 
@@ -47,22 +47,28 @@
         <form method="get" class="row g-2 align-items-end">
             <div class="col-12 col-md-3">
                 <label class="form-label small text-muted mb-1 fw-bold">Datum von</label>
-                <input type="date" name="FilterDateFrom" class="form-control form-control-sm" value="@Model.FilterDateFrom?.ToString("yyyy-MM-dd")" />
+                <input type="date" name="FilterDateFrom" class="form-control form-control-sm"
+                       value="@Model.FilterDateFrom?.ToString("yyyy-MM-dd")"/>
             </div>
             <div class="col-12 col-md-3">
                 <label class="form-label small text-muted mb-1 fw-bold">Datum bis</label>
-                <input type="date" name="FilterDateTo" class="form-control form-control-sm" value="@Model.FilterDateTo?.ToString("yyyy-MM-dd")" />
+                <input type="date" name="FilterDateTo" class="form-control form-control-sm"
+                       value="@Model.FilterDateTo?.ToString("yyyy-MM-dd")"/>
             </div>
             <div class="col-6 col-md-2">
                 <label class="form-label small text-muted mb-1 fw-bold">Zeit von</label>
-                <input type="time" name="FilterTimeFrom" class="form-control form-control-sm" value="@Model.FilterTimeFrom?.ToString(@"hh\:mm")" />
+                <input type="time" name="FilterTimeFrom" class="form-control form-control-sm"
+                       value="@Model.FilterTimeFrom?.ToString(@"hh\:mm")"/>
             </div>
             <div class="col-6 col-md-2">
                 <label class="form-label small text-muted mb-1 fw-bold">Zeit bis</label>
-                <input type="time" name="FilterTimeTo" class="form-control form-control-sm" value="@Model.FilterTimeTo?.ToString(@"hh\:mm")" />
+                <input type="time" name="FilterTimeTo" class="form-control form-control-sm"
+                       value="@Model.FilterTimeTo?.ToString(@"hh\:mm")"/>
             </div>
             <div class="col-12 col-md-2 text-end">
-                <button type="submit" class="btn btn-sm btn-outline-secondary w-100"><i class="bi bi-funnel"></i> Filtern</button>
+                <button type="submit" class="btn btn-sm btn-outline-secondary w-100"><i class="bi bi-funnel"></i>
+                    Filtern
+                </button>
             </div>
         </form>
     </div>
@@ -77,7 +83,8 @@
             <div class="list-group list-group-flush shadow-sm rounded">
                 @foreach (var slot in Model.MyOpenSlots)
                 {
-                    <div class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white">
+                    <div
+                        class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white">
                         <div class="w-100 pe-3">
                             <div class="d-flex align-items-center mb-1">
                                 <span class="badge bg-secondary me-2">@(slot.IsDouble ? "Doppel" : "Einzel")</span>
@@ -88,17 +95,20 @@
                             <div class="small text-danger fw-bold mt-1">Sucht @slot.NeededPlayers Mitspieler</div>
                             @if (!string.IsNullOrEmpty(slot.Message))
                             {
-                                <div class="small fst-italic mt-1 text-secondary pt-1 border-top border-light">"@slot.Message"</div>
+                                <div class="small fst-italic mt-1 text-secondary pt-1 border-top border-light">
+                                    "@slot.Message"
+                                </div>
                             }
                         </div>
                         <div class="text-end ms-3 flex-shrink-0 d-flex flex-column gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" 
+                            <button type="button" class="btn btn-sm btn-outline-secondary fw-bold"
                                     onclick="openEditModal(@slot.Id, '@slot.Date.ToString("yyyy-MM-dd")', '@slot.StartTime.ToString(@"hh\:mm")', '@slot.EndTime.ToString(@"hh\:mm")', '@slot.NeededPlayers', '@slot.Message')">
                                 <i class="bi bi-pencil-square me-1"></i> Bearbeiten
                             </button>
                             <form method="post" asp-page-handler="DeleteSlot" class="m-0">
                                 <input type="hidden" name="SlotId" value="@slot.Id"/>
-                                <button type="submit" class="btn btn-sm btn-outline-danger fw-bold w-100" onclick="return confirm('Möchtest du deinen Eintrag wirklich löschen?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger fw-bold w-100"
+                                        onclick="return confirm('Möchtest du deinen Eintrag wirklich löschen?');">
                                     <i class="bi bi-trash3 me-1"></i> Löschen
                                 </button>
                             </form>
@@ -120,7 +130,8 @@
             <div class="list-group list-group-flush shadow-sm rounded">
                 @foreach (var match in Model.MyFixedMatches)
                 {
-                    <div class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white">
+                    <div
+                        class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white">
                         <div>
                             <div class="d-flex align-items-center mb-1">
                                 <span class="badge bg-secondary me-2">@(match.IsDouble ? "Doppel" : "Einzel")</span>
@@ -129,13 +140,16 @@
                             {
                                 <div class="mt-1 mb-2">
                                     <small class="text-muted">Teilnehmer: </small>
-                                    <strong>@match.Player</strong>, <strong>@match.MatchedWithPlayer</strong>, <strong>@match.MatchedWithPlayer2</strong>, <strong>@match.MatchedWithPlayer3</strong>
+                                    <strong>@match.Player</strong>, <strong>@match.MatchedWithPlayer</strong>,
+                                    <strong>@match.MatchedWithPlayer2</strong>,
+                                    <strong>@match.MatchedWithPlayer3</strong>
                                 </div>
                             }
                             else
                             {
                                 <div class="mt-1 mb-2">
-                                    <strong class="text-navy">@match.Player</strong> spielt gegen <strong class="text-navy">@match.MatchedWithPlayer</strong>
+                                    <strong class="text-navy">@match.Player</strong> spielt gegen <strong
+                                        class="text-navy">@match.MatchedWithPlayer</strong>
                                 </div>
                             }
 
@@ -148,7 +162,8 @@
                             <span class="badge badge-fixed mb-2 d-inline-block">Fixiert ✔</span>
                             <form method="post" asp-page-handler="DeleteSlot" class="m-0">
                                 <input type="hidden" name="SlotId" value="@match.Id"/>
-                                <button type="submit" class="btn btn-sm btn-outline-warning fw-bold" onclick="return confirm('Möchtest du wirklich absagen?');">
+                                <button type="submit" class="btn btn-sm btn-outline-warning fw-bold"
+                                        onclick="return confirm('Möchtest du wirklich absagen?');">
                                     <i class="bi bi-x-circle me-1"></i> Absagen
                                 </button>
                             </form>
@@ -203,8 +218,10 @@
                                     if (slot.MatchedWithPlayerId == null) missingPlayers++;
                                     if (slot.MatchedWithPlayer2Id == null) missingPlayers++;
                                     if (slot.MatchedWithPlayer3Id == null) missingPlayers++;
-                                    
-                                    <div class="small text-danger fw-bold mt-1">Noch @missingPlayers Mitspieler gesucht!</div>
+
+                                    <div class="small text-danger fw-bold mt-1">Noch @missingPlayers Mitspieler
+                                        gesucht!
+                                    </div>
                                     <div class="small text-muted mb-1">
                                         Bisher dabei: @slot.Player
                                         @(slot.MatchedWithPlayer != null ? ", " + slot.MatchedWithPlayer : "")
@@ -214,7 +231,9 @@
                                 }
                                 @if (!string.IsNullOrEmpty(slot.Message))
                                 {
-                                    <div class="small fst-italic mt-1 text-secondary pt-1 border-top border-light">"@slot.Message"</div>
+                                    <div class="small fst-italic mt-1 text-secondary pt-1 border-top border-light">
+                                        "@slot.Message"
+                                    </div>
                                 }
                             </div>
                             <div class="ms-3 d-flex flex-column gap-2 flex-shrink-0">
@@ -304,7 +323,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" asp-page-handler="EditSlot">
-                <input type="hidden" id="editSlotId" name="editSlotId" />
+                <input type="hidden" id="editSlotId" name="editSlotId"/>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-bold text-muted small">Datum</label>
@@ -353,7 +372,7 @@
         document.getElementById('editEndTime').value = endTime;
         document.getElementById('editNeededPlayers').value = neededPlayers;
         document.getElementById('editMessage').value = message;
-        
+
         var editModal = new bootstrap.Modal(document.getElementById('editSlotModal'));
         editModal.show();
     }

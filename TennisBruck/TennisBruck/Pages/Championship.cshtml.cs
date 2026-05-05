@@ -555,6 +555,23 @@ public class Championship(
         return RedirectToPage();
     }
 
+    public IActionResult OnPostDeletePhase(string phaseToDelete)
+    {
+        if (!User.IsInRole("Admin")) return Forbid();
+        InitValues();
+
+        if (string.IsNullOrWhiteSpace(phaseToDelete)) return RedirectToPage();
+
+        db.KnockoutMatch.Where(k => k.CompetitionId == SelectedCompetition!.Id && k.PhaseName == phaseToDelete)
+            .ExecuteDelete();
+        db.SaveChanges();
+
+        if (HttpContext.Session.GetString("ActivePhase") == phaseToDelete)
+            HttpContext.Session.Remove("ActivePhase");
+
+        return RedirectToPage();
+    }
+
     private void UpdateBracket(int size, string phaseName)
     {
         db.KnockoutMatch.Where(k => k.CompetitionId == SelectedCompetition!.Id && k.PhaseName == phaseName)
