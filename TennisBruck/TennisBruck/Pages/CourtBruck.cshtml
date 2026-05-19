@@ -115,7 +115,10 @@
                 @foreach (var timeSlot in Model.TimeSlots)
                 {
                     <tr>
-                        <td class="time-col">@timeSlot.Time.ToString("HH:mm")</td>
+                        <td class="time-col">
+                            <div style="font-weight: 600;">@timeSlot.Time.ToString("HH:mm")</div>
+                            <div class="weather-info" data-time="@timeSlot.Time.ToString("yyyy-MM-dd'T'HH:00")" style="font-size: 0.85rem; margin-top: 4px; font-weight: normal; opacity: 0.8;"></div>
+                        </td>
 
                         @for (int court = 1; court <= 3; court++)
                         {
@@ -184,5 +187,9 @@
     </section>
 </main>
 
+<script>
+    const currentViewDate = '@Model.CurrentDate.ToString("yyyy-MM-dd")';
+</script>
+<script src="~/js/courtBruckWeather.js" asp-append-version="true"></script>
 </body>
 </html>

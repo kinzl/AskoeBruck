@@ -206,7 +206,6 @@ void ConnectToNeonDb()
         .Replace("neonDbUsername", Environment.GetEnvironmentVariable("NEONDB_USERNAME"))
         .Replace("neonDbPassword", Environment.GetEnvironmentVariable("NEONDB_PASSWORD"))
         .Replace("neonDbHost", Environment.GetEnvironmentVariable("NEONDB_HOST"));
-// connectionString = "Host=localhost;Port=5432;Database=mydatabase;Username=myuser;Password=mypassword";
     builder.Services.AddDbContext<TennisContext>(options =>
         options.UseNpgsql(connectionString));
 }
