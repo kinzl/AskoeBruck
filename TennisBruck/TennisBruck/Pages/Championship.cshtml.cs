@@ -417,7 +417,7 @@ public class Championship(
         db.GroupTeams.Add(groupTeam);
         db.SaveChanges();
 
-        return RedirectToPage(new { Message = $"{team} in {group.GroupName} hinzugefügt" });
+        return RedirectToPage(new { Message = $"{team.PlayersToString()} in {group.GroupName} hinzugefügt" });
     }
 
     public IActionResult OnPostRemoveTeamFromGroup(int groupId, int teamId)
@@ -432,7 +432,7 @@ public class Championship(
 
         db.SaveChanges();
         return RedirectToPage(new
-            { Message = $"{groupTeam.Team} von {groupTeam.Group.GroupName} entfernt" });
+            { Message = $"{groupTeam.Team.PlayersToString()} von {groupTeam.Group.GroupName} entfernt" });
     }
 
     #region Match Management

@@ -385,9 +385,8 @@
             </section>
         }
 
-
         var grouped = Model.Matches.GroupBy(m => m.RoundNo).OrderBy(g => g.Key).ToList();
-        
+
         var phases = Model.Matches.GroupBy(m => m.PhaseName ?? "A-Bewerb").OrderBy(g => g.Key).ToList();
         string? sessionPhase = HttpContext.Session.GetString("ActivePhase");
         string activePhase = sessionPhase ?? TempData["ActivePhase"]?.ToString() ?? phases.FirstOrDefault()?.Key ?? "A-Bewerb";
@@ -413,10 +412,12 @@
                             <button type="button" class="btn-action" onclick="checkPhaseExists()">
                                 Raster hinzufügen
                             </button>
-                            <button type="submit" id="btnRealCreateBracket" asp-page-handler="CreateBracket" style="display: none;"></button>
+                            <button type="submit" id="btnRealCreateBracket" asp-page-handler="CreateBracket"
+                                    style="display: none;"></button>
                             @if (phases.Any(p => p.Key == activePhase))
                             {
-                                <button type="submit" asp-page-handler="DeletePhase" name="phaseToDelete" value="@activePhase" 
+                                <button type="submit" asp-page-handler="DeletePhase" name="phaseToDelete"
+                                        value="@activePhase"
                                         class="btn-action btn-danger ms-2"
                                         onclick="return confirm('Möchtest du diesen Raster (@activePhase) und alle darin enthaltenen Spiele wirklich unwiderruflich löschen?');">
                                     🗑️ Raster löschen
@@ -492,12 +493,12 @@
                                                         else
                                                         {
                                                             <div
-                                                                class="bracket-team-read-1 @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : "")">
-                                                                @(match.Team1?.PlayersToStringWithItn() ?? "TBD") @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "✅" : "")
+                                                                class="bracket-team-read-1 @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team1?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
+                                                                @(match.Team1?.PlayersToStringWithItn() ?? "TBD")
                                                             </div>
                                                             <div
-                                                                class="bracket-team-read-2 @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : "")">
-                                                                @(match.Team2?.PlayersToStringWithItn() ?? "TBD") @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "✅" : "")
+                                                                class="bracket-team-read-2 @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team2?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
+                                                                @(match.Team2?.PlayersToStringWithItn() ?? "TBD")
                                                             </div>
                                                         }
 
@@ -549,15 +550,15 @@
                     <div class="match-scorecard">
                         <div class="match-players">
                             <span
-                                class="@(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover-winner" : "")) @(match.Winner?.Id == match.Team1?.Id ? "winner-highlight" : "")">
-                                @match.Team1?.PlayersToString() @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "✅" : "")
+                                class="@(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team1?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
+                                @match.Team1?.PlayersToString()
                             </span>
 
                             <span class="text-vs">vs</span>
 
                             <span
-                                class="@(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover-winner" : "")) @(match.Winner?.Id == match.Team2?.Id ? "winner-highlight" : "")">
-                                @match.Team2?.PlayersToString() @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "✅" : "")
+                                class="@(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team2?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
+                                @match.Team2?.PlayersToString()
                             </span>
                             <span class="badge-phase">
                                 @(match.Group != null ? match.Group.Competition.Name : "K.O Phase")
@@ -619,60 +620,81 @@
                     <h2>📋 Teilnehmerliste (@Model.RegisteredCompetitionPlayers.Count)</h2>
                 </div>
 
-                <div class="participants-wrapper">
-                    @foreach (var registered in Model.RegisteredCompetitionPlayers)
-                    {
-                        <div class="participant-badge">
-                            @registered.Player.ToString()
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <form method="post" class="inline-form-zero flex-center-gap">
-                                    <input type="hidden" name="playerId" value="@registered.Player.Id"/>
-                                    <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
-
-                                    <button asp-page-handler="WithdrawPlayer"
-                                            class="btn-warning btn-xs btn-action-micro"
-                                            title="Spieler w.o. abmelden"
-                                            onclick="return confirm('Soll dieser Spieler wirklich verletzungsbedingt/w.o. abgemeldet werden? ALLE seine offenen Matches in diesem Bewerb werden sofort als Sieg für die Gegner gewertet!');">
-                                        Alles W.O.
-                                    </button>
-                                </form>
-                            }
-                        </div>
-                    }
-                </div>
+                @if (User.IsInRole("Admin"))
+                {
+                    <table class="participant-table">
+                        <thead>
+                        <tr>
+                            <th>Teilnehmer</th>
+                            <th>W.O.</th>
+                            <th>Löschen</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var registered in Model.RegisteredCompetitionPlayers)
+                        {
+                            var playerTeam = Model.RegisteredTeams.FirstOrDefault(t => t.TeamPlayers.Any(tp => tp.Player.Id == registered.Player.Id));
+                            <tr>
+                                <td>@registered.Player.ToString()</td>
+                                <td>
+                                    <form method="post" class="inline-form-zero">
+                                        <input type="hidden" name="playerId" value="@registered.Player.Id"/>
+                                        <input type="hidden" name="competitionId"
+                                               value="@Model.SelectedCompetition.Id"/>
+                                        <button asp-page-handler="WithdrawPlayer"
+                                                class="btn-warning btn-xs btn-action-micro"
+                                                title="Spieler w.o. abmelden"
+                                                onclick="return confirm('Soll dieser Spieler wirklich verletzungsbedingt/w.o. abgemeldet werden? ALLE seine offenen Matches in diesem Bewerb werden sofort als Sieg für die Gegner gewertet!');">
+                                            Alles W.O.
+                                        </button>
+                                    </form>
+                                </td>
+                                <td>
+                                    @if (playerTeam != null)
+                                    {
+                                        <form method="post" asp-page-handler="DeleteTeam" class="inline-form-zero">
+                                            <input type="hidden" name="teamId" value="@playerTeam.Id"/>
+                                            <button class="btn-danger btn-xs btn-action-micro"
+                                                    title="Team löschen"
+                                                    onclick="return confirm('Möchtest du dieses Team wirklich komplett löschen? Alle gespielten Matches dieses Teams werden ebenfalls gelöscht!');">
+                                                Löschen
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="participants-wrapper">
+                        @foreach (var registered in Model.RegisteredCompetitionPlayers)
+                        {
+                            <div class="participant-badge">
+                                @registered.Player.ToString()
+                            </div>
+                        }
+                    </div>
+                }
 
                 @if (User.IsInRole("Admin"))
                 {
                     <div class="manual-add-wrapper">
-                        <h4 class="manual-add-title">Spieler / Teams verwalten</h4>
-                        <div class="d-flex flex-wrap gap-3">
-                            <form method="post" class="manual-add-form flex-grow-1 m-0">
-                                <select name="playerId">
-                                    <option value="">Spieler hinzufügen...</option>
-                                    @foreach (var player in Model.UnregisteredPlayers)
-                                    {
-                                        <option value="@player.Id">@player.ToString()</option>
-                                    }
-                                </select>
-                                <button asp-page-handler="Register" class="btn-action btn-accent white-space-nowrap">
-                                    Hinzufügen
-                                </button>
-                            </form>
-                            <form method="post" class="manual-add-form flex-grow-1 m-0">
-                                <select name="teamId">
-                                    <option value="">Team / Spieler löschen...</option>
-                                    @foreach (var team in Model.RegisteredTeams)
-                                    {
-                                        <option value="@team.Id">@team.PlayersToStringWithItn()</option>
-                                    }
-                                </select>
-                                <button asp-page-handler="DeleteTeam" class="btn-action btn-danger white-space-nowrap"
-                                        onclick="return confirm('Möchtest du dieses Team wirklich komplett löschen? Alle Matches dieses Teams werden ebenfalls entfernt!');">
-                                    Löschen
-                                </button>
-                            </form>
-                        </div>
+                        <h4 class="manual-add-title">Spieler hinzufügen</h4>
+                        <form method="post" class="manual-add-form flex-grow-1 m-0">
+                            <select name="playerId" required>
+                                <option value="">Spieler auswählen...</option>
+                                @foreach (var player in Model.UnregisteredPlayers)
+                                {
+                                    <option value="@player.Id">@player.ToString()</option>
+                                }
+                            </select>
+                            <button asp-page-handler="Register" class="btn-action btn-accent white-space-nowrap">
+                                Hinzufügen
+                            </button>
+                        </form>
                     </div>
                 }
             </section>
@@ -688,15 +710,15 @@
                         <div class="match-scorecard">
                             <div class="match-players text-sm">
                                 <span
-                                    class="@(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover-winner" : ""))">
-                                    @match.Team1?.PlayersToString() @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "✅" : "")
+                                    class="@(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team1?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
+                                    @match.Team1?.PlayersToString()
                                 </span>
 
                                 <span class="text-vs">vs</span>
 
                                 <span
-                                    class="@(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover-winner" : ""))">
-                                    @match.Team2?.PlayersToString() @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "✅" : "")
+                                    class="@(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team2?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
+                                    @match.Team2?.PlayersToString()
                                 </span>
                                 <span class="badge-phase">
                                     @(match.Group != null ? match.Group.Competition.Name : "K.O Phase")

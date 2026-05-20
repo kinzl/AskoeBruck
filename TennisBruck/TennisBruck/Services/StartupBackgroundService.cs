@@ -14,17 +14,13 @@ public class StartupBackgroundService(IServiceProvider provider) : BackgroundSer
         var roleManager = _scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = _scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-        // 1. ALTE LOGIK ENTFERNT: Wir reißen nicht mehr bei jedem Start das Haus ab!
         // await DropAllTables(db);
         // await db.Database.EnsureDeletedAsync(cancellationToken);
 
         await Task.Delay(1000, stoppingToken);
-
-        // 2. NEUE LOGIK: Wir wenden ausstehende Updates (Migrationen) sanft an
         Console.WriteLine("Prüfe auf Datenbank-Updates...");
         await db.Database.MigrateAsync(stoppingToken);
         Console.WriteLine("Datenbank ist auf dem neuesten Stand!");
-
 
         if (!db.Players.Any())
         {
