@@ -4,6 +4,7 @@
 @{
     Layout = null;
 }
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -32,7 +33,7 @@
 
     <form method="post" asp-page-handler="CompetitionChanged">
         @{
-            var currentYear = DateTime.Now.Year;
+            var currentYear = CityTime.GetViennaTimeZone().Year;
             var currentCompetitions = Model.Competitions.Where(c => c.RegistrationUntil.Year >= currentYear).ToList();
             var oldCompetitions = Model.Competitions.Where(c => c.RegistrationUntil.Year < currentYear).ToList();
             var isOldActive = oldCompetitions.Any(c => c.Id == Model.SelectedCompetition?.Id);
@@ -87,7 +88,7 @@
 
                 <form method="post" class="competition-action-form">
                     <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
-                    @if (Model.SelectedCompetition.RegistrationUntil >= DateTime.Now)
+                    @if (Model.SelectedCompetition.RegistrationUntil >= CityTime.GetViennaTimeZone())
                     {
                         <button class="btn-action btn-large-shadow @(Model.IsRegistered ? "btn-danger" : "btn-accent")"
                                 asp-page-handler="@(Model.IsRegistered ? "Unregister" : "Register")">
@@ -128,7 +129,7 @@
             <section class="modern-card">
                 <div class="card-header">
                     <h2>👥 Doppel-Paare Konfigurieren</h2>
-                    @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < DateTime.Now)
+                    @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < CityTime.GetViennaTimeZone())
                     {
                         <form method="post" class="m-0">
                             <input type="hidden" name="ChampionshipId" value="@Model.SelectedCompetition.Id"/>
@@ -231,7 +232,7 @@
                     </div>
 
                 </form>
-                @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < DateTime.Now)
+                @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < CityTime.GetViennaTimeZone())
                 {
                     <div class="d-flex justify-content-center align-items-center gap-3 mt-4 mb-5">
                         <form method="post" asp-page-handler="SavePairs">
@@ -261,7 +262,7 @@
                     }
                 </div>
 
-                @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < DateTime.Now)
+                @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < CityTime.GetViennaTimeZone())
                 {
                     <form method="post">
                         <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>

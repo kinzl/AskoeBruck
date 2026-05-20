@@ -11,9 +11,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Platzreservierung | TennisBruck</title>
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/courtBruck.css" asp-append-version="true">
+    <script src="~/js/courtBruckWeather.js" asp-append-version="true"></script>
 </head>
 <body>
 
@@ -40,25 +40,15 @@
 
 <main class="main-container">
     <section class="modern-card">
-
         <div class="date-nav-wrapper">
-
-            @if (Model.CurrentDate.Date > DateTime.Today)
-            {
-                <a href="?date=@Model.CurrentDate.AddDays(-1).ToString("yyyy-MM-dd")" class="btn-date">◀</a>
-            }
-            else
-            {
-                <span class="btn-date" style="opacity: 0.3; cursor: not-allowed;">◀</span>
-            }
+            <a href="?date=@Model.CurrentDate.AddDays(-1).ToString("yyyy-MM-dd")" class="btn-date">◀</a>
 
             <form method="get" class="date-picker-form">
-                <input type="date" name="date" value="@Model.CurrentDate.ToString("yyyy-MM-dd")" min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                <input type="date" name="date" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"
                        class="date-picker-input" onchange="this.form.submit()">
             </form>
 
             <a href="?date=@Model.CurrentDate.AddDays(1).ToString("yyyy-MM-dd")" class="btn-date">▶</a>
-
         </div>
 
 
@@ -100,7 +90,6 @@
                 </form>
             </div>
         }
-
         <div class="table-responsive">
             <table class="court-table">
                 <thead>
@@ -117,19 +106,57 @@
                     <tr>
                         <td class="time-col">
                             <div style="font-weight: 600;">@timeSlot.Time.ToString("HH:mm")</div>
-                            <div class="weather-info" data-time="@timeSlot.Time.ToString("yyyy-MM-dd'T'HH:00")" style="font-size: 0.85rem; margin-top: 4px; font-weight: normal; opacity: 0.8;"></div>
+                            <div class="weather-info" data-time="@timeSlot.Time.ToString("yyyy-MM-dd'T'HH:00")"
+                                 style="font-size: 0.85rem; margin-top: 4px; font-weight: normal; opacity: 0.8;"></div>
                         </td>
 
                         @for (int court = 1; court <= 3; court++)
                         {
-                            var reservation = Model.GetReservation(court, timeSlot.Time);
+                            if (Model.BlockInfo.TryGetValue((court, timeSlot.Time), out var block))
+                            {
+                                if (block.IsStart)
+                                {
+                                    var reservation = block.Reservation;
+                                    if (Model.CurrentPlayer == null)
+                                    {
+                                        <td class="slot-reserved" rowspan="@block.RowSpan">
+                                            🔒 Reserviert
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        bool isMyReservation = Model.CurrentPlayer.Id == reservation.Player?.Id;
+                                        bool isEvent = !string.IsNullOrWhiteSpace(reservation.EventName);
+                                        string tdClass = isMyReservation ? "slot-my-reservation" : (isEvent ? "slot-event" : "slot-reserved");
 
-                            if (reservation == null)
+                                        <td class="@tdClass" rowspan="@block.RowSpan">
+                                            <div class="reserved-name" title="@reservation.DisplayName">
+                                                @reservation.DisplayName
+                                            </div>
+                                            @if (block.RowSpan > 1)
+                                            {
+                                                <div class="reserved-time" style="font-size: 0.65rem; opacity: 0.8; margin-top: 2px; font-weight: 500;">
+                                                    @reservation.StartTime.ToString("HH:mm") - @reservation.StartTime.AddMinutes(30 * block.RowSpan).ToString("HH:mm")
+                                                </div>
+                                            }
+                                            @if (isMyReservation || User.IsInRole("Admin"))
+                                            {
+                                                <form method="post" asp-page-handler="DeleteReservation" style="margin: 0;">
+                                                    <input type="hidden" name="ReservationId" value="@reservation.Id"/>
+                                                    <button type="submit" class="btn-delete-res" title="Gesamte Reservierung löschen">Löschen</button>
+                                                </form>
+                                            }
+                                        </td>
+                                    }
+                                }
+                                // Skip rendering td entirely for block.IsStart == false (it is spanned from the start cell)
+                            }
+                            else
                             {
                                 <td class="slot-available">
                                     @if (Model.CurrentPlayer != null)
                                     {
-                                        if (timeSlot.Time >= DateTime.Now)
+                                        if (timeSlot.Time >= CityTime.GetViennaTimeZone())
                                         {
                                             <form method="post" asp-page-handler="CreateReservation" class="cell-form">
                                                 <input type="hidden" name="courtNumber" value="@court"/>
@@ -144,39 +171,6 @@
                                     }
                                 </td>
                             }
-                            else
-                            {
-                                @if (Model.CurrentPlayer == null)
-                                {
-                                    <td class="slot-reserved">
-                                        🔒 Reserviert
-                                    </td>
-                                }
-                                else
-                                {
-                                    // Wir prüfen, ob es sich um die eigene Reservierung handelt (Null-sicher!)
-                                    bool isMyReservation = Model.CurrentPlayer.Id == reservation.Player?.Id;
-                                    bool isEvent = !string.IsNullOrWhiteSpace(reservation.EventName);
-
-                                    // CSS-Klasse anpassen: Eigene Reservierungen ('slot-my-reservation') haben ab sofort VORRANG vor 'slot-event'!
-                                    string tdClass = isMyReservation ? "slot-my-reservation" : (isEvent ? "slot-event" : "slot-reserved");
-
-                                    <td class="@tdClass">
-
-                                        <div class="reserved-name">
-                                            @reservation.DisplayName
-                                        </div>
-
-                                        @if (isMyReservation || User.IsInRole("Admin"))
-                                        {
-                                            <form method="post" asp-page-handler="DeleteReservation" style="margin: 0;">
-                                                <input type="hidden" name="ReservationId" value="@reservation.Id"/>
-                                                <button type="submit" class="btn-delete-res">Löschen</button>
-                                            </form>
-                                        }
-                                    </td>
-                                }
-                            }
                         }
                     </tr>
                 }
@@ -190,6 +184,5 @@
 <script>
     const currentViewDate = '@Model.CurrentDate.ToString("yyyy-MM-dd")';
 </script>
-<script src="~/js/courtBruckWeather.js" asp-append-version="true"></script>
 </body>
 </html>

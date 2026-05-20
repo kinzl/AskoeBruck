@@ -1,8 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // currentViewDate is defined in the CourtBruck.cshtml inline script.
     if (!currentViewDate) return;
 
-    // We only need weather from roughly 08:00 to 22:00 as per the court slots
     const latitude = 48.25;
     const longitude = 13.78;
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,weathercode&timezone=Europe%2FBerlin&start_date=${currentViewDate}&end_date=${currentViewDate}`;
@@ -12,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!response.ok) throw new Error('Weather data fetch failed');
         
         const data = await response.json();
-        const hourlyTimes = data.hourly.time; // Array of "YYYY-MM-DDTHH:00" strings
+        const hourlyTimes = data.hourly.time;
         const temperatures = data.hourly.temperature_2m;
         const weatherCodes = data.hourly.weathercode;
 

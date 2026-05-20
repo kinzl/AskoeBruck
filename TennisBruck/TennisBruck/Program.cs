@@ -84,10 +84,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => { options.SignIn.Re
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<TennisContext>();
 
-builder.Services.Configure<SecurityStampValidatorOptions>(options =>
-{
-    options.ValidationInterval = TimeSpan.Zero;
-});
+builder.Services.Configure<SecurityStampValidatorOptions>(options => { options.ValidationInterval = TimeSpan.Zero; });
 
 builder.Services.AddLogging();
 builder.Services.AddHostedService<StartupBackgroundService>();
