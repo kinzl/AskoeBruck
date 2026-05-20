@@ -80,7 +80,19 @@ public class Hallplan(
     {
         var currentUser = currentPlayerService.GetCurrentUser();
         if (currentUser == null) return Unauthorized();
-        if (currentUser.Id != data.Player1Id && currentUser.Id != data.Player2Id && !User.IsInRole("Admin")) 
+
+        // Determine the HallPlanId from the courts involved so we can check registration
+        var courtId = data.Court1Id ?? data.Court2Id;
+        int? relevantHallPlanId = courtId.HasValue
+            ? (await db.HallPlanDays.FindAsync(courtId.Value))?.HallPlanId
+            : null;
+
+        bool isInvolvedPlayer = currentUser.Id == data.Player1Id || currentUser.Id == data.Player2Id;
+        bool isRegisteredInPlan = relevantHallPlanId.HasValue &&
+            await db.HallPlanRegistrations.AnyAsync(r =>
+                r.PlayerId == currentUser.Id && r.HallPlanId == relevantHallPlanId.Value);
+
+        if (!isInvolvedPlayer && !isRegisteredInPlan && !User.IsInRole("Admin"))
             return Forbid();
 
         // Fall 1: Normaler Tausch (Beide Spieler sind schon im Plan auf einem Platz)
