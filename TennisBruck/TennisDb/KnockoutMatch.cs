@@ -2,7 +2,6 @@ namespace TennisDb;
 
 public class KnockoutMatch : Match
 {
-    public int Id { get; set; }
     public int BracketNo { get; set; }
 
     public int RoundNo { get; set; }

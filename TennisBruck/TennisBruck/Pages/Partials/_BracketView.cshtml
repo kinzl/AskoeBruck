@@ -1,0 +1,155 @@
+@model TennisBruck.Pages.Championship
+@using Microsoft.AspNetCore.Http
+
+@{
+    var grouped = Model.Matches.GroupBy(m => m.RoundNo).OrderBy(g => g.Key).ToList();
+    var phases = Model.Matches.GroupBy(m => m.PhaseName ?? "A-Bewerb").OrderBy(g => g.Key).ToList();
+    string? sessionPhase = Context.Session.GetString("ActivePhase");
+    string activePhase = sessionPhase ?? TempData["ActivePhase"]?.ToString() ?? phases.FirstOrDefault()?.Key ?? "A-Bewerb";
+    int globalInputIndex = 0;
+}
+
+@if (grouped.Any() || User.IsInRole("Admin"))
+{
+    <section class="modern-card">
+        <div class="card-header">
+            <h2>⚔️ K.O. Phase</h2>
+            @if (User.IsInRole("Admin"))
+            {
+                <form method="post" class="bracket-admin-form flex-center-gap">
+                    <input type="text" asp-for="PhaseName" placeholder="Z.B A-Bewerb" class="input-score"
+                           style="width: 150px;"/>
+                    <select asp-for="SelectedSize" class="bracket-select-w150">
+                        <option value="2">Finale (2)</option>
+                        <option value="4">Halbfinale (4)</option>
+                        <option value="8">Viertelfinale (8)</option>
+                        <option value="16">Achtelfinale (16)</option>
+                        <option value="32">32er (32)</option>
+                    </select>
+                    <button type="button" class="btn-action" onclick="checkPhaseExists()">
+                        Raster hinzufügen
+                    </button>
+                    <button type="submit" id="btnRealCreateBracket" asp-page-handler="CreateBracket"
+                            style="display: none;"></button>
+                    @if (phases.Any(p => p.Key == activePhase))
+                    {
+                        <button type="submit" asp-page-handler="DeletePhase" name="phaseToDelete"
+                                value="@activePhase"
+                                class="btn-action btn-danger ms-2"
+                                onclick="return confirm('Möchtest du diesen Raster (@activePhase) und alle darin enthaltenen Spiele wirklich unwiderruflich löschen?');">
+                            🗑️ Raster löschen
+                        </button>
+                    }
+                </form>
+            }
+        </div>
+
+        <div class="bracket-scroll-area">
+            <form method="post">
+                @if (phases.Count > 1)
+                {
+                    <div class="competition-pills mb-4 bracket-tabs">
+                        @foreach (var phase in phases)
+                        {
+                            bool isActive = phase.Key == activePhase;
+                            <button type="submit" asp-page-handler="SwitchPhase" name="phaseName"
+                                    value="@phase.Key" class="bracket-pill-btn @(isActive ? "active" : "")">
+                                @phase.Key
+                            </button>
+                        }
+                    </div>
+                }
+
+                @{
+                    var activePhaseGroup = phases.FirstOrDefault(p => p.Key == activePhase);
+                }
+                @if (activePhaseGroup != null)
+                {
+                    var phaseGrouped = activePhaseGroup.GroupBy(m => m.RoundNo).OrderBy(g => g.Key).ToList();
+
+                    <div class="bracket-phase-container">
+                        <div class="bracket-flex mb-24">
+                            @foreach (var round in phaseGrouped)
+                            {
+                                <div class="bracket-col">
+                                    @foreach (var match in round)
+                                    {
+                                        @if (match.IsBye)
+                                        {
+                                            <div class="bracket-bye"></div>
+                                        }
+                                        else
+                                        {
+                                            var currentIndex = globalInputIndex++;
+                                            <div class="match-scorecard bracket-match-card">
+                                                <input type="hidden" name="Inputs[@currentIndex].MatchId"
+                                                       value="@match.Id"/>
+                                                <div class="bracket-match-info">Match @match.BracketNo</div>
+
+                                                @if (User.IsInRole("Admin"))
+                                                {
+                                                    <select name="Inputs[@currentIndex].Team1Id"
+                                                            class="bracket-select">
+                                                        <option value="">Team 1 wählen</option>
+                                                        @foreach (var team in Model.RegisteredTeams)
+                                                        {
+                                                            <option value="@team.Id"
+                                                                    selected="@(match.Team1?.Id == team.Id)">@team.PlayersToStringWithItn()</option>
+                                                        }
+                                                    </select>
+                                                    <select name="Inputs[@currentIndex].Team2Id"
+                                                            class="bracket-select">
+                                                        <option value="">Team 2 wählen</option>
+                                                        @foreach (var team in Model.RegisteredTeams)
+                                                        {
+                                                            <option value="@team.Id"
+                                                                    selected="@(match.Team2?.Id == team.Id)">@team.PlayersToStringWithItn()</option>
+                                                        }
+                                                    </select>
+                                                }
+                                                else
+                                                {
+                                                    <div
+                                                        class="bracket-team-read has-border @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team1?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
+                                                        @(match.Team1?.PlayersToStringWithItn() ?? "TBD")
+                                                    </div>
+                                                    <div
+                                                        class="bracket-team-read @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team2?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
+                                                        @(match.Team2?.PlayersToStringWithItn() ?? "TBD")
+                                                    </div>
+                                                }
+
+                                                @if (match.IsWalkover)
+                                                {
+                                                    var winnerName = match.WalkoverTeamId == match.Team1?.Id ? match.Team2?.PlayersToStringWithItn() : match.Team1?.PlayersToStringWithItn();
+                                                    <div class="bracket-result text-warning fw-bold">w.o.
+                                                        (Sieger: @winnerName)
+                                                    </div>
+                                                }
+                                                else if (match.Sets != null && match.Sets.Any())
+                                                {
+                                                    <div class="bracket-result">
+                                                        @match.SetToString()
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (User.IsInRole("Admin") && grouped.Any())
+                {
+                    <button type="submit" asp-page-handler="ApplyUserInputs"
+                            class="btn-action btn-accent bracket-save-btn"
+                            onclick="return confirm('Bisher zugeiteilte Spieler und gespielte Spieler werden überschrieben. Möchtest du das wirklich?');">
+                        Zuteilung im Raster speichern
+                    </button>
+                }
+            </form>
+        </div>
+    </section>
+}

@@ -1,0 +1,138 @@
+@model TennisBruck.Pages.Championship
+
+@if (Model.Groups.Any() || User.IsInRole("Admin"))
+{
+    <section class="modern-card">
+        <div class="card-header">
+            <h2>📊 Gruppenphase</h2>
+            @if (User.IsInRole("Admin"))
+            {
+                <form method="post">
+                    <button class="btn-action" asp-page-handler="CreateGroup">➕ Gruppe hinzufügen</button>
+                </form>
+            }
+        </div>
+
+        @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < CityTime.GetViennaTimeZone())
+        {
+            <form method="post">
+                <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+
+                <div class="group-generator-toolbar">
+                    <label for="targetGroupSize" class="toolbar-label">
+                        Wunsch-Gruppengröße:
+                    </label>
+
+                    <input type="number" id="targetGroupSize" name="TargetGroupSize"
+                           class="toolbar-input" value="4" min="2" max="10" required/>
+
+                    <button type="submit" asp-page-handler="GenerateGroups" class="btn-generate"
+                            onclick="return confirm('Bisher generierte und gespielte Gruppenphase Spiele dieses Bewerbs werden gelöscht. Möchtest wirklich neu auslosen?');">
+                        Zufällig Auslosen
+                    </button>
+                </div>
+            </form>
+        }
+        <div class="group-grid">
+            @foreach (var group in Model.Groups)
+            {
+                <div class="group-panel">
+                    <div class="group-panel-header">
+                        <strong class="group-panel-title">@group.GroupName</strong>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <form method="post" class="group-admin-actions">
+                                <input type="hidden" name="groupId" value="@group.Id"/>
+                                <button class="btn-action btn-icon-sm" title="Größer"
+                                        asp-page-handler="IncreaseGroupSize">➕
+                                </button>
+                                <button class="btn-action btn-icon-sm" title="Kleiner"
+                                        asp-page-handler="DecreaseGroupSize">➖
+                                </button>
+                                <button class="btn-delete-icon" title="Löschen" asp-page-handler="DeleteGroup">
+                                    🗑️
+                                </button>
+                            </form>
+                        }
+                    </div>
+
+                    <div class="group-panel-body">
+                        @for (int i = 0; i < group.MaxAmount; i++)
+                        {
+                            // Wir holen uns die sicher berechneten Daten für diese Zeile
+                            var tableEntry = Model.GroupTables.TryGetValue(group.Id, out var table) ? table.ElementAtOrDefault(i) : null;
+
+                            // Das ist dein Original-Objekt, das wir für die Team-Namen und den Lösch-Button brauchen
+                            var groupTeam = tableEntry?.GroupTeam ?? group.GroupTeams.ElementAtOrDefault(i);
+
+                            <div class="group-team-row">
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <form method="post" asp-page-handler="AddSinglePlayer" class="flex-1">
+                                        <input type="hidden" name="groupId" value="@group.Id"/>
+                                        <input type="hidden" name="competitionId"
+                                               value="@group.Competition.Id"/>
+                                        <select name="teamId" onchange="this.form.submit()" class="select-sm">
+                                            <option value="">Freilos</option>
+                                            @if (groupTeam != null)
+                                            {
+                                                <option selected="selected"
+                                                        value="@groupTeam.Team.Id">@groupTeam.Team.PlayersToStringWithItn()</option>
+                                            }
+                                            @foreach (var team in Model.RegisteredTeams)
+                                            {
+                                                <option value="@team.Id">@team.PlayersToStringWithItn()</option>
+                                            }
+                                        </select>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span
+                                        class="fw-500">@(groupTeam != null ? groupTeam.Team.PlayersToString() : "TBD")</span>
+                                }
+
+                                <div class="group-score-wrapper">
+                                    @if (tableEntry != null)
+                                    {
+                                        <span class="group-points"
+                                              title="Punkte (Siege)">@tableEntry.Points</span>
+                                        <span class="group-points"
+                                              title="Games (Gewonnen:Verloren)">@tableEntry.GamesWon:@tableEntry.GamesLost</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="group-points">0</span>
+                                        <span class="group-points">0:0</span>
+                                    }
+
+                                    @if (User.IsInRole("Admin") && groupTeam != null)
+                                    {
+                                        <form method="post">
+                                            <input type="hidden" name="groupId" value="@group.Id"/>
+                                            <input type="hidden" name="teamId" value="@groupTeam.Team.Id"/>
+                                            <button class="btn-delete-icon"
+                                                    asp-page-handler="RemoveTeamFromGroup">❌
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (User.IsInRole("Admin") && Model.Groups.Any())
+        {
+            <form method="post" class="group-save-wrapper">
+                <button type="submit" asp-page-handler="SaveGroups"
+                        class="btn-action btn-accent btn-large-accent-shadow"
+                        onclick="return confirm('Bisher generierte und gespielte Gruppenphase Spiele dieses Bewerbs werden gelöscht. Möchtest wirklich neu auslosen?');">
+                    💾 Gruppeneinteilung speichern
+                </button>
+            </form>
+        }
+    </section>
+}

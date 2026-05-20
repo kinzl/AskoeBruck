@@ -1,0 +1,71 @@
+@model TennisBruck.Pages.Championship
+
+@if (Model.PersonalMatches.Any())
+{
+    <section class="modern-card card-accent-border">
+        <div class="card-header">
+            <h2>🎾 Deine nächsten Matches</h2>
+        </div>
+
+        @foreach (var match in Model.PersonalMatches)
+        {
+            <div class="match-scorecard">
+                <div class="match-players">
+                    <span
+                        class="@(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team1?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
+                        @match.Team1?.PlayersToString()
+                    </span>
+
+                    <span class="text-vs">vs</span>
+
+                    <span
+                        class="@(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team2?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
+                        @match.Team2?.PlayersToString()
+                    </span>
+                    <span class="badge-phase">
+                        @(match.Group != null ? match.Group.Competition.Name : "K.O Phase")
+                    </span>
+                </div>
+
+                <form method="post" class="match-action-form">
+                    <input type="hidden" name="matchId" value="@match.Id"/>
+
+                    @if (match.IsWalkover)
+                    {
+                        var winnerName = match.WalkoverTeamId == match.Team1?.Id ? match.Team2?.PlayersToString() : match.Team1?.PlayersToString();
+                        <div class="match-score text-warning fw-bold">w.o. (Sieger: @winnerName)</div>
+                        @if (match.Team1?.TeamPlayers.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true || match.Team2?.TeamPlayers.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true)
+                        {
+                            <button class="btn-action btn-danger btn-xs" asp-page-handler="DeleteMatch">
+                                Rückgängig
+                            </button>
+                        }
+                    }
+                    else if (match.Sets == null || !match.Sets.Any())
+                    {
+                        <div class="flex-center-gap">
+                            <input type="text" name="score" placeholder="6:4 6:2" class="input-score"/>
+                            <button class="btn-action btn-accent" asp-page-handler="SaveMatch">Eintragen
+                            </button>
+                            <button type="submit" class="btn-action btn-warning btn-sm"
+                                    asp-page-handler="GiveWalkover"
+                                    onclick="return confirm('Möchtest du dieses Match wirklich aufgeben? Dein Gegner gewinnt durch w.o.');">
+                                W.O. geben
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="match-score">@match.SetToString()</div>
+                        @if (match.Team1?.TeamPlayers.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true || match.Team2?.TeamPlayers.Any(x => x.PlayerId == Model.CurrentPlayer.Id) == true)
+                        {
+                            <button class="btn-action btn-danger btn-xs" asp-page-handler="DeleteMatch">
+                                Rückgängig
+                            </button>
+                        }
+                    }
+                </form>
+            </div>
+        }
+    </section>
+}

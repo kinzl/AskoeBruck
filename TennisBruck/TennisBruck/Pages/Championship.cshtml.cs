@@ -57,10 +57,10 @@ public class Championship(
             .Where(m => m.Team1.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id) ||
                         m.Team2.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id))
             .ToList()
-            .Where(m => 
+            .Where(m =>
                 (m.Group != null && m.Group.Competition.RegistrationUntil.Year == thisYear) ||
                 (m is KnockoutMatch km && thisYearCompIds.Contains(km.CompetitionId)) ||
-                (m.Sets != null && m.Sets.Any()) || 
+                (m.Sets != null && m.Sets.Any()) ||
                 m.IsWalkover)
             .ToList();
 
@@ -242,15 +242,16 @@ public class Championship(
             // Remove regular matches involving this team
             var matches = db.Matches.Where(m => m.Team1.Id == teamId || m.Team2.Id == teamId).ToList();
             db.Matches.RemoveRange(matches);
-            
+
             // Unlink from knockout matches
-            var knockoutMatches = db.KnockoutMatch.Where(m => (m.Team1 != null && m.Team1.Id == teamId) || (m.Team2 != null && m.Team2.Id == teamId)).ToList();
+            var knockoutMatches = db.KnockoutMatch.Where(m =>
+                (m.Team1 != null && m.Team1.Id == teamId) || (m.Team2 != null && m.Team2.Id == teamId)).ToList();
             foreach (var km in knockoutMatches)
             {
                 if (km.Team1?.Id == teamId) km.Team1 = null;
                 if (km.Team2?.Id == teamId) km.Team2 = null;
             }
-            
+
             // Remove from groups
             var groupTeams = db.GroupTeams.Where(gt => gt.TeamId == teamId).ToList();
             db.GroupTeams.RemoveRange(groupTeams);
@@ -261,13 +262,15 @@ public class Championship(
             if (SelectedCompetition != null && SelectedCompetition.IsSingle)
             {
                 var playerId = team.TeamPlayers.First().PlayerId;
-                var reg = db.TournamentRegistrations.SingleOrDefault(tr => tr.PlayerId == playerId && tr.CompetitionId == SelectedCompetition.Id);
+                var reg = db.TournamentRegistrations.SingleOrDefault(tr =>
+                    tr.PlayerId == playerId && tr.CompetitionId == SelectedCompetition.Id);
                 if (reg != null) db.TournamentRegistrations.Remove(reg);
             }
 
             db.SaveChanges();
             return RedirectToPage(new { Message = "Team wurde erfolgreich gelöscht." });
         }
+
         return RedirectToPage(new { Message = "Team nicht gefunden." });
     }
 
@@ -453,8 +456,8 @@ public class Championship(
                 .Include(x => x.Group)
                 .Single(x => x.Id == matchId);
 
-            bool isTeam1 = match.Team1 != null && match.Team1.TeamPlayers.Any(p => p.Player.Id == currentUser.Id);
-            bool isTeam2 = match.Team2 != null && match.Team2.TeamPlayers.Any(p => p.Player.Id == currentUser.Id);
+            bool isTeam1 = match.Team1 != null && match.Team1.TeamPlayers.Any(p => p.PlayerId == currentUser.Id);
+            bool isTeam2 = match.Team2 != null && match.Team2.TeamPlayers.Any(p => p.PlayerId == currentUser.Id);
             if (!isTeam1 && !isTeam2 && !User.IsInRole("Admin")) return Forbid();
             var sets = score.Split(" ");
             for (var i = 0; i < sets.Length; i++)
@@ -503,23 +506,18 @@ public class Championship(
         var currentUser = currentPlayerService.GetCurrentUser();
         if (currentUser == null) return Unauthorized();
 
-        bool isTeam1 = match.Team1 != null && match.Team1.TeamPlayers.Any(p => p.Player.Id == currentUser.Id);
-        bool isTeam2 = match.Team2 != null && match.Team2.TeamPlayers.Any(p => p.Player.Id == currentUser.Id);
+        bool isTeam1 = match.Team1 != null && match.Team1.TeamPlayers.Any(p => p.PlayerId == currentUser.Id);
+        bool isTeam2 = match.Team2 != null && match.Team2.TeamPlayers.Any(p => p.PlayerId == currentUser.Id);
         bool isAdmin = User.IsInRole("Admin");
 
         if (!isTeam1 && !isTeam2 && !isAdmin) return Forbid();
-
-        if (match.IsWalkover && !isAdmin)
-        {
-            Message = "Ein Walkover kann nur vom Admin rückgängig gemacht werden.";
-            return RedirectToPage();
-        }
 
         if (match.Sets != null && match.Sets.Any()) db.Sets.RemoveRange(match.Sets);
 
         match.Sets = null;
         match.IsWalkover = false;
         match.WalkoverTeamId = null;
+        match.Winner = null;
         match.WinnerTeamId = null;
 
         await db.SaveChangesAsync();
@@ -623,21 +621,35 @@ public class Championship(
         if (!User.IsInRole("Admin")) return Forbid();
         InitValues();
 
+        var teamLookup = db.Teams
+            .Include(t => t.TeamPlayers)
+            .ThenInclude(tp => tp.Player)
+            .Where(t => t.CompetitionId == SelectedCompetition!.Id)
+            .ToDictionary(t => t.Id);
+
         foreach (var match in Matches)
         {
             var input = Inputs.FirstOrDefault(i => i.MatchId == match.Id);
 
             if (input != null)
             {
-                match.Team1 = db.Teams
-                    .Include(t => t.TeamPlayers)
-                    .ThenInclude(tp => tp.Player)
-                    .SingleOrDefault(t => t.Id == input.Team1Id);
+                if (input.Team1Id.HasValue && input.Team1Id.Value > 0)
+                {
+                    match.Team1 = teamLookup.GetValueOrDefault(input.Team1Id.Value);
+                }
+                else
+                {
+                    match.Team1 = null;
+                }
 
-                match.Team2 = db.Teams
-                    .Include(t => t.TeamPlayers)
-                    .ThenInclude(tp => tp.Player)
-                    .SingleOrDefault(t => t.Id == input.Team2Id);
+                if (input.Team2Id.HasValue && input.Team2Id.Value > 0)
+                {
+                    match.Team2 = teamLookup.GetValueOrDefault(input.Team2Id.Value);
+                }
+                else
+                {
+                    match.Team2 = null;
+                }
             }
         }
 
