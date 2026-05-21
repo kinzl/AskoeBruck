@@ -14,7 +14,20 @@ public class CurrentPlayerService(IHttpContextAccessor httpContextAccessor, Tenn
             ? null
             : db.Players
                 .Include(x => x.IdentityUser)
+                .Include(x => x.NotificationSettings)
                 .SingleOrDefault(x => x.IdentityUserId == userId);
+
+        if (_cachedPlayer != null && _cachedPlayer.NotificationSettings == null)
+        {
+            _cachedPlayer.NotificationSettings = new PlayerNotificationSettings
+            {
+                EmailOnOpponentAssigned = true,
+                EmailOnSlotFull = true,
+                EmailOnSlotCancelled = true,
+                EmailOnSlotJoined = true
+            };
+            db.SaveChanges();
+        }
 
         return _cachedPlayer;
     }

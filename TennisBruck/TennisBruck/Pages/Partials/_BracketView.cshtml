@@ -81,7 +81,9 @@
                                         else
                                         {
                                             var currentIndex = globalInputIndex++;
-                                            <div class="match-scorecard bracket-match-card">
+                                            bool isDecided = match.Winner != null || match.IsWalkover;
+                                            <div
+                                                class="match-scorecard bracket-match-card @(isDecided ? "match-complete" : "")">
                                                 <input type="hidden" name="Inputs[@currentIndex].MatchId"
                                                        value="@match.Id"/>
                                                 <div class="bracket-match-info">Match @match.BracketNo</div>
@@ -106,30 +108,57 @@
                                                                     selected="@(match.Team2?.Id == team.Id)">@team.PlayersToStringWithItn()</option>
                                                         }
                                                     </select>
+                                                    @if (match.IsWalkover)
+                                                    {
+                                                        var winnerName = match.WalkoverTeamId == match.Team1?.Id ? match.Team2?.PlayersToStringWithItn() : match.Team1?.PlayersToStringWithItn();
+                                                        <div class="bracket-result text-warning fw-bold">w.o.
+                                                            (Sieger: @winnerName)
+                                                        </div>
+                                                    }
+                                                    else if (match.Sets != null && match.Sets.Any())
+                                                    {
+                                                        <div class="bracket-result">@match.SetToString()</div>
+                                                    }
                                                 }
                                                 else
                                                 {
-                                                    <div
-                                                        class="bracket-team-read has-border @(match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team1?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
+                                                    string slot1Class, slot2Class;
+                                                    if (match.IsWalkover)
+                                                    {
+                                                        slot1Class = match.WalkoverTeamId == match.Team1?.Id ? "slot-loser" : "slot-winner";
+                                                        slot2Class = match.WalkoverTeamId == match.Team2?.Id ? "slot-loser" : "slot-winner";
+                                                    }
+                                                    else if (match.Winner != null)
+                                                    {
+                                                        slot1Class = match.Winner.Id == match.Team1?.Id ? "slot-winner" : "slot-loser";
+                                                        slot2Class = match.Winner.Id == match.Team2?.Id ? "slot-winner" : "slot-loser";
+                                                    }
+                                                    else
+                                                    {
+                                                        slot1Class = match.Team1 == null ? "slot-tbd" : "";
+                                                        slot2Class = match.Team2 == null ? "slot-tbd" : "";
+                                                    }
+
+                                                    <div class="bracket-slot has-border @slot1Class">
                                                         @(match.Team1?.PlayersToStringWithItn() ?? "TBD")
                                                     </div>
-                                                    <div
-                                                        class="bracket-team-read @(match.IsWalkover && match.WalkoverTeamId == match.Team2?.Id ? "team-walkover" : (match.IsWalkover && match.WalkoverTeamId == match.Team1?.Id ? "team-walkover-winner" : (match.Winner?.Id == match.Team2?.Id ? "winner-highlight" : (match.Winner != null ? "loser-highlight" : ""))))">
-                                                        @(match.Team2?.PlayersToStringWithItn() ?? "TBD")
-                                                    </div>
-                                                }
 
-                                                @if (match.IsWalkover)
-                                                {
-                                                    var winnerName = match.WalkoverTeamId == match.Team1?.Id ? match.Team2?.PlayersToStringWithItn() : match.Team1?.PlayersToStringWithItn();
-                                                    <div class="bracket-result text-warning fw-bold">w.o.
-                                                        (Sieger: @winnerName)
-                                                    </div>
-                                                }
-                                                else if (match.Sets != null && match.Sets.Any())
-                                                {
-                                                    <div class="bracket-result">
-                                                        @match.SetToString()
+                                                    @if (match.IsWalkover)
+                                                    {
+                                                        <div class="bracket-score-badge bracket-score-walkover">w.o.
+                                                        </div>
+                                                    }
+                                                    else if (match.Sets != null && match.Sets.Any())
+                                                    {
+                                                        <div class="bracket-score-badge">@match.SetToString()</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="bracket-score-vs">vs</div>
+                                                    }
+
+                                                    <div class="bracket-slot @slot2Class">
+                                                        @(match.Team2?.PlayersToStringWithItn() ?? "TBD")
                                                     </div>
                                                 }
                                             </div>
@@ -144,8 +173,7 @@
                 @if (User.IsInRole("Admin") && grouped.Any())
                 {
                     <button type="submit" asp-page-handler="ApplyUserInputs"
-                            class="btn-action btn-accent bracket-save-btn"
-                            onclick="return confirm('Bisher zugeiteilte Spieler und gespielte Spieler werden überschrieben. Möchtest du das wirklich?');">
+                            class="btn-action btn-accent bracket-save-btn">
                         Zuteilung im Raster speichern
                     </button>
                 }

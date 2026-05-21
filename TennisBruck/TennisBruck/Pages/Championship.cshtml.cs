@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Group = TennisDb.Group;
 using Match = TennisDb.Match;
 
@@ -9,7 +10,8 @@ namespace TennisBruck.Pages;
 public class Championship(
     CurrentPlayerService currentPlayerService,
     TennisContext db,
-    UserManager<IdentityUser> userManager)
+    UserManager<IdentityUser> userManager,
+    IEmailSender emailSender)
     : PageModel
 {
     public bool IsRegistered { get; set; }
@@ -59,7 +61,8 @@ public class Championship(
             .ToList()
             .Where(m =>
                 (m.Group != null && m.Group.Competition.RegistrationUntil.Year == thisYear) ||
-                (m is KnockoutMatch km && thisYearCompIds.Contains(km.CompetitionId)) ||
+                // Only show knockout matches when both opponents are known
+                (m is KnockoutMatch km && thisYearCompIds.Contains(km.CompetitionId) && m.Team1 != null && m.Team2 != null) ||
                 (m.Sets != null && m.Sets.Any()) ||
                 m.IsWalkover)
             .ToList();
@@ -459,6 +462,8 @@ public class Championship(
             bool isTeam1 = match.Team1 != null && match.Team1.TeamPlayers.Any(p => p.PlayerId == currentUser.Id);
             bool isTeam2 = match.Team2 != null && match.Team2.TeamPlayers.Any(p => p.PlayerId == currentUser.Id);
             if (!isTeam1 && !isTeam2 && !User.IsInRole("Admin")) return Forbid();
+            if (match.Team1 == null || match.Team2 == null)
+                return RedirectToPage(new { Message = "Das Match kann nicht gewertet werden, da noch kein Gegner feststeht." });
             var sets = score.Split(" ");
             for (var i = 0; i < sets.Length; i++)
             {
@@ -481,6 +486,7 @@ public class Championship(
             match.Winner = winner;
 
             db.SaveChanges();
+            AdvanceWinnerInBracket(match);
         }
         catch (Exception)
         {
@@ -513,6 +519,20 @@ public class Championship(
         if (!isTeam1 && !isTeam2 && !isAdmin) return Forbid();
 
         if (match.Sets != null && match.Sets.Any()) db.Sets.RemoveRange(match.Sets);
+
+        // Block undo if the next knockout round is already played
+        if (match is KnockoutMatch km && km.NextGame.HasValue && match.Winner != null)
+        {
+            var nextMatch = await db.KnockoutMatch
+                .Include(m => m.Sets)
+                .FirstOrDefaultAsync(m => m.BracketNo == km.NextGame
+                                       && m.CompetitionId == km.CompetitionId
+                                       && m.PhaseName == km.PhaseName);
+            if (nextMatch != null && (nextMatch.IsWalkover || (nextMatch.Sets != null && nextMatch.Sets.Any())))
+                return RedirectToPage(new { Message = "Das Match kann nicht zurückgesetzt werden, da das Folgespiel bereits gespielt wurde." });
+
+            UndoWinnerAdvancement(km, match.Winner);
+        }
 
         match.Sets = null;
         match.IsWalkover = false;
@@ -627,12 +647,16 @@ public class Championship(
             .Where(t => t.CompetitionId == SelectedCompetition!.Id)
             .ToDictionary(t => t.Id);
 
+        var newlyCompletedMatches = new List<KnockoutMatch>();
+
         foreach (var match in Matches)
         {
             var input = Inputs.FirstOrDefault(i => i.MatchId == match.Id);
 
             if (input != null)
             {
+                bool wasIncomplete = match.Team1 == null || match.Team2 == null;
+
                 if (input.Team1Id.HasValue && input.Team1Id.Value > 0)
                 {
                     match.Team1 = teamLookup.GetValueOrDefault(input.Team1Id.Value);
@@ -650,10 +674,21 @@ public class Championship(
                 {
                     match.Team2 = null;
                 }
+
+                if (wasIncomplete && match.Team1 != null && match.Team2 != null)
+                {
+                    newlyCompletedMatches.Add(match);
+                }
             }
         }
 
         db.SaveChanges();
+
+        foreach (var completedMatch in newlyCompletedMatches)
+        {
+            NotifyOpponentsIfAssigned(completedMatch);
+        }
+
         return RedirectToPage(new { Message = "Zuteilung wurde gespeichert" });
     }
 
@@ -741,6 +776,7 @@ public class Championship(
         }
 
         await db.SaveChangesAsync();
+        AdvanceWinnerInBracket(match);
 
         return RedirectToPage(new { Message = "Du hast das Match aufgegeben. Der Sieg geht per w.o. an die Gegner." });
     }
@@ -761,6 +797,7 @@ public class Championship(
         match.Winner = match.Team1 != null && match.Team1.Id == walkoverTeamId ? match.Team2 : match.Team1;
 
         await db.SaveChangesAsync();
+        AdvanceWinnerInBracket(match);
 
         return RedirectToPage(new { Message = "Match wurde durch Admin als w.o. gewertet." });
     }
@@ -786,6 +823,110 @@ public class Championship(
         var player = db.Players.Single(x => x.IdentityUserId == currentUser.Id);
 
         return await WithDrawPlayer(player.Id, selectedCompetition);
+    }
+
+    /// <summary>
+    /// Places the winner of a finished knockout match into the first empty slot of the next round's match.
+    /// Only fills empty slots — does not overwrite manual admin assignments.
+    /// </summary>
+    private void AdvanceWinnerInBracket(Match match)
+    {
+        if (match is not KnockoutMatch km || km.NextGame == null || match.Winner == null)
+            return;
+
+        var nextMatch = db.KnockoutMatch
+            .Include(m => m.Team1)
+            .Include(m => m.Team2)
+            .FirstOrDefault(m => m.BracketNo == km.NextGame
+                              && m.CompetitionId == km.CompetitionId
+                              && m.PhaseName == km.PhaseName);
+
+        if (nextMatch == null) return;
+
+        if (nextMatch.Team1 == null)
+            nextMatch.Team1 = match.Winner;
+        else if (nextMatch.Team2 == null)
+            nextMatch.Team2 = match.Winner;
+        // Both slots already filled (manual assignment) — don't overwrite
+
+        db.SaveChanges();
+        NotifyOpponentsIfAssigned(nextMatch);
+    }
+
+    private void NotifyOpponentsIfAssigned(KnockoutMatch nextMatch)
+    {
+        if (nextMatch.Team1 != null && nextMatch.Team2 != null)
+        {
+            var team1 = db.Teams
+                .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.NotificationSettings)
+                .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.IdentityUser)
+                .FirstOrDefault(t => t.Id == nextMatch.Team1.Id);
+
+            var team2 = db.Teams
+                .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.NotificationSettings)
+                .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.IdentityUser)
+                .FirstOrDefault(t => t.Id == nextMatch.Team2.Id);
+
+            if (team1 != null && team2 != null)
+            {
+                var team1Players = team1.TeamPlayers.Select(tp => tp.Player).ToList();
+                var team2Players = team2.TeamPlayers.Select(tp => tp.Player).ToList();
+
+                var team1Names = string.Join(" / ", team1Players.Select(p => $"{p.Firstname} {p.Lastname}"));
+                var team2Names = string.Join(" / ", team2Players.Select(p => $"{p.Firstname} {p.Lastname}"));
+
+                // Notify team 1 players
+                foreach (var p in team1Players)
+                {
+                    if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnOpponentAssigned))
+                    {
+                        var subject = "🎾 Dein Gegner im K.O.-Raster steht fest!";
+                        var body = $"Hallo {p.Firstname},<br><br>" +
+                                   $"dein nächster Gegner im K.O.-Raster steht fest! Du ({team1Names}) spielst gegen <strong>{team2Names}</strong>.<br><br>" +
+                                   $"Viel Erfolg beim Match!<br>Dein TennisBruck-Team";
+                        _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
+                    }
+                }
+
+                // Notify team 2 players
+                foreach (var p in team2Players)
+                {
+                    if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnOpponentAssigned))
+                    {
+                        var subject = "🎾 Dein Gegner im K.O.-Raster steht fest!";
+                        var body = $"Hallo {p.Firstname},<br><br>" +
+                                   $"dein nächster Gegner im K.O.-Raster steht fest! Du ({team2Names}) spielst gegen <strong>{team1Names}</strong>.<br><br>" +
+                                   $"Viel Erfolg beim Match!<br>Dein TennisBruck-Team";
+                        _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Removes an auto-placed winner from the next round match when undoing a knockout result.
+    /// Only clears the slot if the next match has not yet been played.
+    /// </summary>
+    private void UndoWinnerAdvancement(KnockoutMatch km, Team previousWinner)
+    {
+        if (km.NextGame == null) return;
+
+        var nextMatch = db.KnockoutMatch
+            .Include(m => m.Team1)
+            .Include(m => m.Team2)
+            .FirstOrDefault(m => m.BracketNo == km.NextGame
+                              && m.CompetitionId == km.CompetitionId
+                              && m.PhaseName == km.PhaseName);
+
+        if (nextMatch == null) return;
+
+        if (nextMatch.Team1?.Id == previousWinner.Id)
+            nextMatch.Team1 = null;
+        else if (nextMatch.Team2?.Id == previousWinner.Id)
+            nextMatch.Team2 = null;
+
+        db.SaveChanges();
     }
 
     private async Task<IActionResult> WithDrawPlayer(int playerId, int competitionId)

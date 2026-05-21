@@ -111,6 +111,65 @@
             </form>
         </section>
 
+        <section class="modern-card">
+            <div class="card-header-flex">
+                <div class="icon-box">📧</div>
+                <h2>E-Mail Benachrichtigungen</h2>
+            </div>
+
+            <form method="post" asp-page-handler="SaveNotificationSettings" class="form-col-flex">
+                <p class="form-help-text mb-30" style="line-height:1.4;">
+                    Wähle aus, bei welchen Ereignissen du per E-Mail informiert werden möchtest.
+                </p>
+
+                <div class="notification-item">
+                    <div class="notification-info">
+                        <span class="notification-title">K.O. Gegner bekannt</span>
+                        <span class="notification-desc">Sobald dein nächster Spielgegner feststeht.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnOpponentAssigned" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-info">
+                        <span class="notification-title">Börseneintrag vollständig</span>
+                        <span class="notification-desc">Wenn dein Spielersuche-Eintrag vollzählig besetzt ist.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnSlotFull" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-info">
+                        <span class="notification-title">Börseneintrag gelöscht</span>
+                        <span class="notification-desc">Wenn ein Börsenspiel, bei dem du dich eingetragen hast, abgesagt wird.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnSlotCancelled" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="notification-item mb-30">
+                    <div class="notification-info">
+                        <span class="notification-title">Jemand trägt sich ein</span>
+                        <span class="notification-desc">Wenn sich ein Spieler für deine Spielersuche anmeldet.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnSlotJoined" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-action btn-accent">Einstellungen Speichern</button>
+            </form>
+        </section>
+
         <section class="modern-card" style="border-left: 4px solid var(--danger-color, #ef4444);">
             <div class="card-header-flex">
                 <div class="icon-box" style="background:#fee2e2;color:#ef4444;">⚠️</div>

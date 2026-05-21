@@ -572,6 +572,37 @@ namespace TennisDb.Migrations
                     b.ToTable("Players");
                 });
 
+            modelBuilder.Entity("TennisDb.PlayerNotificationSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("EmailOnOpponentAssigned")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailOnSlotCancelled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailOnSlotFull")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmailOnSlotJoined")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("PlayerId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlayerId")
+                        .IsUnique();
+
+                    b.ToTable("PlayerNotificationSettings");
+                });
+
             modelBuilder.Entity("TennisDb.Reservation", b =>
                 {
                     b.Property<int>("Id")
@@ -944,6 +975,17 @@ namespace TennisDb.Migrations
                     b.Navigation("IdentityUser");
                 });
 
+            modelBuilder.Entity("TennisDb.PlayerNotificationSettings", b =>
+                {
+                    b.HasOne("TennisDb.Player", "Player")
+                        .WithOne("NotificationSettings")
+                        .HasForeignKey("TennisDb.PlayerNotificationSettings", "PlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Player");
+                });
+
             modelBuilder.Entity("TennisDb.Reservation", b =>
                 {
                     b.HasOne("TennisDb.Player", "Player")
@@ -1058,6 +1100,8 @@ namespace TennisDb.Migrations
             modelBuilder.Entity("TennisDb.Player", b =>
                 {
                     b.Navigation("HallEntities");
+
+                    b.Navigation("NotificationSettings");
 
                     b.Navigation("TournamentRegistrations");
                 });

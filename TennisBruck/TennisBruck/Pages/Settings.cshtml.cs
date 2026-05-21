@@ -50,6 +50,25 @@ public class Settings(
         return RedirectToPage(nameof(Settings), new { Message = "Daten erfolgreich gespeichert" });
     }
 
+    public async Task<IActionResult> OnPostSaveNotificationSettingsAsync()
+    {
+        var dbPlayer = currentPlayerService.GetCurrentUser()!;
+        if (dbPlayer.NotificationSettings == null)
+        {
+            dbPlayer.NotificationSettings = new PlayerNotificationSettings();
+            db.PlayerNotificationSettings.Add(dbPlayer.NotificationSettings);
+        }
+
+        dbPlayer.NotificationSettings.EmailOnOpponentAssigned = CurrentPlayer.NotificationSettings?.EmailOnOpponentAssigned ?? true;
+        dbPlayer.NotificationSettings.EmailOnSlotFull = CurrentPlayer.NotificationSettings?.EmailOnSlotFull ?? true;
+        dbPlayer.NotificationSettings.EmailOnSlotCancelled = CurrentPlayer.NotificationSettings?.EmailOnSlotCancelled ?? true;
+        dbPlayer.NotificationSettings.EmailOnSlotJoined = CurrentPlayer.NotificationSettings?.EmailOnSlotJoined ?? true;
+
+        await db.SaveChangesAsync();
+
+        return RedirectToPage(nameof(Settings), new { Message = "Benachrichtigungseinstellungen erfolgreich aktualisiert." });
+    }
+
     public async Task<IActionResult> OnPostChangePasswordAsync(string oldPassword, string newPassword,
         string newPasswordRepeat)
     {

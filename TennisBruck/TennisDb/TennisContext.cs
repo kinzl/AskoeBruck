@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +36,7 @@ public class TennisContext : IdentityDbContext<IdentityUser>, IDataProtectionKey
     public DbSet<HallPlanRegistration> HallPlanRegistrations { get; set; }
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
     public DbSet<AvailabilitySlot> AvailabilitySlots { get; set; }
+    public DbSet<PlayerNotificationSettings> PlayerNotificationSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

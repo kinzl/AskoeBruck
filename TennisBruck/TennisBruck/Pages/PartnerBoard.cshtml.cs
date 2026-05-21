@@ -93,6 +93,13 @@ public class PartnerBoardModel(
 
         var slot = await db.AvailabilitySlots
             .Include(s => s.Player).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.Player).ThenInclude(p => p.NotificationSettings)
+            .Include(s => s.MatchedWithPlayer).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.MatchedWithPlayer).ThenInclude(p => p.NotificationSettings)
+            .Include(s => s.MatchedWithPlayer2).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.MatchedWithPlayer2).ThenInclude(p => p.NotificationSettings)
+            .Include(s => s.MatchedWithPlayer3).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.MatchedWithPlayer3).ThenInclude(p => p.NotificationSettings)
             .FirstOrDefaultAsync(s => s.Id == slotId);
 
         if (slot == null)
@@ -135,21 +142,52 @@ public class PartnerBoardModel(
 
             await db.SaveChangesAsync();
 
-            // Sende E-Mail an den Ersteller
+            // A) Send email to creator if they want updates on joins
             if (slot.Player?.IdentityUser?.Email != null && joiningPlayer != null)
             {
-                var emailSubject = "🎾 Neuer Mitspieler in der Börse!";
-                var emailBody = $"Hallo {slot.Player.Firstname},<br><br>" +
-                                $"<strong>{joiningPlayer.Firstname} {joiningPlayer.Lastname}</strong> hat sich gerade für deinen Börsen-Eintrag am <strong>{slot.Date:dd.MM.yyyy}</strong> um {slot.StartTime:hh\\:mm} Uhr eingetragen!<br><br>";
-
-                if (slot.IsMatched)
+                if (slot.Player.NotificationSettings == null || slot.Player.NotificationSettings.EmailOnSlotJoined)
                 {
-                    emailBody += "<strong>Dein Match ist nun komplett fixiert!</strong> Vergiss nicht, euch rechtzeitig im Hallenplan einen Platz zu reservieren.<br><br>";
+                    var emailSubject = "🎾 Neuer Mitspieler in der Börse!";
+                    var emailBody = $"Hallo {slot.Player.Firstname},<br><br>" +
+                                    $"<strong>{joiningPlayer.Firstname} {joiningPlayer.Lastname}</strong> hat sich gerade für deinen Börsen-Eintrag am <strong>{slot.Date:dd.MM.yyyy}</strong> um {slot.StartTime:hh\\:mm} Uhr eingetragen!<br><br>";
+
+                    if (slot.IsMatched)
+                    {
+                        emailBody += "<strong>Dein Match ist nun komplett fixiert!</strong> Vergiss nicht, euch rechtzeitig im Hallenplan einen Platz zu reservieren.<br><br>";
+                    }
+
+                    emailBody += "Viel Spaß beim Spielen!<br>Dein TennisBruck-Team";
+
+                    await emailSender.SendEmailAsync(slot.Player.IdentityUser.Email, emailSubject, emailBody);
                 }
+            }
 
-                emailBody += "Viel Spaß beim Spielen!<br>Dein TennisBruck-Team";
+            // B) If complete, send "Slot full" notification to all participants (if enabled for each)
+            if (slot.IsMatched)
+            {
+                var participants = new List<Player> { slot.Player! };
+                if (slot.MatchedWithPlayer != null) participants.Add(slot.MatchedWithPlayer);
+                if (slot.MatchedWithPlayer2 != null) participants.Add(slot.MatchedWithPlayer2);
+                if (slot.MatchedWithPlayer3 != null) participants.Add(slot.MatchedWithPlayer3);
 
-                await emailSender.SendEmailAsync(slot.Player.IdentityUser.Email, emailSubject, emailBody);
+                var playerNames = string.Join(", ", participants.Select(p => $"{p.Firstname} {p.Lastname}"));
+
+                foreach (var p in participants)
+                {
+                    // Don't send double notifications to creator if they already got the slot joined email
+                    // but they can get it if they specifically have EmailOnSlotFull enabled
+                    if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotFull))
+                    {
+                        var subject = "🎾 Börsen-Spiel vollständig fixiert!";
+                        var body = $"Hallo {p.Firstname},<br><br>" +
+                                   $"das Börsen-Spiel am <strong>{slot.Date:dd.MM.yyyy}</strong> um {slot.StartTime:hh\\:mm} Uhr ist nun vollständig besetzt!<br><br>" +
+                                   $"<strong>Teilnehmer:</strong> {playerNames}<br><br>" +
+                                   $"Vergesst nicht, euch rechtzeitig einen Platz im Hallenplan zu reservieren.<br><br>" +
+                                   $"Viel Spaß beim Spielen!<br>Dein TennisBruck-Team";
+
+                        _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
+                    }
+                }
             }
         }
 
@@ -207,7 +245,16 @@ public class PartnerBoardModel(
             .SingleOrDefault(x => x.IdentityUser != null && x.IdentityUser.Id == user.Id);
         if (dbUser == null) return Challenge();
 
-        var slot = await db.AvailabilitySlots.FindAsync(editSlotId);
+        var slot = await db.AvailabilitySlots
+            .Include(s => s.Player).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.MatchedWithPlayer).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.MatchedWithPlayer).ThenInclude(p => p.NotificationSettings)
+            .Include(s => s.MatchedWithPlayer2).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.MatchedWithPlayer2).ThenInclude(p => p.NotificationSettings)
+            .Include(s => s.MatchedWithPlayer3).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.MatchedWithPlayer3).ThenInclude(p => p.NotificationSettings)
+            .FirstOrDefaultAsync(s => s.Id == editSlotId);
+
         if (slot == null)
         {
             TempData["ErrorMessage"] = "Dieser Eintrag existiert nicht mehr.";
@@ -219,6 +266,10 @@ public class PartnerBoardModel(
             return Forbid();
         }
 
+        var oldDate = slot.Date;
+        var oldStartTime = slot.StartTime;
+        var oldEndTime = slot.EndTime;
+
         slot.Date = editDate;
         slot.StartTime = editStartTime;
         slot.EndTime = editEndTime;
@@ -227,6 +278,31 @@ public class PartnerBoardModel(
         slot.IsDouble = editNeededPlayers > 1;
 
         await db.SaveChangesAsync();
+
+        // Send email to joined players if the date or time changed
+        if (oldDate != editDate || oldStartTime != editStartTime || oldEndTime != editEndTime)
+        {
+            var joinedPlayers = new List<Player>();
+            if (slot.MatchedWithPlayer != null) joinedPlayers.Add(slot.MatchedWithPlayer);
+            if (slot.MatchedWithPlayer2 != null) joinedPlayers.Add(slot.MatchedWithPlayer2);
+            if (slot.MatchedWithPlayer3 != null) joinedPlayers.Add(slot.MatchedWithPlayer3);
+
+            foreach (var p in joinedPlayers)
+            {
+                if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotCancelled))
+                {
+                    var subject = "Update: 🎾 Dein Börsen-Spiel wurde verschoben!";
+                    var body = $"Hallo {p.Firstname},<br><br>" +
+                               $"der Ersteller <strong>{slot.Player?.Firstname} {slot.Player?.Lastname}</strong> hat den Termin für euer Börsen-Spiel geändert!<br><br>" +
+                               $"<strong>Alter Termin:</strong> {oldDate:dd.MM.yyyy} um {oldStartTime:hh\\:mm} - {oldEndTime:hh\\:mm} Uhr<br>" +
+                               $"<strong>Neuer Termin:</strong> {editDate:dd.MM.yyyy} um {editStartTime:hh\\:mm} - {editEndTime:hh\\:mm} Uhr<br><br>" +
+                               $"Bitte prüfe, ob dir der neue Termin passt.<br><br>" +
+                               $"Dein TennisBruck-Team";
+
+                    _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
+                }
+            }
+        }
 
         TempData["SuccessMessage"] = "Dein Eintrag wurde erfolgreich aktualisiert.";
         return RedirectToPage();
@@ -244,6 +320,13 @@ public class PartnerBoardModel(
 
         var slot = await db.AvailabilitySlots
             .Include(s => s.Player).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.Player).ThenInclude(p => p.NotificationSettings)
+            .Include(s => s.MatchedWithPlayer).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.MatchedWithPlayer).ThenInclude(p => p.NotificationSettings)
+            .Include(s => s.MatchedWithPlayer2).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.MatchedWithPlayer2).ThenInclude(p => p.NotificationSettings)
+            .Include(s => s.MatchedWithPlayer3).ThenInclude(p => p.IdentityUser)
+            .Include(s => s.MatchedWithPlayer3).ThenInclude(p => p.NotificationSettings)
             .FirstOrDefaultAsync(s => s.Id == slotId);
 
         if (slot == null)
@@ -254,6 +337,26 @@ public class PartnerBoardModel(
 
         if (slot.PlayerId == dbUser.Id)
         {
+            // Gather all joined players who should be notified about the cancellation
+            var joinedPlayers = new List<Player>();
+            if (slot.MatchedWithPlayer != null) joinedPlayers.Add(slot.MatchedWithPlayer);
+            if (slot.MatchedWithPlayer2 != null) joinedPlayers.Add(slot.MatchedWithPlayer2);
+            if (slot.MatchedWithPlayer3 != null) joinedPlayers.Add(slot.MatchedWithPlayer3);
+
+            foreach (var p in joinedPlayers)
+            {
+                if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotCancelled))
+                {
+                    var subject = "🎾 Börsen-Spiel abgesagt!";
+                    var body = $"Hallo {p.Firstname},<br><br>" +
+                               $"der Ersteller <strong>{slot.Player?.Firstname} {slot.Player?.Lastname}</strong> hat das Börsen-Spiel am <strong>{slot.Date:dd.MM.yyyy}</strong> um {slot.StartTime:hh\\:mm} Uhr gelöscht.<br><br>" +
+                               $"Du wurdest automatisch ausgetragen.<br><br>" +
+                               $"Dein TennisBruck-Team";
+
+                    _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
+                }
+            }
+
             db.AvailabilitySlots.Remove(slot);
             TempData["SuccessMessage"] = "Dein Eintrag wurde erfolgreich gelöscht.";
         }
@@ -266,8 +369,8 @@ public class PartnerBoardModel(
             slot.IsMatched = false;
             TempData["SuccessMessage"] = "Du hast dich aus dem Match ausgetragen. Der freie Platz wurde wieder in die Börse gestellt.";
 
-            // Sende E-Mail an den Ersteller
-            if (slot.Player?.IdentityUser?.Email != null)
+            // Sende E-Mail an den Ersteller, falls dieser Benachrichtigungen über Stornierungen/Absagen möchte
+            if (slot.Player?.IdentityUser?.Email != null && (slot.Player.NotificationSettings == null || slot.Player.NotificationSettings.EmailOnSlotCancelled))
             {
                 var emailSubject = "🎾 Ein Mitspieler hat abgesagt!";
                 var emailBody = $"Hallo {slot.Player.Firstname},<br><br>" +

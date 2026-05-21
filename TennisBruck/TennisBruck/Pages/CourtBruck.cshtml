@@ -107,7 +107,7 @@
                         <td class="time-col">
                             <div style="font-weight: 600;">@timeSlot.Time.ToString("HH:mm")</div>
                             <div class="weather-info" data-time="@timeSlot.Time.ToString("yyyy-MM-dd'T'HH:00")"
-                                 style="font-size: 0.85rem; margin-top: 4px; font-weight: normal; opacity: 0.8;"></div>
+                                 style="font-size: 0.85rem; margin-top: 4px; font-weight: normal; opacity: 0.8; min-height: 18px;"></div>
                         </td>
 
                         @for (int court = 1; court <= 3; court++)
@@ -135,15 +135,19 @@
                                             </div>
                                             @if (block.RowSpan > 1)
                                             {
-                                                <div class="reserved-time" style="font-size: 0.65rem; opacity: 0.8; margin-top: 2px; font-weight: 500;">
+                                                <div class="reserved-time"
+                                                     style="font-size: 0.65rem; opacity: 0.8; margin-top: 2px; font-weight: 500;">
                                                     @reservation.StartTime.ToString("HH:mm") - @reservation.StartTime.AddMinutes(30 * block.RowSpan).ToString("HH:mm")
                                                 </div>
                                             }
                                             @if (isMyReservation || User.IsInRole("Admin"))
                                             {
-                                                <form method="post" asp-page-handler="DeleteReservation" style="margin: 0;">
+                                                <form method="post" asp-page-handler="DeleteReservation"
+                                                      style="margin: 0;">
                                                     <input type="hidden" name="ReservationId" value="@reservation.Id"/>
-                                                    <button type="submit" class="btn-delete-res" title="Gesamte Reservierung löschen">Löschen</button>
+                                                    <button type="submit" class="btn-delete-res"
+                                                            title="Gesamte Reservierung löschen">Löschen
+                                                    </button>
                                                 </form>
                                             }
                                         </td>
@@ -161,7 +165,8 @@
                                             <form method="post" asp-page-handler="CreateReservation" class="cell-form">
                                                 <input type="hidden" name="courtNumber" value="@court"/>
                                                 <input type="hidden" name="StartTime" value="@timeSlot.Time"/>
-                                                <button type="submit" class="btn-reserve" title="Jetzt reservieren">+</button>
+                                                <button type="submit" class="btn-reserve" title="Jetzt reservieren">+
+                                                </button>
                                             </form>
                                         }
                                         else
