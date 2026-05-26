@@ -297,17 +297,15 @@
                                     </form>
                                 </td>
                                 <td>
-                                    @if (playerTeam != null)
-                                    {
-                                        <form method="post" asp-page-handler="DeleteTeam" class="inline-form-zero">
-                                            <input type="hidden" name="teamId" value="@playerTeam.Id"/>
-                                            <button class="btn-danger btn-xs btn-action-micro"
-                                                    title="Team löschen"
-                                                    onclick="return confirm('Möchtest du dieses Team wirklich komplett löschen? Alle gespielten Matches dieses Teams werden ebenfalls gelöscht!');">
-                                                Löschen
-                                            </button>
-                                        </form>
-                                    }
+                                    <form method="post" asp-page-handler="RemoveRegistration" class="inline-form-zero">
+                                        <input type="hidden" name="playerId" value="@registered.Player.Id"/>
+                                        <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+                                        <button class="btn-danger btn-xs btn-action-micro"
+                                                title="Teilnehmer löschen"
+                                                onclick="return confirm('Möchtest du diesen Teilnehmer wirklich aus dem Bewerb löschen? Alle zugehörigen Teams und Matches werden ebenfalls gelöscht!');">
+                                            Löschen
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         }

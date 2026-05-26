@@ -50,8 +50,10 @@ public class PartnerBoardModel(
         // Apply filters
         if (FilterDateFrom.HasValue) query = query.Where(s => s.Date >= FilterDateFrom.Value);
         if (FilterDateTo.HasValue) query = query.Where(s => s.Date <= FilterDateTo.Value);
-        if (FilterTimeFrom.HasValue) query = query.Where(s => s.StartTime >= FilterTimeFrom.Value || s.EndTime > FilterTimeFrom.Value);
-        if (FilterTimeTo.HasValue) query = query.Where(s => s.EndTime <= FilterTimeTo.Value || s.StartTime < FilterTimeTo.Value);
+        if (FilterTimeFrom.HasValue)
+            query = query.Where(s => s.StartTime >= FilterTimeFrom.Value || s.EndTime > FilterTimeFrom.Value);
+        if (FilterTimeTo.HasValue)
+            query = query.Where(s => s.EndTime <= FilterTimeTo.Value || s.StartTime < FilterTimeTo.Value);
 
         var availableSlots = await query
             .OrderBy(s => s.Date)
@@ -74,7 +76,7 @@ public class PartnerBoardModel(
                 .Include(s => s.MatchedWithPlayer2)
                 .Include(s => s.MatchedWithPlayer3)
                 .Where(s => s.Date >= DateTime.Today && s.IsMatched == true &&
-                            (s.PlayerId == CurrentPlayerId || 
+                            (s.PlayerId == CurrentPlayerId ||
                              s.MatchedWithPlayerId == CurrentPlayerId ||
                              s.MatchedWithPlayer2Id == CurrentPlayerId ||
                              s.MatchedWithPlayer3Id == CurrentPlayerId))
@@ -89,7 +91,8 @@ public class PartnerBoardModel(
     public async Task<IActionResult> OnPostAcceptMatchAsync(int slotId)
     {
         CurrentPlayerId = currentPlayerService.GetCurrentUser()!.Id;
-        var joiningPlayer = await db.Players.Include(p => p.IdentityUser).FirstOrDefaultAsync(p => p.Id == CurrentPlayerId);
+        var joiningPlayer =
+            await db.Players.Include(p => p.IdentityUser).FirstOrDefaultAsync(p => p.Id == CurrentPlayerId);
 
         var slot = await db.AvailabilitySlots
             .Include(s => s.Player).ThenInclude(p => p.IdentityUser)
@@ -111,19 +114,26 @@ public class PartnerBoardModel(
         // Sicherheits-Check: Nur fixieren, wenn frei
         if (!slot.IsMatched)
         {
-            if (CurrentPlayerId == slot.PlayerId || 
-                CurrentPlayerId == slot.MatchedWithPlayerId || 
-                CurrentPlayerId == slot.MatchedWithPlayer2Id || 
+            if (CurrentPlayerId == slot.PlayerId ||
+                CurrentPlayerId == slot.MatchedWithPlayerId ||
+                CurrentPlayerId == slot.MatchedWithPlayer2Id ||
                 CurrentPlayerId == slot.MatchedWithPlayer3Id)
             {
-                // Cannot join own match or join twice
                 return RedirectToPage();
             }
 
-            int filledSlots = 0;
-            if (slot.MatchedWithPlayerId == null) { slot.MatchedWithPlayerId = CurrentPlayerId; filledSlots++; }
-            else if (slot.MatchedWithPlayer2Id == null) { slot.MatchedWithPlayer2Id = CurrentPlayerId; filledSlots++; }
-            else if (slot.MatchedWithPlayer3Id == null) { slot.MatchedWithPlayer3Id = CurrentPlayerId; filledSlots++; }
+            if (slot.MatchedWithPlayerId == null)
+            {
+                slot.MatchedWithPlayerId = CurrentPlayerId;
+            }
+            else if (slot.MatchedWithPlayer2Id == null)
+            {
+                slot.MatchedWithPlayer2Id = CurrentPlayerId;
+            }
+            else if (slot.MatchedWithPlayer3Id == null)
+            {
+                slot.MatchedWithPlayer3Id = CurrentPlayerId;
+            }
 
             int totalJoined = 0;
             if (slot.MatchedWithPlayerId != null) totalJoined++;
@@ -133,17 +143,19 @@ public class PartnerBoardModel(
             if (totalJoined >= slot.NeededPlayers)
             {
                 slot.IsMatched = true; // Alle Slots vollendet!
-                TempData["SuccessMessage"] = "Match komplett fixiert! Vergiss nicht, euch im Hallenplan noch einen Platz zu reservieren.";
+                TempData["SuccessMessage"] =
+                    "Match komplett fixiert! Vergiss nicht, euch im Hallenplan noch einen Platz zu reservieren.";
             }
             else
             {
-                TempData["SuccessMessage"] = "Du wurdest erfolgreich als Mitspieler eingetragen. Es fehlen noch weitere Spieler.";
+                TempData["SuccessMessage"] =
+                    "Du wurdest erfolgreich als Mitspieler eingetragen. Es fehlen noch weitere Spieler.";
             }
 
             await db.SaveChangesAsync();
 
             // A) Send email to creator if they want updates on joins
-            if (slot.Player?.IdentityUser?.Email != null && joiningPlayer != null)
+            if (slot.Player.IdentityUser?.Email != null && joiningPlayer != null)
             {
                 if (slot.Player.NotificationSettings == null || slot.Player.NotificationSettings.EmailOnSlotJoined)
                 {
@@ -153,7 +165,8 @@ public class PartnerBoardModel(
 
                     if (slot.IsMatched)
                     {
-                        emailBody += "<strong>Dein Match ist nun komplett fixiert!</strong> Vergiss nicht, euch rechtzeitig im Hallenplan einen Platz zu reservieren.<br><br>";
+                        emailBody +=
+                            "<strong>Dein Match ist nun komplett fixiert!</strong> Vergiss nicht, euch rechtzeitig im Hallenplan einen Platz zu reservieren.<br><br>";
                     }
 
                     emailBody += "Viel Spaß beim Spielen!<br>Dein TennisBruck-Team";
@@ -174,9 +187,8 @@ public class PartnerBoardModel(
 
                 foreach (var p in participants)
                 {
-                    // Don't send double notifications to creator if they already got the slot joined email
-                    // but they can get it if they specifically have EmailOnSlotFull enabled
-                    if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotFull))
+                    if (p.IdentityUser?.Email != null &&
+                        (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotFull))
                     {
                         var subject = "🎾 Börsen-Spiel vollständig fixiert!";
                         var body = $"Hallo {p.Firstname},<br><br>" +
@@ -194,7 +206,6 @@ public class PartnerBoardModel(
         return RedirectToPage();
     }
 
-    // Wird aufgerufen, wenn jemand auf "Speichern & Veröffentlichen" klickt
     public async Task<IActionResult> OnPostCreateSlotAsync(DateTime date, TimeSpan startTime, TimeSpan endTime,
         string message, int neededPlayers)
     {
@@ -205,10 +216,10 @@ public class PartnerBoardModel(
         }
 
         var user = await userManager.GetUserAsync(User);
-        if (user == null) return Challenge(); // Zur Login-Seite, falls nicht eingeloggt
+        if (user == null) return Unauthorized();
         var dbUser = db.Players.Include(x => x.IdentityUser)
             .SingleOrDefault(x => x.IdentityUser != null && x.IdentityUser.Id == user.Id);
-        if (dbUser == null) return Challenge();
+        if (dbUser == null) return Unauthorized();
 
         var newSlot = new AvailabilitySlot
         {
@@ -229,7 +240,8 @@ public class PartnerBoardModel(
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostEditSlotAsync(int editSlotId, DateTime editDate, TimeSpan editStartTime, TimeSpan editEndTime,
+    public async Task<IActionResult> OnPostEditSlotAsync(int editSlotId, DateTime editDate, TimeSpan editStartTime,
+        TimeSpan editEndTime,
         string editMessage, int editNeededPlayers)
     {
         if (editStartTime >= editEndTime || editStartTime == editEndTime)
@@ -296,7 +308,8 @@ public class PartnerBoardModel(
 
             foreach (var p in joinedPlayers)
             {
-                if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotCancelled))
+                if (p.IdentityUser?.Email != null &&
+                    (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotCancelled))
                 {
                     var subject = "🎾 Update zu deinem Börsen-Spiel!";
                     var body = $"Hallo {p.Firstname},<br><br>" +
@@ -360,7 +373,8 @@ public class PartnerBoardModel(
 
             foreach (var p in joinedPlayers)
             {
-                if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotCancelled))
+                if (p.IdentityUser?.Email != null &&
+                    (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotCancelled))
                 {
                     var subject = "🎾 Börsen-Spiel abgesagt!";
                     var body = $"Hallo {p.Firstname},<br><br>" +
@@ -382,10 +396,12 @@ public class PartnerBoardModel(
             if (slot.MatchedWithPlayer3Id == dbUser.Id) slot.MatchedWithPlayer3Id = null;
 
             slot.IsMatched = false;
-            TempData["SuccessMessage"] = "Du hast dich aus dem Match ausgetragen. Der freie Platz wurde wieder in die Börse gestellt.";
+            TempData["SuccessMessage"] =
+                "Du hast dich aus dem Match ausgetragen. Der freie Platz wurde wieder in die Börse gestellt.";
 
             // Sende E-Mail an den Ersteller, falls dieser Benachrichtigungen über Stornierungen/Absagen möchte
-            if (slot.Player?.IdentityUser?.Email != null && (slot.Player.NotificationSettings == null || slot.Player.NotificationSettings.EmailOnSlotCancelled))
+            if (slot.Player?.IdentityUser?.Email != null && (slot.Player.NotificationSettings == null ||
+                                                             slot.Player.NotificationSettings.EmailOnSlotCancelled))
             {
                 var emailSubject = "🎾 Ein Mitspieler hat abgesagt!";
                 var emailBody = $"Hallo {slot.Player.Firstname},<br><br>" +

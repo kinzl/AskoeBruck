@@ -825,6 +825,55 @@ public class Championship(
         return await WithDrawPlayer(player.Id, selectedCompetition);
     }
 
+    public async Task<IActionResult> OnPostRemoveRegistrationAsync(int playerId, int competitionId)
+    {
+        if (!User.IsInRole("Admin")) return Forbid();
+        InitValues();
+
+        // 1. Find and remove tournament registration
+        var reg = await db.TournamentRegistrations.FirstOrDefaultAsync(tr =>
+            tr.PlayerId == playerId && tr.CompetitionId == competitionId);
+        if (reg != null)
+        {
+            db.TournamentRegistrations.Remove(reg);
+        }
+
+        // 2. Find any team in this competition that contains this player
+        var teams = await db.Teams
+            .Include(t => t.TeamPlayers)
+            .Where(t => t.CompetitionId == competitionId && t.TeamPlayers.Any(tp => tp.PlayerId == playerId))
+            .ToListAsync();
+
+        foreach (var team in teams)
+        {
+            // Remove matches involving this team
+            var matches = await db.Matches.Where(m => m.Team1.Id == team.Id || m.Team2.Id == team.Id).ToListAsync();
+            db.Matches.RemoveRange(matches);
+
+            // Unlink from knockout matches
+            var knockoutMatches = await db.KnockoutMatch.Where(m =>
+                (m.Team1 != null && m.Team1.Id == team.Id) || (m.Team2 != null && m.Team2.Id == team.Id)).ToListAsync();
+            foreach (var km in knockoutMatches)
+            {
+                if (km.Team1?.Id == team.Id) km.Team1 = null;
+                if (km.Team2?.Id == team.Id) km.Team2 = null;
+            }
+
+            // Remove from groups
+            var groupTeams = await db.GroupTeams.Where(gt => gt.TeamId == team.Id).ToListAsync();
+            db.GroupTeams.RemoveRange(groupTeams);
+
+            // Remove TeamPlayer records
+            db.TeamPlayer.RemoveRange(team.TeamPlayers);
+
+            // Delete the team itself
+            db.Teams.Remove(team);
+        }
+
+        await db.SaveChangesAsync();
+        return RedirectToPage(new { Message = "Teilnehmer wurde erfolgreich gelöscht." });
+    }
+
     /// <summary>
     /// Places the winner of a finished knockout match into the first empty slot of the next round's match.
     /// Only fills empty slots — does not overwrite manual admin assignments.
