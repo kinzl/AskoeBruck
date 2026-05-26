@@ -269,6 +269,8 @@ public class PartnerBoardModel(
         var oldDate = slot.Date;
         var oldStartTime = slot.StartTime;
         var oldEndTime = slot.EndTime;
+        var oldMessage = slot.Message;
+        var oldNeededPlayers = slot.NeededPlayers;
 
         slot.Date = editDate;
         slot.StartTime = editStartTime;
@@ -279,8 +281,13 @@ public class PartnerBoardModel(
 
         await db.SaveChangesAsync();
 
-        // Send email to joined players if the date or time changed
-        if (oldDate != editDate || oldStartTime != editStartTime || oldEndTime != editEndTime)
+        bool isEdited = oldDate != editDate ||
+                        oldStartTime != editStartTime ||
+                        oldEndTime != editEndTime ||
+                        oldMessage != editMessage ||
+                        oldNeededPlayers != editNeededPlayers;
+
+        if (isEdited)
         {
             var joinedPlayers = new List<Player>();
             if (slot.MatchedWithPlayer != null) joinedPlayers.Add(slot.MatchedWithPlayer);
@@ -291,13 +298,21 @@ public class PartnerBoardModel(
             {
                 if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotCancelled))
                 {
-                    var subject = "Update: 🎾 Dein Börsen-Spiel wurde verschoben!";
+                    var subject = "🎾 Update zu deinem Börsen-Spiel!";
                     var body = $"Hallo {p.Firstname},<br><br>" +
-                               $"der Ersteller <strong>{slot.Player?.Firstname} {slot.Player?.Lastname}</strong> hat den Termin für euer Börsen-Spiel geändert!<br><br>" +
-                               $"<strong>Alter Termin:</strong> {oldDate:dd.MM.yyyy} um {oldStartTime:hh\\:mm} - {oldEndTime:hh\\:mm} Uhr<br>" +
-                               $"<strong>Neuer Termin:</strong> {editDate:dd.MM.yyyy} um {editStartTime:hh\\:mm} - {editEndTime:hh\\:mm} Uhr<br><br>" +
-                               $"Bitte prüfe, ob dir der neue Termin passt.<br><br>" +
-                               $"Dein TennisBruck-Team";
+                               $"der Ersteller <strong>{slot.Player?.Firstname} {slot.Player?.Lastname}</strong> hat den Eintrag für euer Börsen-Spiel geändert!<br><br>" +
+                               $"<strong>Neue Spieldetails:</strong><br>" +
+                               $"- Datum: {editDate:dd.MM.yyyy}<br>" +
+                               $"- Uhrzeit: {editStartTime:hh\\:mm} - {editEndTime:hh\\:mm} Uhr<br>" +
+                               $"- Typ: {(slot.IsDouble ? "Doppel" : "Einzel")}<br>";
+
+                    if (!string.IsNullOrEmpty(editMessage))
+                    {
+                        body += $"- Nachricht: \"{editMessage}\"<br>";
+                    }
+
+                    body += $"<br>Bitte prüfe im Partnerboard, ob dir die Änderungen passen.<br><br>" +
+                            $"Dein TennisBruck-Team";
 
                     _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
                 }

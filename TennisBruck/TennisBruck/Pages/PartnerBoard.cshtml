@@ -92,7 +92,29 @@
                             <small class="text-muted d-block mb-1">
                                 <i class="bi bi-clock me-1"></i> @slot.Date.ToString("dd.MM.yyyy") | @slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm") Uhr
                             </small>
-                            <div class="small text-danger fw-bold mt-1">Sucht @slot.NeededPlayers Mitspieler</div>
+                            @{
+                                int totalJoined = 0;
+                                if (slot.MatchedWithPlayerId != null) totalJoined++;
+                                if (slot.MatchedWithPlayer2Id != null) totalJoined++;
+                                if (slot.MatchedWithPlayer3Id != null) totalJoined++;
+                                int missingPlayers = slot.NeededPlayers - totalJoined;
+                            }
+                            <div class="small text-danger fw-bold mt-1">
+                                @if (slot.IsDouble)
+                                {
+                                    <span>Sucht noch @missingPlayers Mitspieler (Doppel)</span>
+                                }
+                                else
+                                {
+                                    <span>Sucht @slot.NeededPlayers Mitspieler (Einzel)</span>
+                                }
+                            </div>
+                            <div class="small text-muted mb-1">
+                                Bisher dabei: @slot.Player
+                                @(slot.MatchedWithPlayer != null ? ", " + slot.MatchedWithPlayer : "")
+                                @(slot.MatchedWithPlayer2 != null ? ", " + slot.MatchedWithPlayer2 : "")
+                                @(slot.MatchedWithPlayer3 != null ? ", " + slot.MatchedWithPlayer3 : "")
+                            </div>
                             @if (!string.IsNullOrEmpty(slot.Message))
                             {
                                 <div class="small fst-italic mt-1 text-secondary pt-1 border-top border-light">
@@ -140,9 +162,7 @@
                             {
                                 <div class="mt-1 mb-2">
                                     <small class="text-muted">Teilnehmer: </small>
-                                    <strong>@match.Player</strong>, <strong>@match.MatchedWithPlayer</strong>,
-                                    <strong>@match.MatchedWithPlayer2</strong>,
-                                    <strong>@match.MatchedWithPlayer3</strong>
+                                    <strong>@match.Player</strong>@if (match.MatchedWithPlayer != null) { <span>, </span><strong>@match.MatchedWithPlayer</strong> }@if (match.MatchedWithPlayer2 != null) { <span>, </span><strong>@match.MatchedWithPlayer2</strong> }@if (match.MatchedWithPlayer3 != null) { <span>, </span><strong>@match.MatchedWithPlayer3</strong> }
                                 </div>
                             }
                             else
@@ -212,23 +232,22 @@
                                 <small class="text-muted d-block mb-1">
                                     <i class="bi bi-clock me-1"></i> @slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm") Uhr
                                 </small>
-                                @if (slot.IsDouble)
-                                {
-                                    int missingPlayers = 0;
-                                    if (slot.MatchedWithPlayerId == null) missingPlayers++;
-                                    if (slot.MatchedWithPlayer2Id == null) missingPlayers++;
-                                    if (slot.MatchedWithPlayer3Id == null) missingPlayers++;
-
-                                    <div class="small text-danger fw-bold mt-1">Noch @missingPlayers Mitspieler
-                                        gesucht!
-                                    </div>
-                                    <div class="small text-muted mb-1">
-                                        Bisher dabei: @slot.Player
-                                        @(slot.MatchedWithPlayer != null ? ", " + slot.MatchedWithPlayer : "")
-                                        @(slot.MatchedWithPlayer2 != null ? ", " + slot.MatchedWithPlayer2 : "")
-                                        @(slot.MatchedWithPlayer3 != null ? ", " + slot.MatchedWithPlayer3 : "")
-                                    </div>
+                                @{
+                                    int totalJoined = 0;
+                                    if (slot.MatchedWithPlayerId != null) totalJoined++;
+                                    if (slot.MatchedWithPlayer2Id != null) totalJoined++;
+                                    if (slot.MatchedWithPlayer3Id != null) totalJoined++;
+                                    int missingPlayers = slot.NeededPlayers - totalJoined;
                                 }
+                                <div class="small text-danger fw-bold mt-1">
+                                    Noch @missingPlayers Mitspieler gesucht!
+                                </div>
+                                <div class="small text-muted mb-1">
+                                    Bisher dabei: @slot.Player
+                                    @(slot.MatchedWithPlayer != null ? ", " + slot.MatchedWithPlayer : "")
+                                    @(slot.MatchedWithPlayer2 != null ? ", " + slot.MatchedWithPlayer2 : "")
+                                    @(slot.MatchedWithPlayer3 != null ? ", " + slot.MatchedWithPlayer3 : "")
+                                </div>
                                 @if (!string.IsNullOrEmpty(slot.Message))
                                 {
                                     <div class="small fst-italic mt-1 text-secondary pt-1 border-top border-light">
@@ -297,11 +316,10 @@
                                placeholder="Z.B. Suche Gegner für lockeres Einzel" maxlength="200"/>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-muted small">Wie viele Mitspieler suchst du noch?</label>
+                        <label class="form-label fw-bold text-muted small">Match-Typ</label>
                         <select name="neededPlayers" class="form-select">
-                            <option value="1">1 Mitspieler (Einzel / Letzter Platz im Doppel)</option>
-                            <option value="2">2 Mitspieler</option>
-                            <option value="3">3 Mitspieler (Komplettes Doppel)</option>
+                            <option value="1">Einzel (1 weiterer Spieler gesucht)</option>
+                            <option value="3">Doppel (3 weitere Spieler gesucht)</option>
                         </select>
                     </div>
                 </div>
@@ -346,11 +364,10 @@
                                maxlength="200"/>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-muted small">Wie viele Mitspieler suchst du noch?</label>
+                        <label class="form-label fw-bold text-muted small">Match-Typ</label>
                         <select id="editNeededPlayers" name="editNeededPlayers" class="form-select">
-                            <option value="1">1 Mitspieler (Einzel / Letzter Platz im Doppel)</option>
-                            <option value="2">2 Mitspieler</option>
-                            <option value="3">3 Mitspieler (Komplettes Doppel)</option>
+                            <option value="1">Einzel (1 weiterer Spieler gesucht)</option>
+                            <option value="3">Doppel (3 weitere Spieler gesucht)</option>
                         </select>
                     </div>
                 </div>
