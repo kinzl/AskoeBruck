@@ -10,7 +10,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hallenplan | TennisBruck</title>
+    <title>Hallenplan</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css">
     <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
@@ -27,7 +27,7 @@
             <button type="submit" class="btn-back-header">← Übersicht</button>
         </form>
     </div>
-    <h1 class="app-title">🎾 @(Model.SelectedHallPlanEntity?.Name ?? "Hallenplan")</h1>
+    <h1 class="app-title">@(Model.SelectedHallPlanEntity?.Name ?? "Hallenplan")</h1>
     <p class="header-subtitle">Verschiebe Spieler einfach per Drag & Drop</p>
 
     @if (!string.IsNullOrEmpty(Model.Message))

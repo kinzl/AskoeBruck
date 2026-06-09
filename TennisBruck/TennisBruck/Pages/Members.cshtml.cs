@@ -25,22 +25,6 @@ public class Members(
         return Page();
     }
 
-    public IActionResult OnPostCreateUser(RegistrationDto body)
-    {
-        if (!User.IsInRole("Admin")) return Forbid();
-        logger.LogInformation("OnPostCreateUser");
-        string password = "askoebruck";
-        var player = new Player
-        {
-            Firstname = body.Firstname,
-            Lastname = body.Lastname
-        };
-        db.Players.Add(player);
-        db.SaveChanges();
-
-        return RedirectToPage(new { Message = $"Benutzer wurde erstellt, das Passwort ist {password}" });
-    }
-
     public IActionResult OnPostDeleteUser(int playerId)
     {
         if (!User.IsInRole("Admin")) return Forbid();

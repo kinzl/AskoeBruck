@@ -10,7 +10,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mitglieder | TennisBruck</title>
+    <title>Mitglieder</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/members.css" asp-append-version="true">
@@ -28,55 +28,14 @@
         </form>
     </div>
 
-    <h1 class="app-title">👥 Mitgliederverzeichnis</h1>
-    <p class="header-subtitle">Eingeloggt als:
-        <strong>@Model.LoggedInPlayer.ToString()</strong></p>
+    <h1 class="app-title">Mitgliederverzeichnis</h1>
 </header>
 
 <main class="main-container">
 
-    @if (User.IsInRole("Admin"))
+    @if (User.IsInRole("Admin") && !string.IsNullOrEmpty(Model.Message))
     {
-        <section class="modern-card card-admin">
-            <div class="card-header card-header-compact">
-                <h2 class="text-admin-title">🛠 Admin-Tools</h2>
-                <button id="createUserButton" class="btn-action btn-accent" onclick="toggleCreateUser()" type="button">
-                    + Benutzer erstellen
-                </button>
-            </div>
-
-            <div id="createUser" class="admin-invite-form">
-                <form method="post">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="firstnameInput">Vorname</label>
-                            <input id="firstnameInput" name="firstname" class="form-input" required/>
-                        </div>
-                        <div class="form-group">
-                            <label for="lastnameInput">Nachname</label>
-                            <input id="lastnameInput" name="lastname" class="form-input" required/>
-                        </div>
-                        <div class="form-group">
-                            <label for="usernameInput">ITN</label>
-                            <input id="usernameInput" name="username" class="form-input" required/>
-                        </div>
-                        <div class="form-group">
-                            <label for="emailOrPhoneInput">Email</label>
-                            <input id="emailOrPhoneInput" name="emailOrPhone" class="form-input" required type="email"/>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <button type="submit" class="btn-action" asp-page-handler="CreateUser">Benutzer in DB anlegen
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            @if (!string.IsNullOrEmpty(Model.Message))
-            {
-                <div class="info-alert">@Model.Message</div>
-            }
-        </section>
+        <div class="info-alert">@Model.Message</div>
     }
 
     <section class="modern-card">
@@ -90,9 +49,9 @@
                 <tr>
                     <th>Vorname</th>
                     <th>Nachname</th>
+                    <th>ITN</th>
                     @if (User.IsInRole("Admin"))
                     {
-                        <th>ITN</th>
                         <th>Email</th>
                         <th class="text-center">Admin</th>
                         <th class="text-center">Löschen</th>
@@ -105,12 +64,10 @@
                     <tr>
                         <td class="fw-500">@player.Firstname</td>
                         <td class="fw-500">@player.Lastname</td>
-
+                        <td class="text-muted">@player.Itn</td>
                         @if (User.IsInRole("Admin"))
                         {
-                            <td class="text-muted">@player.Itn</td>
                             <td class="text-muted">@player.IdentityUser?.Email</td>
-
                             <td class="text-center">
                                 <form method="post" asp-page-handler="ChangeAdmin" class="m-0">
                                     <input type="hidden" name="user" value="@player.Id"/>
