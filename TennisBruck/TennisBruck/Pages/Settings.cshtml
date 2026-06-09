@@ -76,10 +76,10 @@
                            value="@Model.CurrentPlayer.NuLigaPlayerUrl"
                            class="form-input" placeholder="https://www.oetv.at/spieler/NU...">
                     <small class="form-help-text">
-                        Dieser Link führt zu deinem Spielerprofil auf der ÖTV Verbandsseite. (Freiwillig)
+                        Dieser Link führt zu deinem Spielerprofil auf der ÖTV Verbandsseite. Durch den Link kann deine
+                        ITN auf dieser Seite hinzugefügt werden.
                     </small>
                 </div>
-
                 <button type="submit" class="btn-action btn-accent mt-15">Daten Speichern</button>
             </form>
         </section>
@@ -106,7 +106,6 @@
                     <label for="NewPasswordRepeat">Neues Passwort wiederholen</label>
                     <input id="NewPasswordRepeat" name="newPasswordRepeat" type="password" required class="form-input">
                 </div>
-
                 <button type="submit" class="btn-action">Passwort aktualisieren</button>
             </form>
         </section>
@@ -125,43 +124,43 @@
                 <div class="notification-item">
                     <div class="notification-info">
                         <span class="notification-title">K.O. Gegner bekannt</span>
-                        <span class="notification-desc">Sobald dein nächster Spielgegner feststeht.</span>
+                        <span class="notification-desc">Sobald dein nächster Genger in der Vereinsmeisterschaft feststeht.</span>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnOpponentAssigned" />
+                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnOpponentAssigned"/>
                         <span class="slider"></span>
                     </label>
                 </div>
 
                 <div class="notification-item">
                     <div class="notification-info">
-                        <span class="notification-title">Börseneintrag vollständig</span>
+                        <span class="notification-title">Spielpartner-Suche vollständig</span>
                         <span class="notification-desc">Wenn dein Spielersuche-Eintrag vollzählig besetzt ist.</span>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnSlotFull" />
+                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnSlotFull"/>
                         <span class="slider"></span>
                     </label>
                 </div>
 
                 <div class="notification-item">
                     <div class="notification-info">
-                        <span class="notification-title">Börseneintrag gelöscht</span>
+                        <span class="notification-title">Spielpartner-Suche gelöscht</span>
                         <span class="notification-desc">Wenn ein Börsenspiel, bei dem du dich eingetragen hast, abgesagt wird.</span>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnSlotCancelled" />
+                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnSlotCancelled"/>
                         <span class="slider"></span>
                     </label>
                 </div>
 
                 <div class="notification-item mb-30">
                     <div class="notification-info">
-                        <span class="notification-title">Jemand trägt sich ein</span>
+                        <span class="notification-title">Spielpartner-Suche Teilnahme</span>
                         <span class="notification-desc">Wenn sich ein Spieler für deine Spielersuche anmeldet.</span>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnSlotJoined" />
+                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnSlotJoined"/>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -177,15 +176,14 @@
             </div>
 
             <p class="form-help-text" style="display:block;margin-bottom:15px;line-height:1.4;">
-                Hier kannst du dein Profil deaktivieren. Du wirst aus allen aktiven Ansichten entfernt und sofort
-                abgemeldet. Dieser Vorgang kann nicht eigenständig rückgängig gemacht werden.
+                Hier kannst du dein Profil löschen.
             </p>
 
             <form method="post" asp-page-handler="DeleteProfile" class="form-col-flex" style="margin-top:auto;">
                 <button type="submit" class="btn-action"
                         style="background-color:var(--danger-color, #ef4444); color:white; width: 100%; transition: opacity 0.2s;"
                         onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1"
-                        onclick="return confirm('Möchtest du dein Profil wirklich deaktivieren? Du wirst sofort abgemeldet und dies ist endgültig!');">
+                        onclick="return confirm('Möchtest du dein Profil wirklich löschen? Du wirst sofort abgemeldet und dies ist endgültig!');">
                     Mein Profil löschen
                 </button>
             </form>

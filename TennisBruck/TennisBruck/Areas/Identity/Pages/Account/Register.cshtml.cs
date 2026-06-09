@@ -131,6 +131,14 @@ namespace TennisBruck.Areas.Identity.Pages.Account
                         Lastname = Input.Lastname,
                         IdentityUserId = userId
                     };
+                    var notificationSettings = new PlayerNotificationSettings()
+                    {
+                        EmailOnOpponentAssigned = true,
+                        EmailOnSlotCancelled = true,
+                        EmailOnSlotFull = true,
+                        EmailOnSlotJoined = true,
+                    };
+                    newPlayer.NotificationSettings = notificationSettings;
                     _db.Players.Add(newPlayer);
                     await _db.SaveChangesAsync();
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);

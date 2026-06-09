@@ -15,5 +15,5 @@ public partial class Player
     public DateTime? LastItnUpdate { get; set; }
     public string? NuLigaPlayerUrl { get; set; }
     public bool IsActive { get; set; } = true;
-    public PlayerNotificationSettings? NotificationSettings { get; set; }
+    public PlayerNotificationSettings NotificationSettings { get; set; } = null!;
 }
