@@ -111,8 +111,31 @@ body {
 
 .top-dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: 1fr;
     gap: 24px;
+}
+
+.hallplan-header-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+}
+
+.hallplan-select-wrapper {
+    flex: 1;
+}
+
+.hallplan-status-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    border-left: 1px solid #cbd5e1;
+    padding-left: 30px;
+}
+
+.status-text-info {
+    text-align: left;
 }
 
 .modern-card {
@@ -666,6 +689,31 @@ input:checked + .slider:before {
 
     .player-slot {
         font-size: 0.85rem;
+    }
+
+    .hallplan-header-card {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px;
+    }
+    
+    .hallplan-select-wrapper {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .hallplan-status-wrapper {
+        border-left: none;
+        padding-left: 0;
+        gap: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex: 1;
+        min-width: 200px;
     }
 }
 

@@ -33,7 +33,9 @@ body {
    ========================================== */
 .app-header {
     background-color: var(--nav-bg);
-    padding: 40px 20px 80px 20px;
+    height: 230px;
+    padding: 25px 20px 0 20px;
+    box-sizing: border-box;
     text-align: center;
 }
 
@@ -78,6 +80,7 @@ body {
 }
 
 .pill-select {
+    width: auto !important;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -1192,7 +1195,8 @@ select:focus {
 
     /* Header and Cards */
     .app-header {
-        padding: 30px 15px 40px 15px;
+        height: 200px;
+        padding: 20px 15px 0 15px;
     }
 
     .main-container {

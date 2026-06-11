@@ -1,9 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using TennisDb;
 
 namespace TennisBruck.Pages;
 
@@ -112,7 +108,7 @@ public class PartnerBoardModel(
         }
 
         // Sicherheits-Check: Nur fixieren, wenn frei
-        if (!slot.IsMatched)
+        if (slot.IsMatched) return RedirectToPage();
         {
             if (CurrentPlayerId == slot.PlayerId ||
                 CurrentPlayerId == slot.MatchedWithPlayerId ||
@@ -157,7 +153,7 @@ public class PartnerBoardModel(
             // A) Send email to creator if they want updates on joins
             if (slot.Player.IdentityUser?.Email != null && joiningPlayer != null)
             {
-                if (slot.Player.NotificationSettings == null || slot.Player.NotificationSettings.EmailOnSlotJoined)
+                if (slot.Player.NotificationSettings.EmailOnSlotJoined)
                 {
                     var emailSubject = "🎾 Neuer Mitspieler in der Börse!";
                     var emailBody = $"Hallo {slot.Player.Firstname},<br><br>" +
@@ -229,7 +225,7 @@ public class PartnerBoardModel(
             EndTime = endTime,
             Message = message,
             NeededPlayers = neededPlayers,
-            IsDouble = neededPlayers > 1, // Fallback für ältere Code-Teile
+            IsDouble = neededPlayers > 1,
             IsMatched = false
         };
 
@@ -374,7 +370,7 @@ public class PartnerBoardModel(
             foreach (var p in joinedPlayers)
             {
                 if (p.IdentityUser?.Email != null &&
-                    (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotCancelled))
+                    p.NotificationSettings.EmailOnSlotCancelled)
                 {
                     var subject = "🎾 Börsen-Spiel abgesagt!";
                     var body = $"Hallo {p.Firstname},<br><br>" +
@@ -400,8 +396,7 @@ public class PartnerBoardModel(
                 "Du hast dich aus dem Match ausgetragen. Der freie Platz wurde wieder in die Börse gestellt.";
 
             // Sende E-Mail an den Ersteller, falls dieser Benachrichtigungen über Stornierungen/Absagen möchte
-            if (slot.Player?.IdentityUser?.Email != null && (slot.Player.NotificationSettings == null ||
-                                                             slot.Player.NotificationSettings.EmailOnSlotCancelled))
+            if (slot.Player.IdentityUser?.Email != null && slot.Player.NotificationSettings.EmailOnSlotCancelled)
             {
                 var emailSubject = "🎾 Ein Mitspieler hat abgesagt!";
                 var emailBody = $"Hallo {slot.Player.Firstname},<br><br>" +

@@ -27,7 +27,9 @@ body {
 /* --- HEADER --- */
 .app-header {
     background-color: var(--nav-bg);
-    padding: 20px 20px 80px 20px;
+    height: 230px;
+    padding: 25px 20px 0 20px;
+    box-sizing: border-box;
     text-align: center;
 }
 
@@ -200,7 +202,8 @@ body {
    ========================================== */
 @media (max-width: 768px) {
     .app-header {
-        padding: 30px 15px 40px 15px;
+        height: 200px;
+        padding: 20px 15px 0 15px;
     }
 
     .main-container {

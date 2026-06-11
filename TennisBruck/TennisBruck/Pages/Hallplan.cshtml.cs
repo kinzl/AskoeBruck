@@ -18,7 +18,6 @@ public class Hallplan(
     public bool IsLoggedInPlayerPlaying { get; set; }
     public string? Message { get; set; }
     public bool IsError { get; set; }
-
     public HallPlanEntity? SelectedHallPlanEntity { get; set; }
 
     public IActionResult OnPost(string? message = null, bool isError = false)
@@ -60,10 +59,10 @@ public class Hallplan(
                 .Any(r => r.PlayerId == p.Id && r.HallPlanId == HallPlanId))
             .ToList();
 
-        // foreach (var court in HallPlanDays)
-        // {
-        //     court.Players = court.Players.OrderBy(p => p.Player.ToString()).ToList();
-        // }
+        foreach (var court in HallPlanDays)
+        {
+            court.Players = court.Players.OrderBy(p => p.Player.ToString()).ToList();
+        }
 
         if (SelectedHallPlanEntity != null)
         {

@@ -16,41 +16,41 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
-<div class="dark-header-section position-relative">
-    <div class="d-flex justify-content-start w-100 px-3 pt-3 position-absolute top-0 start-0">
-        <a href="/" class="back-button position-static">← Übersicht</a>
+<div class="dark-header-section">
+    <div class="header-top-bar">
+        <a href="/" class="back-button">← Übersicht</a>
     </div>
 
-    <h1 class="fw-bold mb-2 mt-4 pt-3">Spielpartner-Suche</h1>
+    <h1 class="fw-bold mb-2">Spielpartner-Suche</h1>
     <p class="text-white-50">Finde unkompliziert Mitspieler oder trage deine verfügbaren Zeiten ein</p>
 
+</div>
+
+<div class="main-content-container">
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert-box-custom alert-success-custom">
+        <div class="alert-box-custom alert-success-custom mb-3">
             <i class="bi bi-check-circle-fill me-2"></i>
             <strong>@TempData["SuccessMessage"]</strong>
         </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert-box-custom alert-error-custom">
+        <div class="alert-box-custom alert-error-custom mb-3">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
             <strong>@TempData["ErrorMessage"]</strong>
         </div>
     }
-</div>
-
-<div class="main-content-container">
 
     <!-- FILTER BAR -->
-    <div class="hallenplan-card mb-4">
+    <div class="hallenplan-card mb-4 filter-card">
         <form method="get" class="row g-2 align-items-end">
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
                 <label class="form-label small text-muted mb-1 fw-bold">Datum von</label>
                 <input type="date" name="FilterDateFrom" class="form-control form-control-sm"
                        value="@Model.FilterDateFrom?.ToString("yyyy-MM-dd")"/>
             </div>
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
                 <label class="form-label small text-muted mb-1 fw-bold">Datum bis</label>
                 <input type="date" name="FilterDateTo" class="form-control form-control-sm"
                        value="@Model.FilterDateTo?.ToString("yyyy-MM-dd")"/>
@@ -65,10 +65,15 @@
                 <input type="time" name="FilterTimeTo" class="form-control form-control-sm"
                        value="@Model.FilterTimeTo?.ToString(@"hh\:mm")"/>
             </div>
-            <div class="col-12 col-md-2 text-end">
-                <button type="submit" class="btn btn-sm btn-outline-secondary w-100"><i class="bi bi-funnel"></i>
-                    Filtern
+            <div class="col-6 col-md-2">
+                <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
+                    <i class="bi bi-funnel"></i> Filtern
                 </button>
+            </div>
+            <div class="col-6 col-md-2">
+                <a href="/PartnerBoard" class="btn btn-sm btn-outline-danger w-100">
+                    <i class="bi bi-x-circle"></i> Zurücksetzen
+                </a>
             </div>
         </form>
     </div>
@@ -84,10 +89,11 @@
                 @foreach (var slot in Model.MyOpenSlots)
                 {
                     <div
-                        class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white">
+                        class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white my-open-slot-item">
                         <div class="w-100 pe-3">
                             <div class="d-flex align-items-center mb-1">
                                 <span class="badge bg-secondary me-2">@(slot.IsDouble ? "Doppel" : "Einzel")</span>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Mein Eintrag</span>
                             </div>
                             <small class="text-muted d-block mb-1">
                                 <i class="bi bi-clock me-1"></i> @slot.Date.ToString("dd.MM.yyyy") | @slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm") Uhr
@@ -153,10 +159,18 @@
                 @foreach (var match in Model.MyFixedMatches)
                 {
                     <div
-                        class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white">
+                        class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 mb-1 rounded bg-white @(match.PlayerId == Model.CurrentPlayerId ? "my-open-slot-item" : "my-joined-slot-item")">
                         <div>
                             <div class="d-flex align-items-center mb-1">
                                 <span class="badge bg-secondary me-2">@(match.IsDouble ? "Doppel" : "Einzel")</span>
+                                @if (match.PlayerId == Model.CurrentPlayerId)
+                                {
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Von mir erstellt</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Teilgenommen</span>
+                                }
                             </div>
                             @if (match.IsDouble)
                             {
@@ -222,12 +236,17 @@
 
                     @foreach (var slot in dayGroup.Value)
                     {
+                        var hasJoined = slot.MatchedWithPlayerId == Model.CurrentPlayerId || slot.MatchedWithPlayer2Id == Model.CurrentPlayerId || slot.MatchedWithPlayer3Id == Model.CurrentPlayerId;
                         <div
-                            class="list-group-item d-flex justify-content-between align-items-center border-0 bg-light mb-2 rounded">
+                            class="list-group-item d-flex justify-content-between align-items-center border-0 mb-2 rounded @(hasJoined ? "my-joined-slot-item" : "bg-light")">
                             <div class="w-100 pe-3">
                                 <div class="d-flex align-items-center mb-1">
                                     <span class="badge bg-secondary me-2">@(slot.IsDouble ? "Doppel" : "Einzel")</span>
-                                    <strong class="text-dark">@(slot.Player?.ToString() ?? "Unbekannt")</strong>
+                                    @if (hasJoined)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle me-2">Angemeldet</span>
+                                    }
+                                    <strong class="text-dark">@(slot.Player.ToString() ?? "Unbekannt")</strong>
                                 </div>
                                 <small class="text-muted d-block mb-1">
                                     <i class="bi bi-clock me-1"></i> @slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm") Uhr
