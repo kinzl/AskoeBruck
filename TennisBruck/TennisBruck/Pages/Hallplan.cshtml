@@ -103,8 +103,9 @@
                                          draggable="true"
                                          data-player-id="@playerEntry.Player.Id"
                                          data-court-id="@court.Id">
-                                        <div class="avatar-micro">@playerEntry.Player.ToString().Substring(0, 1)</div>
-                                        <span class="player-name-micro">@playerEntry.Player.ToString()</span>
+                                        <div class="avatar-micro">@(!string.IsNullOrEmpty(playerEntry.Player.Firstname) ? playerEntry.Player.Firstname.Substring(0, 1) : "")</div>
+                                        <span class="player-name-micro desktop-name">@playerEntry.Player.ToString()</span>
+                                        <span class="player-name-micro mobile-name">@playerEntry.Player.Firstname @(string.IsNullOrEmpty(playerEntry.Player.Lastname) ? "" : playerEntry.Player.Lastname[0].ToString() + ".")</span>
                                     </div>
 
                                 </div>

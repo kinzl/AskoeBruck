@@ -84,43 +84,73 @@
                             class="text-dark">@Model.SelectedCompetition.RegistrationUntil.ToString("dd.MM.yyyy HH:mm")</strong>
                     </p>
                 </div>
+                @{
+                    var registrationOpen = Model.SelectedCompetition.RegistrationUntil >= CityTime.GetViennaTimeZone();
+                }
 
-                <form method="post" class="competition-action-form">
-                    <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
-                    @if (Model.SelectedCompetition.RegistrationUntil >= CityTime.GetViennaTimeZone())
-                    {
+                @if (registrationOpen)
+                {
+                    <form method="post" class="competition-action-form">
+                        <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
                         <button class="btn-action btn-large-shadow @(Model.IsRegistered ? "btn-danger" : "btn-accent")"
                                 asp-page-handler="@(Model.IsRegistered ? "Unregister" : "Register")">
                             @(Model.IsRegistered ? "❌ Wieder abmelden" : "🎾 Jetzt Teilnehmen")
                         </button>
-                    }
-                    else
+                        <span class="badge-count">Spieler: @Model.RegisteredCompetitionPlayers.Count</span>
+                    </form>
+
+                    @if (User.IsInRole("Admin"))
                     {
-                        <span class="badge-closed">Anmeldung geschlossen</span>
+                        <form method="post" class="admin-time-form">
+                            <span class="text-sm text-muted">Admin-Anpassung:</span>
+                            <input type="date" name="newDate"
+                                   value="@Model.SelectedCompetition.RegistrationUntil.ToString("yyyy-MM-dd")"
+                                   class="input-auto"/>
+                            <input type="time" name="newTime"
+                                   value="@Model.SelectedCompetition.RegistrationUntil.ToString("HH:mm")"
+                                   class="input-auto"/>
+                            <button asp-page-handler="SaveNewDate" class="btn-action btn-sm">Anmeldefrist aktualisieren
+                            </button>
+                        </form>
+                    }
+                }
+                else
+                {
+                    <div class="registration-closed-row">
+                        <div class="registration-closed-badges">
+                            <span class="badge-closed">Anmeldung geschlossen</span>
+                            <span class="badge-count">Spieler: @Model.RegisteredCompetitionPlayers.Count</span>
+                        </div>
+
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <form method="post" class="admin-time-form admin-time-form--inline">
+                                <span class="text-sm text-muted">Admin-Anpassung:</span>
+                                <input type="date" name="newDate"
+                                       value="@Model.SelectedCompetition.RegistrationUntil.ToString("yyyy-MM-dd")"
+                                       class="input-auto"/>
+                                <input type="time" name="newTime"
+                                       value="@Model.SelectedCompetition.RegistrationUntil.ToString("HH:mm")"
+                                       class="input-auto"/>
+                                <button asp-page-handler="SaveNewDate" class="btn-action btn-sm">Anmeldefrist aktualisieren
+                                </button>
+                            </form>
+                        }
+
                         @if (Model.IsRegistered)
                         {
-                            <button class="btn-action btn-warning" asp-page-handler="SelfWithdraw"
-                                    onclick="return confirm('Möchtest du das Turnier wirklich komplett abbrechen? ALLE deine noch offenen Matches werden als Sieg (w.o.) für deine Gegner gewertet. Das kann nicht rückgängig gemacht werden!');">
-                                Turnier abbrechen (w.o.)
-                            </button>
+                            <form method="post" class="m-0">
+                                <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
+                                <button class="btn-action btn-danger" asp-page-handler="SelfWithdraw"
+                                        onclick="return confirm('Möchtest du das Turnier wirklich komplett abbrechen? ALLE deine noch offenen Matches werden als Sieg (w.o.) für deine Gegner gewertet. Das kann nicht rückgängig gemacht werden!');">
+                                    Turnier abbrechen (w.o.)
+                                </button>
+                            </form>
                         }
-                    }
-                    <span class="badge-count">Spieler: @Model.RegisteredCompetitionPlayers.Count</span>
-                </form>
+                    </div>
+                }
             </div>
 
-            @if (User.IsInRole("Admin"))
-            {
-                <form method="post" class="admin-time-form">
-                    <span class="text-sm text-muted">Admin-Anpassung:</span>
-                    <input type="date" name="newDate"
-                           value="@Model.SelectedCompetition.RegistrationUntil.ToString("yyyy-MM-dd")"
-                           class="input-auto"/>
-                    <input type="time" name="newTime"
-                           value="@Model.SelectedCompetition.RegistrationUntil.ToString("HH:mm")" class="input-auto"/>
-                    <button asp-page-handler="SaveNewDate" class="btn-action btn-sm">Zeit updaten</button>
-                </form>
-            }
         </section>
 
         @if (!Model.SelectedCompetition.IsSingle)
@@ -298,7 +328,8 @@
                                 <td>
                                     <form method="post" asp-page-handler="RemoveRegistration" class="inline-form-zero">
                                         <input type="hidden" name="playerId" value="@registered.Player.Id"/>
-                                        <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+                                        <input type="hidden" name="competitionId"
+                                               value="@Model.SelectedCompetition.Id"/>
                                         <button class="btn-danger btn-xs btn-action-micro"
                                                 title="Teilnehmer löschen"
                                                 onclick="return confirm('Möchtest du diesen Teilnehmer wirklich aus dem Bewerb löschen? Alle zugehörigen Teams und Matches werden ebenfalls gelöscht!');">

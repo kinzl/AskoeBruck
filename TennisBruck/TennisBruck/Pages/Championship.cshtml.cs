@@ -74,6 +74,7 @@ public class Championship(
             Matches = db.KnockoutMatch
                 .Include(x => x.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
                 .Include(x => x.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                .Include(x => x.Sets)
                 .Where(x => x.CompetitionId == selectedCompetitionId)
                 .ToList();
 
@@ -182,10 +183,12 @@ public class Championship(
     public IActionResult OnPostRegister(int? playerId = null)
     {
         InitValues();
+        int targetPlayerId = playerId ?? CurrentPlayer.Id;
+
         db.TournamentRegistrations.Add(new TournamentRegistration()
         {
             Competition = SelectedCompetition!,
-            PlayerId = playerId ?? CurrentPlayer.Id,
+            PlayerId = targetPlayerId,
             RegisteredAt = DateTime.Now
         });
         if (SelectedCompetition!.IsSingle)
@@ -195,13 +198,21 @@ public class Championship(
                 CompetitionId = SelectedCompetition.Id,
                 TeamPlayers = new List<TeamPlayer>
                 {
-                    new() { PlayerId = playerId ?? CurrentPlayer.Id }
+                    new() { PlayerId = targetPlayerId }
                 }
             };
             db.Teams.Add(team);
         }
 
         db.SaveChanges();
+
+        if (playerId.HasValue)
+        {
+            var registeredPlayer = db.Players.Find(playerId.Value);
+            string name = registeredPlayer != null ? registeredPlayer.ToString() : "Spieler";
+            return RedirectToPage(new { Message = $"Spieler {name} wurde erfolgreich zum Bewerb {SelectedCompetition.Name} angemeldet" });
+        }
+
         return RedirectToPage(new { Message = $"Du hast dich beim Bewerb {SelectedCompetition.Name} angemeldet" });
     }
 
@@ -1094,11 +1105,45 @@ public class Championship(
         if (!User.IsInRole("Admin")) return Forbid();
         if (targetGroupSize < 2) targetGroupSize = 2;
 
-        var players = await db.TournamentRegistrations
-            .Where(p => p.CompetitionId == competitionId)
+        var competition = await db.Competitions.FindAsync(competitionId);
+        if (competition == null) return NotFound();
+
+        // For single competitions, ensure all registered players have a Team record
+        if (competition.IsSingle)
+        {
+            var registeredPlayerIds = await db.TournamentRegistrations
+                .Where(r => r.CompetitionId == competitionId)
+                .Select(r => r.PlayerId)
+                .ToListAsync();
+
+            var existingTeamPlayerIds = await db.Teams
+                .Where(t => t.CompetitionId == competitionId)
+                .SelectMany(t => t.TeamPlayers.Select(tp => tp.PlayerId))
+                .ToListAsync();
+
+            var missingPlayerIds = registeredPlayerIds.Except(existingTeamPlayerIds).ToList();
+            if (missingPlayerIds.Any())
+            {
+                foreach (var pId in missingPlayerIds)
+                {
+                    db.Teams.Add(new Team
+                    {
+                        CompetitionId = competitionId,
+                        TeamPlayers = new List<TeamPlayer> { new() { PlayerId = pId } }
+                    });
+                }
+                await db.SaveChangesAsync();
+            }
+        }
+
+        var shuffledPlayers = await db.Teams
+            .Where(x => x.CompetitionId == competitionId)
             .ToListAsync();
 
-        if (!players.Any()) return RedirectToPage(new { id = competitionId });
+        if (!shuffledPlayers.Any())
+        {
+            return RedirectToPage(new { Message = "Fehler: Keine Teams/Spieler für diesen Bewerb vorhanden. Generiere zuerst Teams oder füge Spieler hinzu." });
+        }
 
         var oldGroups = await db.Groups
             .Include(g => g.GroupTeams)
@@ -1112,7 +1157,8 @@ public class Championship(
 
         await db.SaveChangesAsync();
 
-        int numberOfGroups = (int)Math.Ceiling((double)players.Count / targetGroupSize);
+        // Calculate numberOfGroups based on the actual number of teams (shuffledPlayers.Count) rather than individual players count
+        int numberOfGroups = (int)Math.Ceiling((double)shuffledPlayers.Count / targetGroupSize);
 
         var newGroups = new List<Group>();
         for (int i = 0; i < numberOfGroups; i++)
@@ -1127,8 +1173,6 @@ public class Championship(
         }
 
         var random = new Random();
-        var shuffledPlayers = db.Teams.Where(x => x.CompetitionId == competitionId).ToList();
-
         shuffledPlayers = shuffledPlayers.OrderBy(_ => random.Next()).ToList();
 
         for (int i = 0; i < shuffledPlayers.Count; i++)

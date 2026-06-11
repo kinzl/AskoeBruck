@@ -290,6 +290,37 @@ input:checked + .slider:before {
     .modern-card {
         padding: 15px;
     }
+
+    .card-header {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .card-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .app-title {
+        font-size: 1.4rem;
+    }
+
+    /* Members table: allow horizontal scroll on mobile */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+
+    .members-table {
+        min-width: 500px;
+    }
+
+    .members-table td,
+    .members-table th {
+        padding: 10px 10px;
+        font-size: 0.9rem;
+    }
 }
 
 .m-0 {

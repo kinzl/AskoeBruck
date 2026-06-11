@@ -4,8 +4,8 @@
 :root {
     --app-bg: #f3f4f6;
     --nav-bg: #0f172a;
-    --accent-color: #10b981; /* Changed to a modern elegant green */
-    --accent-hover: #059669;
+    --accent-color: #15803d; /* Changed to an elegant tennis green */
+    --accent-hover: #166534;
     --text-light: #f8fafc;
     --text-dark: #1e293b;
     --text-muted: #64748b;
@@ -235,7 +235,7 @@ body {
     padding: 8px 16px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 4px 6px -1px rgba(21, 128, 61, 0.4);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     width: 100%; /* Default width for small screens */
@@ -244,13 +244,13 @@ body {
 
 .btn-action.btn-accent:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px -2px rgba(16, 185, 129, 0.5);
-    background: linear-gradient(135deg, var(--accent-hover) 0%, #047857 100%);
+    box-shadow: 0 6px 12px -2px rgba(21, 128, 61, 0.5);
+    background: linear-gradient(135deg, var(--accent-hover) 0%, #14532d 100%);
 }
 
 .btn-action.btn-accent:active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px -1px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 2px 4px -1px rgba(21, 128, 61, 0.4);
 }
 
 @media (min-width: 650px) {
@@ -375,26 +375,45 @@ body {
 
 /* --- BUTTONS IN TABLE --- */
 .btn-reserve {
-    background: var(--accent-color);
-    color: var(--nav-bg);
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
     border: none;
     width: 24px; /* Tiny plus button */
     height: 24px;
     border-radius: 50%;
-    font-size: 1rem;
-    font-weight: bold;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     margin: 0 auto;
+    position: relative;
+    display: block;
 }
 
 .btn-reserve:hover {
     transform: scale(1.1);
-    background: var(--accent-hover);
+    background: linear-gradient(135deg, var(--accent-hover) 0%, #14532d 100%);
+}
+
+.btn-reserve::before,
+.btn-reserve::after {
+    content: '';
+    position: absolute;
+    background-color: #ffffff;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 1px;
+}
+
+/* Horizontal line of the plus */
+.btn-reserve::before {
+    width: 10px;
+    height: 2px;
+}
+
+/* Vertical line of the plus */
+.btn-reserve::after {
+    width: 2px;
+    height: 10px;
 }
 
 .btn-delete-res {
@@ -438,6 +457,39 @@ body {
     }
 
     .modern-card {
-        padding: 10px; /* Less padding on the surrounding card on mobile */
+        padding: 12px;
+    }
+
+    .app-title {
+        font-size: 1.4rem;
+    }
+
+    /* Date navigation pill stays full-width but smaller */
+    .date-nav-wrapper {
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    .btn-date {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+
+    .date-picker-input {
+        font-size: 0.9rem;
+    }
+
+    /* Admin panel form: stack vertically on mobile */
+    .admin-form {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-group-flex {
+        min-width: 100%;
+    }
+
+    .admin-panel {
+        padding: 12px;
     }
 }

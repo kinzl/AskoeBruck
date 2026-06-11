@@ -576,12 +576,16 @@ input:checked + .slider:before {
 }
 
 .player-name-micro {
-    font-size: 0.75rem; /* Etwas kleiner für die Kompaktheit */
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--nav-bg);
-    white-space: nowrap; /* Kein Zeilenumbruch! */
-    overflow: hidden; /* Schneidet zu lange Namen sauber ab... */
-    text-overflow: ellipsis; /* ...und macht "..." am Ende */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mobile-name {
+    display: none !important;
 }
 
 /* ==========================================
@@ -595,6 +599,43 @@ input:checked + .slider:before {
     .main-container {
         padding: 0 10px;
         margin-top: -20px;
+    }
+
+    .desktop-name {
+        display: none !important;
+    }
+
+    .mobile-name {
+        display: inline !important;
+    }
+
+    .app-title {
+        font-size: 1.4rem;
+    }
+
+    .players-2x2-grid {
+        gap: 4px;
+        padding: 4px;
+    }
+
+    .compact-drop {
+        min-height: 44px;
+    }
+
+    .compact-player {
+        padding: 4px 6px;
+        gap: 5px;
+    }
+
+    .avatar-micro {
+        width: 22px;
+        height: 22px;
+        font-size: 0.68rem;
+        flex-shrink: 0;
+    }
+
+    .player-name-micro {
+        font-size: 0.72rem;
     }
 
     .top-dashboard-grid {
@@ -612,7 +653,31 @@ input:checked + .slider:before {
     .card-status-flex {
         flex-direction: column;
         align-items: flex-start;
-        gap: 15px;
+        gap: 10px;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+    }
+
+    .substitute-bench {
+        gap: 8px;
+    }
+
+    .player-slot {
+        font-size: 0.85rem;
     }
 }
+
+/* On very small phones (<=400px), switch schedule to 1-column for readability */
+@media (max-width: 400px) {
+    .players-2x2-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .compact-drop {
+        min-height: 40px;
+    }
+}
+
 .mt-10 { margin-top: 10px; }

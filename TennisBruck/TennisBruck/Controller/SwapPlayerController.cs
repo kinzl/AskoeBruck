@@ -2,17 +2,9 @@ namespace TennisBruck.Controller;
 
 [Authorize]
 [Route("[controller]/[action]")]
-public class SwapPlayerController : ControllerBase
+public class SwapPlayerController(TennisContext db, CurrentPlayerService currentPlayerService)
+    : ControllerBase
 {
-    private TennisContext _db;
-    private readonly CurrentPlayerService _currentPlayerService;
-
-    public SwapPlayerController(TennisContext db, CurrentPlayerService currentPlayerService)
-    {
-        _db = db;
-        _currentPlayerService = currentPlayerService;
-    }
-
     [HttpPost]
     public async Task<IActionResult> OnPostSwapPlayers([FromBody] JsonElement data)
     {
@@ -32,24 +24,24 @@ public class SwapPlayerController : ControllerBase
             return BadRequest("Invalid data format.");
         }
 
-        var currentUser = _currentPlayerService.GetCurrentUser();
+        var currentUser = currentPlayerService.GetCurrentUser();
         if (currentUser == null) return Unauthorized("Invalid user");
 
-        var court1 = await _db.Court.FindAsync(court1Id);
+        var court1 = await db.Court.FindAsync(court1Id);
         if (court1 == null) return BadRequest("Court not found");
 
-        bool isRegistered = await _db.HallPlanRegistrations
+        bool isRegistered = await db.HallPlanRegistrations
             .AnyAsync(r => r.PlayerId == currentUser.Id && r.HallPlanId == court1.HallPlanId);
 
-        if (!isRegistered && !User.IsInRole("Admin")) 
+        if (!isRegistered) 
             return StatusCode(StatusCodes.Status403Forbidden, "You must be registered to this Hallplan to swap players.");
 
-        var playerCourt1 = await _db.HallEntities
+        var playerCourt1 = await db.HallEntities
             .Include(pc => pc.Player)
             .Include(pc => pc.HallPlanDay)
             .FirstOrDefaultAsync(pc => pc.Player.Id == player1Id && pc.HallPlanDay.Id == court1Id);
 
-        var playerCourt2 = await _db.HallEntities
+        var playerCourt2 = await db.HallEntities
             .Include(pc => pc.Player)
             .Include(pc => pc.HallPlanDay)
             .FirstOrDefaultAsync(pc => pc.Player.Id == player2Id && pc.HallPlanDay.Id == court2Id);
@@ -59,28 +51,28 @@ public class SwapPlayerController : ControllerBase
             return BadRequest("One or both players not found in specified courts.");
         }
 
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
         try
         {
             // Remove both entries from the database
-            _db.HallEntities.Remove(playerCourt1);
-            _db.HallEntities.Remove(playerCourt2);
-            await _db.SaveChangesAsync();
+            db.HallEntities.Remove(playerCourt1);
+            db.HallEntities.Remove(playerCourt2);
+            await db.SaveChangesAsync();
 
             // Re-add entries with swapped court and player assignments
-            _db.HallEntities.Add(new HallEntity
+            db.HallEntities.Add(new HallEntity
             {
                 Player = playerCourt2.Player,
                 HallPlanDay = playerCourt1.HallPlanDay
             });
 
-            _db.HallEntities.Add(new HallEntity
+            db.HallEntities.Add(new HallEntity
             {
                 Player = playerCourt1.Player,
                 HallPlanDay = playerCourt2.HallPlanDay
             });
 
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
             await transaction.CommitAsync();
             return Ok();
         }
