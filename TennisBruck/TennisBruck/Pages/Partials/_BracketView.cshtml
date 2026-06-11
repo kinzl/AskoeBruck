@@ -7,10 +7,21 @@
     string? sessionPhase = Context.Session.GetString("ActivePhase");
     string activePhase = sessionPhase ?? TempData["ActivePhase"]?.ToString() ?? phases.FirstOrDefault()?.Key ?? "A-Bewerb";
     int globalInputIndex = 0;
+
+    string GetTeamClass(KnockoutMatch m, Team? team, string winnerClass, string loserClass, string tbdClass)
+    {
+        if (m.Winner != null || m.IsWalkover)
+        {
+            bool isWinner = m.Winner?.Id == team?.Id || (m.IsWalkover && m.WalkoverTeamId != team?.Id);
+            return isWinner ? winnerClass : loserClass;
+        }
+        return team == null ? tbdClass : "";
+    }
 }
 
 @if (grouped.Any() || User.IsInRole("Admin"))
 {
+    <form method="post" id="deletePhaseForm" style="display: none;"></form>
     <section class="modern-card">
         <div class="card-header">
             <h2>⚔️ K.O. Phase</h2>
@@ -18,7 +29,8 @@
             {
                 <form method="post" class="bracket-admin-form">
                     <div class="bracket-inputs-row">
-                        <input type="text" asp-for="PhaseName" placeholder="Z.B A-Bewerb" class="input-score bracket-name-input"/>
+                        <input type="text" asp-for="PhaseName" placeholder="Z.B A-Bewerb"
+                               class="input-score bracket-name-input"/>
                         <select asp-for="SelectedSize" class="bracket-select-w150">
                             <option value="2">Finale (2)</option>
                             <option value="4">Halbfinale (4)</option>
@@ -53,28 +65,27 @@
                         }
                         @if (User.IsInRole("Admin") && phases.Any(p => p.Key == activePhase))
                         {
-                            <form method="post" class="m-0 bracket-delete-form">
-                                <button type="submit" asp-page-handler="DeletePhase" name="phaseToDelete"
+                            <span class="m-0 bracket-delete-form">
+                                <button type="submit" form="deletePhaseForm" asp-page-handler="DeletePhase"
+                                        name="phaseToDelete"
                                         value="@activePhase"
                                         class="btn-action btn-sm btn-danger"
                                         onclick="return confirm('Möchtest du diesen Raster (@activePhase) und alle darin enthaltenen Spiele wirklich unwiderruflich löschen?');">
                                     🗑️
                                 </button>
-                            </form>
+                            </span>
                         }
                     </div>
                 }
                 else if (User.IsInRole("Admin") && phases.Any(p => p.Key == activePhase))
                 {
                     <div class="bracket-single-delete">
-                        <form method="post" class="m-0">
-                            <button type="submit" asp-page-handler="DeletePhase" name="phaseToDelete"
-                                    value="@activePhase"
-                                    class="btn-action btn-sm btn-danger"
-                                    onclick="return confirm('Möchtest du diesen Raster (@activePhase) und alle darin enthaltenen Spiele wirklich unwiderruflich löschen?');">
-                                🗑️ Raster löschen
-                            </button>
-                        </form>
+                        <button type="submit" form="deletePhaseForm" asp-page-handler="DeletePhase" name="phaseToDelete"
+                                value="@activePhase"
+                                class="btn-action btn-sm btn-danger"
+                                onclick="return confirm('Möchtest du diesen Raster (@activePhase) und alle darin enthaltenen Spiele wirklich unwiderruflich löschen?');">
+                            🗑️ Raster löschen
+                        </button>
                     </div>
                 }
 
@@ -112,21 +123,25 @@
                                                 team1Score = string.Join(" ", match.Sets.Select(s => s.Player1GamesWon));
                                                 team2Score = string.Join(" ", match.Sets.Select(s => s.Player2GamesWon));
                                             }
+
                                             <div
                                                 class="match-scorecard bracket-match-card @(isDecided ? "match-complete" : "")">
                                                 <input type="hidden" name="Inputs[@currentIndex].MatchId"
                                                        value="@match.Id"/>
                                                 <div class="bracket-match-info">Match @match.BracketNo</div>
 
-                                                @if (User.IsInRole("Admin"))
+                                                @if (User.IsInRole("Admin") && match.RoundNo == 1)
                                                 {
                                                     <div class="bracket-admin-selects">
                                                         <div class="bracket-admin-row">
-                                                            <select name="Inputs[@currentIndex].Team1Id" class="bracket-select">
+                                                            <select name="Inputs[@currentIndex].Team1Id"
+                                                                    class="bracket-select @GetTeamClass(match, match.Team1, "select-winner", "select-loser", "")"
+                                                                    disabled="@(isDecided ? "disabled" : null)">
                                                                 <option value="">Team 1 wählen</option>
                                                                 @foreach (var team in Model.RegisteredTeams)
                                                                 {
-                                                                    <option value="@team.Id" selected="@(match.Team1?.Id == team.Id)">@team.PlayersToStringWithItn()</option>
+                                                                    <option value="@team.Id"
+                                                                            selected="@(match.Team1?.Id == team.Id)">@team.PlayersToStringWithItn()</option>
                                                                 }
                                                             </select>
                                                             @if (!string.IsNullOrEmpty(team1Score))
@@ -135,11 +150,14 @@
                                                             }
                                                         </div>
                                                         <div class="bracket-admin-row">
-                                                            <select name="Inputs[@currentIndex].Team2Id" class="bracket-select">
+                                                            <select name="Inputs[@currentIndex].Team2Id"
+                                                                    class="bracket-select @GetTeamClass(match, match.Team2, "select-winner", "select-loser", "")"
+                                                                    disabled="@(isDecided ? "disabled" : null)">
                                                                 <option value="">Team 2 wählen</option>
                                                                 @foreach (var team in Model.RegisteredTeams)
                                                                 {
-                                                                    <option value="@team.Id" selected="@(match.Team2?.Id == team.Id)">@team.PlayersToStringWithItn()</option>
+                                                                    <option value="@team.Id"
+                                                                            selected="@(match.Team2?.Id == team.Id)">@team.PlayersToStringWithItn()</option>
                                                                 }
                                                             </select>
                                                             @if (!string.IsNullOrEmpty(team2Score))
@@ -151,33 +169,20 @@
                                                 }
                                                 else
                                                 {
-                                                    string slot1Class, slot2Class;
-                                                    if (match.IsWalkover)
-                                                    {
-                                                        slot1Class = match.WalkoverTeamId == match.Team1?.Id ? "slot-loser" : "slot-winner";
-                                                        slot2Class = match.WalkoverTeamId == match.Team2?.Id ? "slot-loser" : "slot-winner";
-                                                    }
-                                                    else if (match.Winner != null)
-                                                    {
-                                                        slot1Class = match.Winner.Id == match.Team1?.Id ? "slot-winner" : "slot-loser";
-                                                        slot2Class = match.Winner.Id == match.Team2?.Id ? "slot-winner" : "slot-loser";
-                                                    }
-                                                    else
-                                                    {
-                                                        slot1Class = match.Team1 == null ? "slot-tbd" : "";
-                                                        slot2Class = match.Team2 == null ? "slot-tbd" : "";
-                                                    }
-
                                                     <div class="bracket-slots-container">
-                                                        <div class="bracket-slot slot-top @slot1Class" title="@(match.Team1?.PlayersToStringWithItn() ?? "TBD")">
-                                                            <span class="bracket-player-name">@(match.Team1?.PlayersToStringWithItn() ?? "TBD")</span>
+                                                        <div class="bracket-slot slot-top @GetTeamClass(match, match.Team1, "slot-winner", "slot-loser", "slot-tbd")"
+                                                             title="@(match.Team1?.PlayersToStringWithItn() ?? "TBD")">
+                                                            <span
+                                                                class="bracket-player-name">@(match.Team1?.PlayersToStringWithItn() ?? "TBD")</span>
                                                             @if (!string.IsNullOrEmpty(team1Score))
                                                             {
                                                                 <span class="bracket-player-score">@team1Score</span>
                                                             }
                                                         </div>
-                                                        <div class="bracket-slot slot-bottom @slot2Class" title="@(match.Team2?.PlayersToStringWithItn() ?? "TBD")">
-                                                            <span class="bracket-player-name">@(match.Team2?.PlayersToStringWithItn() ?? "TBD")</span>
+                                                        <div class="bracket-slot slot-bottom @GetTeamClass(match, match.Team2, "slot-winner", "slot-loser", "slot-tbd")"
+                                                             title="@(match.Team2?.PlayersToStringWithItn() ?? "TBD")">
+                                                            <span
+                                                                class="bracket-player-name">@(match.Team2?.PlayersToStringWithItn() ?? "TBD")</span>
                                                             @if (!string.IsNullOrEmpty(team2Score))
                                                             {
                                                                 <span class="bracket-player-score">@team2Score</span>

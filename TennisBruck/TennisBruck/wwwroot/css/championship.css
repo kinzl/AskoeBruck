@@ -615,7 +615,7 @@ select:focus {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    width: 260px;
+    width: 290px;
 }
 
 .bracket-bye {
@@ -646,6 +646,21 @@ select:focus {
     margin-bottom: 5px;
     font-size: 0.85rem;
     padding: 4px;
+    border-radius: 4px;
+}
+
+.bracket-select.select-winner {
+    background-color: rgba(16, 185, 129, 0.12) !important;
+    color: #047857 !important;
+    border: 1px solid #10b981 !important;
+    font-weight: 700 !important;
+}
+
+.bracket-select.select-loser {
+    background-color: #f8fafc !important;
+    color: #64748b !important;
+    border: 1px solid #cbd5e1 !important;
+    opacity: 0.8;
 }
 
 .bracket-admin-selects {
@@ -686,10 +701,11 @@ select:focus {
 }
 
 .bracket-player-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal !important;
+    word-break: break-word;
     flex-grow: 1;
+    overflow: visible !important;
+    text-overflow: clip !important;
 }
 
 .bracket-player-score {
@@ -1365,7 +1381,7 @@ select:focus {
 
     /* Bracket: narrower cards */
     .bracket-col {
-        width: 200px;
+        width: 230px;
     }
 
     .bracket-scroll-area {
@@ -1456,6 +1472,18 @@ select:focus {
     transition: all 0.3s ease;
     font-size: 0.95rem;
 }
+/* Bracket Tabs specifically visible on light card background */
+.bracket-pill-btn {
+    background: transparent;
+    color: var(--nav-bg);
+    border: 2px solid var(--nav-bg);
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
 
 .bracket-pill-btn:hover {
     background: rgba(15, 23, 42, 0.05);
@@ -1465,4 +1493,75 @@ select:focus {
     background: var(--nav-bg);
     color: var(--text-light);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Stacked Match Players & Scores (Personal and General matches) */
+.match-players-stacked {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 320px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.match-player-row {
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.match-player-row:not(:last-child) {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.match-player-row.winner {
+    background: rgba(16, 185, 129, 0.06);
+    color: var(--color-success);
+    font-weight: 700;
+}
+
+.match-player-row.loser {
+    color: var(--color-gray);
+}
+
+.match-player-row.walkover-loser {
+    color: var(--color-warning);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.match-player-score-inline {
+    font-weight: 800;
+    font-size: 0.85rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--nav-bg);
+}
+
+.match-player-row.winner .match-player-score-inline {
+    background: rgba(16, 185, 129, 0.15);
+    color: #047857;
+}
+
+@media (max-width: 768px) {
+    .match-players-stacked {
+        max-width: 100%;
+        margin-right: 0;
+        margin-bottom: 12px;
+    }
+}
+
+.match-meta-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }

@@ -662,6 +662,9 @@ public class Championship(
 
         foreach (var match in Matches)
         {
+            if (match.Winner != null || match.IsWalkover) continue;
+            if (match.RoundNo > 1) continue;
+
             var input = Inputs.FirstOrDefault(i => i.MatchId == match.Id);
 
             if (input != null)
