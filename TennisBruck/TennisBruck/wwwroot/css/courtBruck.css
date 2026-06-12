@@ -207,6 +207,14 @@ body {
     align-items: flex-end;
 }
 
+/* Each field wrapper inside the form */
+.admin-form > div,
+.admin-form > .form-group-flex {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
 .form-group-flex {
     flex: 1;
     min-width: 120px;
@@ -482,17 +490,47 @@ body {
         font-size: 0.9rem;
     }
 
-    /* Admin panel form: stack vertically on mobile */
+    /* Admin panel: compact 3-column grid on mobile — Platz · Von · Bis on one line */
+    .admin-panel {
+        padding: 8px 10px;
+        margin-bottom: 14px;
+    }
+
+    .admin-panel-title {
+        font-size: 0.8rem;
+        margin-bottom: 6px;
+    }
+
     .admin-form {
-        flex-direction: column;
-        gap: 10px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        align-items: end;
+    }
+
+    /* Event name (admin only) spans all 3 columns */
+    .admin-form > .form-group-flex {
+        grid-column: 1 / -1;
+    }
+
+    /* Submit button spans all 3 columns */
+    .admin-form > button[type="submit"] {
+        grid-column: 1 / -1;
+        margin-top: 2px;
+        padding: 7px 12px !important;
+        font-size: 0.8rem;
     }
 
     .form-group-flex {
-        min-width: 100%;
+        min-width: 0;
     }
 
-    .admin-panel {
-        padding: 12px;
+    .form-label {
+        font-size: 0.65rem;
+    }
+
+    .form-input {
+        padding: 4px 5px;
+        font-size: 0.8rem;
     }
 }

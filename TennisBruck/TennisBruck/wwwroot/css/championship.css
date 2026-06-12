@@ -1209,29 +1209,229 @@ select:focus {
    ========================================== */
 @media (max-width: 768px) {
 
-    /* Header and Cards */
+    /* Header — shorter, tighter */
     .app-header {
-        height: 200px;
-        padding: 20px 15px 0 15px;
+        height: 165px;
+        padding: 12px 12px 0 12px;
     }
 
+    .header-top-bar {
+        padding-bottom: 10px;
+    }
+
+    .app-title {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    /* Main container */
     .main-container {
-        padding: 0 10px;
+        padding: 0 8px;
         margin-top: -20px;
+        gap: 12px;
     }
 
+    /* Cards — tighter padding */
     .modern-card {
-        padding: 15px;
+        padding: 12px;
     }
 
-    /* Card Header stacks vertically */
+    /* Card header: compact */
     .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+    }
+
+    .card-header h2 {
+        font-size: 0.95rem;
+    }
+
+    /* Competition info: compact horizontal, don't force full vertical stack */
+    .competition-info-flex {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
 
-    /* K.O. Phase Admin Form: keep two-row layout, rows stay as rows */
+    .competition-title {
+        font-size: 1rem;
+        margin-bottom: 2px;
+    }
+
+    .registration-text {
+        font-size: 0.8rem;
+        margin: 0;
+    }
+
+    /* Competition action: button + badge side by side (more compact than full stack) */
+    .competition-action-form {
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .competition-action-form .btn-large-shadow,
+    .competition-action-form .btn-large-accent-shadow {
+        flex: 1;
+        font-size: 0.82rem;
+        padding: 8px 12px;
+        width: auto;
+    }
+
+    .competition-action-form .badge-count {
+        text-align: center;
+        padding: 6px 10px;
+        font-size: 0.82rem;
+    }
+
+    /* Registration-closed row */
+    .registration-closed-row {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .registration-closed-badges {
+        gap: 6px;
+    }
+
+    .badge-closed {
+        font-size: 0.82rem;
+        padding: 6px 12px;
+    }
+
+    .badge-count {
+        font-size: 0.82rem;
+        padding: 4px 10px;
+    }
+
+    /* Admin time form — 2-col grid on mobile instead of full stack */
+    .admin-time-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        align-items: end;
+        margin-top: 10px;
+        padding-top: 10px;
+    }
+
+    .admin-time-form > span {
+        grid-column: 1 / -1;
+        font-size: 0.75rem;
+    }
+
+    .admin-time-form button {
+        grid-column: 1 / -1;
+    }
+
+    .admin-time-form--inline {
+        grid-column: 1 / -1;
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+    }
+
+    .admin-time-form--inline > span {
+        grid-column: 1 / -1;
+        font-size: 0.75rem;
+    }
+
+    .admin-time-form--inline button {
+        grid-column: 1 / -1;
+    }
+
+    .registration-closed-row .btn-action {
+        width: 100%;
+        font-size: 0.82rem;
+        padding: 7px 12px;
+    }
+
+    /* Grids */
+    .pairs-grid-container {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .pair-card {
+        padding: 12px;
+    }
+
+    .players-flex-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .plus-symbol {
+        margin-top: 0;
+        margin-bottom: 0;
+        font-size: 1.1rem;
+        text-align: center;
+    }
+
+    .group-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    /* Group panels */
+    .group-panel-header {
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 8px 12px;
+    }
+
+    .group-panel-title {
+        font-size: 0.9rem;
+    }
+
+    .group-panel-body {
+        padding: 10px;
+    }
+
+    .group-team-row {
+        padding: 6px 0;
+        font-size: 0.85rem;
+    }
+
+    .group-points {
+        font-size: 0.95rem;
+    }
+
+    /* Match Scorecards — stay horizontal but compact */
+    .match-scorecard {
+        padding: 10px;
+        margin-bottom: 8px;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .match-player-row {
+        padding: 6px 10px;
+        font-size: 0.82rem;
+    }
+
+    .match-action-form {
+        flex-wrap: wrap;
+        width: 100%;
+        gap: 6px;
+    }
+
+    .match-meta-container {
+        gap: 6px;
+    }
+
+    /* K.O. Phase Admin Form */
     .bracket-admin-form {
         width: 100%;
     }
@@ -1240,7 +1440,7 @@ select:focus {
     .bracket-buttons-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
         align-items: center;
         width: 100%;
     }
@@ -1266,7 +1466,7 @@ select:focus {
         justify-content: center;
     }
 
-    /* Group header actions stay side-by-side -- override the width:100% above */
+    /* Group header actions stay side-by-side */
     .group-header-actions {
         flex-direction: row;
         flex-wrap: wrap;
@@ -1281,177 +1481,82 @@ select:focus {
         justify-content: flex-start;
     }
 
-    /* Wrap competition actions and title */
-    .competition-info-flex {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-
-    /* Den Button und den Spieler-Badge sauber stapeln */
-    .competition-action-form {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
-    }
-
-    .competition-action-form .badge-count {
-        text-align: center;
-        padding: 10px;
-    }
-
-    /* Registration-closed row stacks vertically on mobile */
-    .registration-closed-row {
-        flex-direction: column;
-        align-items: flex-start;
-        width: 100%;
-        gap: 12px;
-    }
-
-    .registration-closed-badges {
-        gap: 8px;
-    }
-
-    /* admin-time-form--inline: on mobile becomes full-width stacked */
-    .admin-time-form--inline {
-        width: 100%;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .admin-time-form--inline input[type="date"],
-    .admin-time-form--inline input[type="time"],
-    .admin-time-form--inline button {
-        width: 100%;
-    }
-
-    .registration-closed-row .btn-action {
-        width: 100%;
-    }
-
-    /* Grids */
-    .pairs-grid-container {
-        grid-template-columns: 1fr;
-    }
-
-    .players-flex-row {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .plus-symbol {
-        margin-top: 0;
-        margin-bottom: 5px;
-    }
-
-    .group-grid {
-        grid-template-columns: 1fr;
-    }
-
-    /* Match Scorecards */
-    .match-scorecard {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .match-action-form {
-        flex-wrap: wrap;
-        width: 100%;
-        justify-content: flex-start;
-    }
-
-    /* Admin Formular fuer Datum/Zeit */
-    .admin-time-form {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-    }
-
-    .admin-time-form input[type="date"],
-    .admin-time-form input[type="time"],
-    .admin-time-form button {
-        width: 100%;
-    }
-
-    .admin-create-form {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    /* Bracket: narrower cards */
+    /* Bracket */
     .bracket-col {
-        width: 230px;
+        width: 220px;
     }
 
     .bracket-scroll-area {
         position: relative;
     }
 
+    /* Participants */
     .participants-wrapper {
         column-count: 2;
     }
 
-    /* Mobile typography & button adjustments */
-    .app-title {
-        font-size: 1.15rem;
-        margin-bottom: 10px;
+    .participant-badge {
+        font-size: 0.82rem;
+        padding: 4px 10px;
     }
 
-    .competition-title {
-        font-size: 1.1rem;
-    }
-
-    .card-header h2 {
-        font-size: 1.0rem;
-    }
-
-    .pill-btn {
-        padding: 6px 12px;
+    /* Participant table */
+    .participant-table th,
+    .participant-table td {
+        padding: 6px 8px;
         font-size: 0.8rem;
+    }
+
+    /* Pill buttons */
+    .pill-btn {
+        padding: 5px 10px;
+        font-size: 0.78rem;
     }
 
     .bracket-pill-btn {
-        padding: 6px 12px;
-        font-size: 0.8rem;
+        padding: 5px 10px;
+        font-size: 0.78rem;
     }
 
+    /* Buttons */
     .btn-action {
-        padding: 8px 14px;
-        font-size: 0.85rem;
-    }
-
-    .btn-large-shadow,
-    .btn-large-accent-shadow {
-        padding: 10px 20px;
-        font-size: 0.9rem;
-        width: 100%;
+        padding: 7px 12px;
+        font-size: 0.82rem;
     }
 
     .btn-back-header {
-        padding: 6px 12px;
-        font-size: 0.8rem;
+        padding: 5px 10px;
+        font-size: 0.78rem;
     }
 
+    /* Inputs */
     input[type="text"],
     input[type="date"],
     input[type="time"],
     select {
-        padding: 8px 10px;
-        font-size: 0.9rem;
-    }
-
-    /* Participant table on mobile */
-    .participant-table th,
-    .participant-table td {
-        padding: 8px 10px;
+        padding: 6px 8px;
         font-size: 0.85rem;
     }
 
-    /* Group tables on mobile */
-    .group-panel-header {
-        flex-wrap: wrap;
+    /* Admin strip */
+    .admin-strip {
+        padding: 12px;
+    }
+
+    .admin-create-form {
+        flex-direction: column;
+        align-items: stretch;
         gap: 8px;
+    }
+
+    /* Empty state */
+    .empty-state {
+        padding: 40px 20px;
+    }
+
+    .empty-state-icon {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
     }
 }
 
