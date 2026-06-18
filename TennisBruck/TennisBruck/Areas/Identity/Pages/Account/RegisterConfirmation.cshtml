@@ -1,31 +1,27 @@
-﻿@page
+@page
 @model RegisterConfirmationModel
 @{
     ViewData["Title"] = "Registrierung fast abgeschlossen!";
 }
 
-<div class="auth-card-container">
-    <div class="auth-card">
+<link rel="stylesheet" href="~/css/areas/login.css" asp-append-version="true"/>
 
-        <div class="status-icon">
-            📬
-        </div>
+<div class="auth-wrapper">
+    <div class="auth-card auth-card--centered">
 
-        <h1>@ViewData["Title"]</h1>
+        <div class="confirm-icon">📬</div>
 
-        <div class="status-message-wrapper">
+        <h1 class="auth-title">@ViewData["Title"]</h1>
 
-            <p>
-                Wir haben dir gerade eine E-Mail geschickt. <br/><br/>
-                <strong>Bitte überprüfe dein Postfach (und deinen Spam-Ordner)</strong> und klicke auf den Link darin,
-                um dein Konto zu aktivieren.
-            </p>
-            
-        </div>
+        <p class="confirm-message">
+            Wir haben dir gerade eine E-Mail geschickt.<br/><br/>
+            <strong>Bitte überprüfe dein Postfach (und deinen Spam-Ordner)</strong> und klicke auf den
+            Link darin, um dein Konto zu aktivieren.
+        </p>
 
-        @if (!@Model.DisplayConfirmAccountLink)
+        @if (!Model.DisplayConfirmAccountLink)
         {
-            <a href="~/" class="btn-secondary">Zurück zur Startseite</a>
+            <a href="~/" class="btn-submit btn-submit--secondary">← Zurück zur Startseite</a>
         }
 
     </div>

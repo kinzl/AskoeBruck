@@ -18,6 +18,42 @@
     box-sizing: border-box;
 }
 
+/* Centered variant for single-column confirmation pages */
+.auth-card--centered {
+    max-width: 520px;
+    text-align: center;
+}
+
+.confirm-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    line-height: 1;
+}
+
+.confirm-message {
+    font-size: 1rem;
+    color: #495057;
+    line-height: 1.7;
+    margin-bottom: 28px;
+}
+
+/* Secondary button variant (outline style) */
+.btn-submit--secondary {
+    display: inline-block;
+    text-decoration: none;
+    background-color: transparent;
+    color: #1a1e36;
+    border: 2px solid #1a1e36;
+    font-size: 1rem;
+}
+
+.btn-submit--secondary:hover {
+    background-color: #1a1e36;
+    color: #ffffff;
+}
+
+
+
 /* --- Typography --- */
 .auth-title {
     text-align: center;
