@@ -148,8 +148,51 @@ public class Championship(
         var competition = db.Competitions.Find(competitionId);
         if (competition == null) return RedirectToPage(new { Message = "Ein Fehler ist aufgetreten" });
 
+        // Retrieve and delete dependent entities in correct dependency order
+        var groups = db.Groups.Where(g => g.CompetitionId == competitionId).ToList();
+        var groupIds = groups.Select(g => g.Id).ToList();
+
+        var groupTeams = db.GroupTeams.Where(gt => groupIds.Contains(gt.GroupId)).ToList();
+
+        var groupMatches = db.Matches.Where(m => m.Group != null && groupIds.Contains(m.Group.Id)).ToList();
+        var knockoutMatches = db.KnockoutMatch.Where(km => km.CompetitionId == competitionId).ToList();
+        var allMatches = groupMatches.Cast<Match>().Concat(knockoutMatches.Cast<Match>()).ToList();
+        var matchIds = allMatches.Select(m => m.Id).ToList();
+
+        var sets = db.Sets.Where(s => matchIds.Contains(s.Match.Id)).ToList();
+
+        var teams = db.Teams.Where(t => t.CompetitionId == competitionId).ToList();
+        var teamIds = teams.Select(t => t.Id).ToList();
+        var teamPlayers = db.TeamPlayer.Where(tp => teamIds.Contains(tp.TeamId)).ToList();
+
+        var registrations = db.TournamentRegistrations.Where(r => r.CompetitionId == competitionId).ToList();
+
+        // 1. Sets
+        db.Sets.RemoveRange(sets);
+
+        // 2. Matches
+        db.Matches.RemoveRange(allMatches);
+
+        // 3. GroupTeams
+        db.GroupTeams.RemoveRange(groupTeams);
+
+        // 4. Groups
+        db.Groups.RemoveRange(groups);
+
+        // 5. TeamPlayers
+        db.TeamPlayer.RemoveRange(teamPlayers);
+
+        // 6. Teams
+        db.Teams.RemoveRange(teams);
+
+        // 7. TournamentRegistrations
+        db.TournamentRegistrations.RemoveRange(registrations);
+
+        // 8. Competition
         db.Competitions.Remove(competition);
+
         db.SaveChanges();
+
         HttpContext.Session.SetString("selectedCompetitionId", "0");
         return RedirectToPage(new { Message = "Bewerb wurde gelöscht" });
     }
