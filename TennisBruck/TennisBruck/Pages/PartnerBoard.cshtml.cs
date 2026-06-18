@@ -15,6 +15,8 @@ public class PartnerBoardModel(
     public List<AvailabilitySlot> MyFixedMatches { get; set; } = [];
     public List<AvailabilitySlot> MyOpenSlots { get; set; } = [];
     public List<AvailabilitySlot> OtherOpenSlots { get; set; } = [];
+    public bool HasAnySlots { get; set; }
+    public bool IsFilterActive { get; set; }
 
     [BindProperty(SupportsGet = true)] public DateTime? FilterDateFrom { get; set; }
     [BindProperty(SupportsGet = true)] public DateTime? FilterDateTo { get; set; }
@@ -34,6 +36,26 @@ public class PartnerBoardModel(
             db.AvailabilitySlots.RemoveRange(oldSlots);
             await db.SaveChangesAsync();
         }
+
+        IsFilterActive = FilterDateFrom.HasValue || FilterDateTo.HasValue ||
+                         FilterTimeFrom.HasValue || FilterTimeTo.HasValue;
+
+        // Sanitize filter values — silently correct invalid inputs
+        // 1. Dates must not be in the past
+        if (FilterDateFrom.HasValue && FilterDateFrom.Value.Date < DateTime.Today)
+            FilterDateFrom = DateTime.Today;
+        if (FilterDateTo.HasValue && FilterDateTo.Value.Date < DateTime.Today)
+            FilterDateTo = DateTime.Today;
+        // 2. "Datum bis" must not be before "Datum von"
+        if (FilterDateFrom.HasValue && FilterDateTo.HasValue && FilterDateTo.Value < FilterDateFrom.Value)
+            FilterDateTo = FilterDateFrom;
+        // 3. "Zeit bis" must be after "Zeit von"
+        if (FilterTimeFrom.HasValue && FilterTimeTo.HasValue && FilterTimeTo.Value <= FilterTimeFrom.Value)
+            FilterTimeTo = null;
+
+        // Check if there are any slots at all (before applying filters)
+        HasAnySlots = await db.AvailabilitySlots
+            .AnyAsync(s => s.Date >= DateTime.Today && s.IsMatched == false && s.PlayerId != CurrentPlayerId);
 
         var query = db.AvailabilitySlots
             .Include(s => s.Player)
@@ -151,6 +173,7 @@ public class PartnerBoardModel(
             await db.SaveChangesAsync();
 
             // A) Send email to creator if they want updates on joins
+            bool creatorAlreadyNotified = false;
             if (slot.Player.IdentityUser?.Email != null && joiningPlayer != null)
             {
                 if (slot.Player.NotificationSettings.EmailOnSlotJoined)
@@ -168,10 +191,12 @@ public class PartnerBoardModel(
                     emailBody += "Viel Spaß beim Spielen!<br>Dein TennisBruck-Team";
 
                     await emailSender.SendEmailAsync(slot.Player.IdentityUser.Email, emailSubject, emailBody);
+                    creatorAlreadyNotified = true;
                 }
             }
 
             // B) If complete, send "Slot full" notification to all participants (if enabled for each)
+            // Skip the creator if they already received the "joined" email above to avoid a duplicate.
             if (slot.IsMatched)
             {
                 var participants = new List<Player> { slot.Player! };
@@ -183,6 +208,9 @@ public class PartnerBoardModel(
 
                 foreach (var p in participants)
                 {
+                    // Don't send a second email to the creator — they already received one above.
+                    if (creatorAlreadyNotified && p.Id == slot.PlayerId) continue;
+
                     if (p.IdentityUser?.Email != null &&
                         (p.NotificationSettings == null || p.NotificationSettings.EmailOnSlotFull))
                     {
@@ -374,10 +402,9 @@ public class PartnerBoardModel(
                 {
                     var subject = "🎾 Börsen-Spiel abgesagt!";
                     var body = $"Hallo {p.Firstname},<br><br>" +
-                               $"der Ersteller <strong>{slot.Player?.Firstname} {slot.Player?.Lastname}</strong> hat das Börsen-Spiel am <strong>{slot.Date:dd.MM.yyyy}</strong> um {slot.StartTime:hh\\:mm} Uhr gelöscht.<br><br>" +
+                               $"der Ersteller <strong>{slot.Player?.Firstname} {slot.Player?.Lastname}</strong> hat das Börsen-Spiel am <strong>{slot.Date:dd.MM.yyyy}</strong> um {slot.StartTime:hh\\:mm} Uhr abgesagt.<br><br>" +
                                $"Du wurdest automatisch ausgetragen.<br><br>" +
                                $"Dein TennisBruck-Team";
-
                     _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
                 }
             }
@@ -401,7 +428,6 @@ public class PartnerBoardModel(
                 var emailSubject = "🎾 Ein Mitspieler hat abgesagt!";
                 var emailBody = $"Hallo {slot.Player.Firstname},<br><br>" +
                                 $"<strong>{dbUser.Firstname} {dbUser.Lastname}</strong> hat sich gerade aus deinem Börsen-Eintrag am <strong>{slot.Date:dd.MM.yyyy}</strong> um {slot.StartTime:hh\\:mm} Uhr ausgetragen.<br>" +
-                                $"Der freie Platz wurde automatisch wieder in die Börse gestellt.<br><br>" +
                                 "Dein TennisBruck-Team";
 
                 await emailSender.SendEmailAsync(slot.Player.IdentityUser.Email, emailSubject, emailBody);

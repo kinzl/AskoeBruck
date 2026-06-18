@@ -42,41 +42,75 @@
         </div>
     }
 
-    <!-- FILTER BAR -->
-    <div class="hallenplan-card mb-4 filter-card">
-        <form method="get" class="row g-2 align-items-end">
-            <div class="col-12 col-md-2">
-                <label class="form-label small text-muted mb-1 fw-bold">Datum von</label>
-                <input type="date" name="FilterDateFrom" class="form-control form-control-sm"
-                       value="@Model.FilterDateFrom?.ToString("yyyy-MM-dd")"/>
-            </div>
-            <div class="col-12 col-md-2">
-                <label class="form-label small text-muted mb-1 fw-bold">Datum bis</label>
-                <input type="date" name="FilterDateTo" class="form-control form-control-sm"
-                       value="@Model.FilterDateTo?.ToString("yyyy-MM-dd")"/>
-            </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label small text-muted mb-1 fw-bold">Zeit von</label>
-                <input type="time" name="FilterTimeFrom" class="form-control form-control-sm"
-                       value="@Model.FilterTimeFrom?.ToString(@"hh\:mm")"/>
-            </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label small text-muted mb-1 fw-bold">Zeit bis</label>
-                <input type="time" name="FilterTimeTo" class="form-control form-control-sm"
-                       value="@Model.FilterTimeTo?.ToString(@"hh\:mm")"/>
-            </div>
-            <div class="col-6 col-md-2">
-                <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
-                    <i class="bi bi-funnel"></i> Filtern
-                </button>
-            </div>
-            <div class="col-6 col-md-2">
-                <a href="/PartnerBoard" class="btn btn-sm btn-outline-danger w-100">
-                    <i class="bi bi-x-circle"></i> Zurücksetzen
-                </a>
-            </div>
-        </form>
-    </div>
+    <!-- FILTER BAR — only shown when there is something to filter or a filter is already active -->
+    @if (Model.HasAnySlots || Model.IsFilterActive)
+    {
+        <div class="hallenplan-card mb-4 filter-card">
+            <form method="get" class="row g-2 align-items-end" id="filter-form">
+                <div class="col-12 col-md-2">
+                    <label class="form-label small text-muted mb-1 fw-bold">Datum von</label>
+                    <input type="date" name="FilterDateFrom" id="filterDateFrom"
+                           class="form-control form-control-sm"
+                           min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                           value="@Model.FilterDateFrom?.ToString("yyyy-MM-dd")"/>
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small text-muted mb-1 fw-bold">Datum bis</label>
+                    <input type="date" name="FilterDateTo" id="filterDateTo"
+                           class="form-control form-control-sm"
+                           min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                           value="@Model.FilterDateTo?.ToString("yyyy-MM-dd")"/>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-muted mb-1 fw-bold">Zeit von</label>
+                    <input type="time" name="FilterTimeFrom" id="filterTimeFrom"
+                           class="form-control form-control-sm"
+                           value="@Model.FilterTimeFrom?.ToString(@"hh\:mm")"/>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-muted mb-1 fw-bold">Zeit bis</label>
+                    <input type="time" name="FilterTimeTo" id="filterTimeTo"
+                           class="form-control form-control-sm"
+                           value="@Model.FilterTimeTo?.ToString(@"hh\:mm")"/>
+                </div>
+                <div class="col-6 col-md-2">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
+                        <i class="bi bi-funnel"></i> Filtern
+                    </button>
+                </div>
+                <div class="col-6 col-md-2">
+                    <a href="/PartnerBoard" class="btn btn-sm btn-outline-danger w-100">
+                        <i class="bi bi-x-circle"></i> Zurücksetzen
+                    </a>
+                </div>
+            </form>
+            <script>
+                (function () {
+                    const dateFrom = document.getElementById('filterDateFrom');
+                    const dateTo   = document.getElementById('filterDateTo');
+                    const timeFrom = document.getElementById('filterTimeFrom');
+                    const timeTo   = document.getElementById('filterTimeTo');
+
+                    // Keep "Datum bis" min in sync with "Datum von"
+                    dateFrom.addEventListener('change', () => {
+                        dateTo.min = dateFrom.value || '@DateTime.Today.ToString("yyyy-MM-dd")';
+                        if (dateTo.value && dateTo.value < dateFrom.value) dateTo.value = dateFrom.value;
+                    });
+
+                    // Keep "Zeit bis" min in sync with "Zeit von"
+                    timeFrom.addEventListener('change', () => {
+                        timeTo.min = timeFrom.value;
+                        if (timeTo.value && timeTo.value <= timeFrom.value) timeTo.value = '';
+                    });
+
+                    // Set initial min on dateTo if dateFrom already has a value
+                    if (dateFrom.value) dateTo.min = dateFrom.value;
+                    if (timeFrom.value) timeTo.min = timeFrom.value;
+                })();
+            </script>
+        </div>
+    }
+
 
     <!-- MEINE OFFENEN EINTRÄGE -->
     @if (Model.MyOpenSlots.Any())
@@ -176,7 +210,22 @@
                             {
                                 <div class="mt-1 mb-2">
                                     <small class="text-muted">Teilnehmer: </small>
-                                    <strong>@match.Player</strong>@if (match.MatchedWithPlayer != null) { <span>, </span><strong>@match.MatchedWithPlayer</strong> }@if (match.MatchedWithPlayer2 != null) { <span>, </span><strong>@match.MatchedWithPlayer2</strong> }@if (match.MatchedWithPlayer3 != null) { <span>, </span><strong>@match.MatchedWithPlayer3</strong> }
+                                    <strong>@match.Player</strong>
+                                    @if (match.MatchedWithPlayer != null)
+                                    {
+                                        <span>, </span>
+                                        <strong>@match.MatchedWithPlayer</strong>
+                                    }
+                                    @if (match.MatchedWithPlayer2 != null)
+                                    {
+                                        <span>, </span>
+                                        <strong>@match.MatchedWithPlayer2</strong>
+                                    }
+                                    @if (match.MatchedWithPlayer3 != null)
+                                    {
+                                        <span>, </span>
+                                        <strong>@match.MatchedWithPlayer3</strong>
+                                    }
                                 </div>
                             }
                             else
@@ -218,11 +267,25 @@
 
         @if (!Model.SlotsByDay.Any())
         {
-            <div class="text-center py-5">
-                <div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
-                <h5 class="fw-bold text-navy">Aktuell keine Gesuche!</h5>
-                <p class="text-muted mb-0">Sei der Erste und trage ein, wann du Zeit hast.</p>
-            </div>
+            @if (Model.IsFilterActive)
+            {
+                <div class="text-center py-5">
+                    <div class="empty-state-icon"><i class="bi bi-funnel-x"></i></div>
+                    <h4 class="fw-bold text-navy">Es wurden keine Ergebnisse gefunden.</h4>
+                    <p class="text-muted mb-3">Passe die Filter an oder setze sie zurück.</p>
+                    <a href="/PartnerBoard" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-x-circle me-1"></i> Filter zurücksetzen
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
+                    <h4 class="fw-bold text-navy">Niemand am Tennisplatz?</h4>
+                    <p class="text-muted mb-0">Sei der Erste und trage ein, wann du Zeit hast.</p>
+                </div>
+            }
         }
         else
         {
@@ -244,13 +307,15 @@
                                     <span class="badge bg-secondary me-2">@(slot.IsDouble ? "Doppel" : "Einzel")</span>
                                     @if (hasJoined)
                                     {
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle me-2">Angemeldet</span>
+                                        <span
+                                            class="badge bg-success-subtle text-success border border-success-subtle me-2">Angemeldet</span>
                                     }
                                     <strong class="text-dark">@(slot.Player.ToString() ?? "Unbekannt")</strong>
                                 </div>
                                 <small class="text-muted d-block mb-1">
-                                    <i class="bi bi-clock me-1"></i> @slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm") Uhr
+                                    <i class="bi bi-clock me-1"></i> @slot.Date.ToString("dd.MM.yyyy") | @slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm") Uhr
                                 </small>
+
                                 @{
                                     int totalJoined = 0;
                                     if (slot.MatchedWithPlayerId != null) totalJoined++;
