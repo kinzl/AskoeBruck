@@ -91,8 +91,8 @@ public class Hallplan(
             await db.HallPlanRegistrations.AnyAsync(r =>
                 r.PlayerId == currentUser.Id && r.HallPlanId == relevantHallPlanId.Value);
 
-        if (!isInvolvedPlayer && !isRegisteredInPlan && !User.IsInRole("Admin"))
-            return Forbid();
+        // Any authenticated club member may rearrange the schedule.
+        // (Page-level [Authorize] already ensures the user is logged in.)
 
         // Fall 1: Normaler Tausch (Beide Spieler sind schon im Plan auf einem Platz)
         if (data.Court1Id.HasValue && data.Court2Id.HasValue)
