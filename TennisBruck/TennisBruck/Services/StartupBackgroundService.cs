@@ -14,7 +14,7 @@ public class StartupBackgroundService(IServiceProvider provider) : BackgroundSer
         var roleManager = _scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = _scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-        await DropAllTables(db);
+        // await DropAllTables(db);
         // await db.Database.EnsureDeletedAsync(cancellationToken);
 
         await Task.Delay(1000, stoppingToken);

@@ -178,10 +178,9 @@
                     {
                         <form method="post" class="m-0">
                             <input type="hidden" name="ChampionshipId" value="@Model.SelectedCompetition.Id"/>
-
-                            <button type="submit" asp-page-handler="GeneratePairs" class="btn-action"
+                            <button type="submit" asp-page-handler="GeneratePairs" class="btn-action btn-sm"
                                     onclick="return confirm('Bisherige Doppel Paare werden gelöscht und neu zugeordnet. Möchtest du das wirklich?');">
-                                🔀 Doppel-Paare zufällig auslosen
+                                🔀 Zufällig auslosen
                             </button>
                         </form>
                     }
@@ -191,107 +190,83 @@
                     int totalPairs = Model.RegisteredCompetitionPlayers.Count / 2;
                 }
 
-                <form method="post">
+                <form method="post" asp-page-handler="SavePairs">
                     <input type="hidden" name="ChampionshipId" value="@Model.SelectedCompetition?.Id"/>
 
-                    <div class="pairs-grid-container">
+                    <div class="pairs-list">
                         @for (int i = 0; i < totalPairs; i++)
                         {
                             var currentTeam = Model.RegisteredTeams != null && i < Model.RegisteredTeams.Count ? Model.RegisteredTeams[i] : null;
                             var firstPlayer = currentTeam?.TeamPlayers.ElementAtOrDefault(0)?.Player;
                             var secondPlayer = currentTeam?.TeamPlayers.ElementAtOrDefault(1)?.Player;
-                            var pairIndex = i + 1;
 
-                            <div class="pair-card">
-                                <div class="border-divider d-flex justify-content-between align-items-center">
-                                    <span>Paar @pairIndex</span>
-                                    @if (currentTeam != null && User.IsInRole("Admin"))
+                            @if (currentTeam != null && User.IsInRole("Admin"))
+                            {
+                                <input type="hidden" name="pairs[@i].TeamId" value="@currentTeam.Id"/>
+                            }
+
+                            <div class="pair-row">
+                                <span class="pair-number">#@(i + 1)</span>
+
+                                <div class="pair-players">
+                                    @if (User.IsInRole("Admin"))
                                     {
-                                        <form method="post" asp-page-handler="DeleteTeam" class="m-0 p-0"
-                                              style="display:inline;">
-                                            <input type="hidden" name="teamId" value="@currentTeam.Id"/>
-                                            <button type="submit" class="btn-delete-icon" title="Team löschen"
-                                                    onclick="return confirm('Möchtest du dieses Team wirklich löschen?');">
-                                                🗑️
-                                            </button>
-                                        </form>
+                                        <select name="pairs[@i].SinglePlayerId" class="pair-select">
+                                            <option value="">Spieler A...</option>
+                                            @foreach (var registration in Model.RegisteredCompetitionPlayers)
+                                            {
+                                                bool isSelected = firstPlayer != null && registration.Player.Id == firstPlayer.Id;
+                                                <option value="@registration.Player.Id" selected="@isSelected">@registration.Player.ToStringWithItn()</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <span class="pair-name">@(firstPlayer != null ? firstPlayer.ToStringWithItn() : "Offen")</span>
+                                    }
+
+                                    <span class="pair-plus">+</span>
+
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <select name="pairs[@i].DoublePlayerId" class="pair-select">
+                                            <option value="">Spieler B...</option>
+                                            @foreach (var registration in Model.RegisteredCompetitionPlayers)
+                                            {
+                                                bool isSelected = secondPlayer != null && registration.Player.Id == secondPlayer.Id;
+                                                <option value="@registration.Player.Id" selected="@isSelected">@registration.Player.ToStringWithItn()</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <span class="pair-name">@(secondPlayer != null ? secondPlayer.ToStringWithItn() : "Offen")</span>
                                     }
                                 </div>
 
                                 @if (currentTeam != null && User.IsInRole("Admin"))
                                 {
-                                    <input type="hidden" name="pairs[@i].TeamId" value="@currentTeam.Id"/>
+                                    <button type="button" class="pair-delete-btn" title="Paar löschen"
+                                            onclick="document.getElementById('deleteTeamIdInput').value='@currentTeam.Id'; if(confirm('Möchtest du dieses Paar wirklich löschen?')) document.getElementById('deleteTeamForm').submit();">
+                                        🗑️
+                                    </button>
                                 }
-
-                                <div class="players-flex-row">
-                                    <div class="player-column">
-                                        <label class="player-label">Spieler A</label>
-                                        @if (User.IsInRole("Admin"))
-                                        {
-                                            <select name="pairs[@i].SinglePlayerId" class="player-select">
-                                                <option value="">Auswählen...</option>
-                                                @foreach (var registration in Model.RegisteredCompetitionPlayers)
-                                                {
-                                                    bool isSelected = firstPlayer != null && registration.Player.Id == firstPlayer.Id;
-                                                    <option value="@registration.Player.Id" selected="@isSelected">
-                                                        @registration.Player.ToStringWithItn()
-                                                    </option>
-                                                }
-                                            </select>
-                                        }
-                                        else
-                                        {
-                                            <div class="player-select disabled-look">
-                                                @(firstPlayer != null ? firstPlayer.ToStringWithItn() : "Offen")
-                                            </div>
-                                        }
-                                    </div>
-
-                                    <div class="plus-symbol">+</div>
-
-                                    <div class="player-column">
-                                        <label class="player-label">Spieler B</label>
-                                        @if (User.IsInRole("Admin"))
-                                        {
-                                            <select name="pairs[@i].DoublePlayerId" class="player-select">
-                                                <option value="">Auswählen...</option>
-                                                @foreach (var registration in Model.RegisteredCompetitionPlayers)
-                                                {
-                                                    bool isSelected = (secondPlayer != null && registration.Player.Id == secondPlayer.Id);
-                                                    <option value="@registration.Player.Id" selected="@isSelected">
-                                                        @registration.Player.ToStringWithItn()
-                                                    </option>
-                                                }
-                                            </select>
-                                        }
-                                        else
-                                        {
-                                            <div class="player-select disabled-look">
-                                                @(secondPlayer != null ? secondPlayer.ToStringWithItn() : "Offen")
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
                             </div>
                         }
                     </div>
 
+                    @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < CityTime.GetViennaTimeZone())
+                    {
+                        <div class="pairs-save-row">
+                            <button type="submit" class="btn-action btn-accent">💾 Paare Speichern</button>
+                        </div>
+                    }
                 </form>
-                @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < CityTime.GetViennaTimeZone())
-                {
-                    <div class="d-flex justify-content-center align-items-center gap-3 mt-4 mb-5">
-                        <form method="post" asp-page-handler="SavePairs">
-                            <div class="group-save-wrapper m-0">
-                                <button type="submit" class="btn-action btn-accent">
-                                    💾 Paare Speichern
-                                </button>
-                            </div>
-                        </form>
-
-                    </div>
-                }
-
             </section>
+
+            <form method="post" asp-page-handler="DeleteTeam" id="deleteTeamForm" style="display:none;">
+                <input type="hidden" name="teamId" id="deleteTeamIdInput"/>
+            </form>
         }
 
         <partial name="Partials/_GroupTables" model="Model"/>
