@@ -180,6 +180,16 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
             });
         }
 
+        if (endDateTime <= startDateTime)
+        {
+            return RedirectToPage(new
+            {
+                date = currentDateStr,
+                message = "Die Endzeit muss nach der Startzeit liegen.",
+                isError = true
+            });
+        }
+
         // Prüfen, ob irgendein Slot in dem Zeitraum bereits reserviert ist
         var hasConflict = db.Reservations.Any(r =>
             r.CourtNumber == courtNumber &&
