@@ -41,6 +41,12 @@
 
 <main class="main-container" id="main-content" data-me-id="@Model.LoggedInPlayer.Id">
 
+    @* Hidden form solely to provide the anti-forgery token for drag-and-drop AJAX calls *@
+    <form id="csrf-token-form" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+
+
     <div class="top-dashboard-grid">
         <section class="modern-card card-no-margin hallplan-header-card">
             <div class="hallplan-select-wrapper">
