@@ -38,6 +38,8 @@
         <div class="info-alert">@Model.Message</div>
     }
 
+
+    @* ── MEMBER TABLE ─────────────────────────────────────────────────────── *@
     <section class="modern-card">
         <div class="card-header">
             <h2>Aktive Mitglieder</h2>
@@ -49,48 +51,86 @@
                 <tr>
                     <th>Vorname</th>
                     <th>Nachname</th>
-                    <th>ITN</th>
+                    <th class="col-itn">ITN</th>
                     @if (User.IsInRole("Admin"))
                     {
-                        <th>Email</th>
+                        <th class="col-email">Email</th>
                         <th class="text-center">Admin</th>
-                        <th class="text-center">Löschen</th>
+                        <th class="text-center">Aktionen</th>
                     }
                 </tr>
                 </thead>
                 <tbody>
                 @foreach (var player in Model.AllPlayers)
                 {
+                    bool isOffline = player.IdentityUser == null;
                     <tr>
-                        <td class="fw-500">@player.Firstname</td>
+                        <td class="fw-500">
+                            @player.Firstname
+                            @if (isOffline)
+                            {
+                                <span class="badge-offline" title="Offline-Mitglied — kein Login-Account">👤</span>
+                            }
+                        </td>
                         <td class="fw-500">@player.Lastname</td>
-                        <td class="text-muted">@player.Itn</td>
+                        <td class="text-muted col-itn">@player.Itn</td>
                         @if (User.IsInRole("Admin"))
                         {
-                            <td class="text-muted">@player.IdentityUser?.Email</td>
-                            <td class="text-center">
-                                <form method="post" asp-page-handler="ChangeAdmin" class="m-0">
-                                    <input type="hidden" name="user" value="@player.Id"/>
-                                    <label class="switch" title="Admin-Rechte umschalten">
-                                        <input type="checkbox" onclick="this.form.submit()"
-                                               @(player.IdentityUser != null && Model.AdminUserIds.Contains(player.IdentityUser.Id) ? "checked" : "")/>
-                                        <span class="slider"></span>
-                                    </label>
-                                </form>
-                            </td>
+                            <td class="text-muted col-email">@(isOffline ? "—" : player.IdentityUser?.Email)</td>
 
+                            @* Admin toggle — only for players with an account *@
                             <td class="text-center">
-                                @if (player.Id != Model.LoggedInPlayer.Id)
+                                @if (!isOffline)
                                 {
-                                    <form method="post" class="m-0 inline-block">
-                                        <button class="btn-danger-icon" name="playerId" value="@player.Id" type="submit"
-                                                asp-page-handler="DeleteUser"
-                                                onclick="return confirm('Möchtest du @player.Firstname wirklich deaktivieren?');"
-                                                title="User deaktivieren">
-                                            🗑️
-                                        </button>
+                                    <form method="post" asp-page-handler="ChangeAdmin" class="m-0">
+                                        <input type="hidden" name="user" value="@player.Id"/>
+                                        <label class="switch" title="Admin-Rechte umschalten">
+                                            <input type="checkbox" onclick="this.form.submit()"
+                                                   @(player.IdentityUser != null && Model.AdminUserIds.Contains(player.IdentityUser.Id) ? "checked" : "")/>
+                                            <span class="slider"></span>
+                                        </label>
                                     </form>
                                 }
+                                else
+                                {
+                                    <span class="text-muted"
+                                          title="Offline-Mitglieder können keine Admin-Rechte erhalten">—</span>
+                                }
+                            </td>
+
+                            @* Edit + Delete actions *@
+                            <td class="text-center">
+                                <div class="action-buttons">
+                                    @* Edit button — opens modal *@
+                                    <button type="button"
+                                            class="btn-icon btn-edit-icon"
+                                            title="Bearbeiten"
+                                            onclick="openEditModal(
+                                                @player.Id,
+                                                '@Html.Raw(player.Firstname.Replace("'", "\\'"))',
+                                                '@Html.Raw(player.Lastname.Replace("'", "\\'"))',
+                                                '@(player.Itn?.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) ?? "")',
+                                                '@(player.IdentityUser?.Email ?? "")',
+                                                @(isOffline ? "true" : "false"),
+                                                @(!string.IsNullOrEmpty(player.NuLigaPlayerUrl) ? "true" : "false")
+                                            )">
+                                        ✏️
+                                    </button>
+
+                                    @* Delete — not shown for own account *@
+                                    @if (player.Id != Model.LoggedInPlayer.Id)
+                                    {
+                                        <form method="post" class="m-0 inline-block">
+                                            <button class="btn-danger-icon" name="playerId" value="@player.Id"
+                                                    type="submit"
+                                                    asp-page-handler="DeleteUser"
+                                                    onclick="return confirm('Möchtest du @player.Firstname wirklich deaktivieren?');"
+                                                    title="Mitglied deaktivieren">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
                             </td>
                         }
                     </tr>
@@ -100,6 +140,144 @@
         </div>
     </section>
 
+
+
+    @* ── CREATE MEMBER (admin only) ────────────────────────────────────────── *@
+    @if (User.IsInRole("Admin"))
+    {
+        <section class="modern-card">
+            <div class="card-header">
+                <h2>➕ Mitglied erstellen</h2>
+            </div>
+            <form method="post" asp-page-handler="CreateMember" class="create-member-form">
+                <div class="create-member-grid">
+                    <div class="form-group">
+                        <label for="firstname">Vorname *</label>
+                        <input id="firstname" type="text" name="firstname" class="form-input" placeholder="z. B. Max"
+                               required/>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastname">Nachname *</label>
+                        <input id="lastname" type="text" name="lastname" class="form-input"
+                               placeholder="z. B. Mustermann" required/>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">E-Mail <span class="optional-hint">(optional — ohne E-Mail = Offline-Mitglied)</span></label>
+                        <input id="email" type="email" name="email" class="form-input"
+                               placeholder="z. B. max@example.com"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="itn">ITN <span class="optional-hint">(optional)</span></label>
+                        <input id="itn" type="number" name="itn" class="form-input" placeholder="z. B. 10.3" step="0.1"
+                               min="1" max="10.3"/>
+                    </div>
+                </div>
+                <div class="create-member-footer">
+                    <button type="submit" class="btn-action btn-accent">Mitglied erstellen</button>
+                    <span
+                        class="create-hint">Ohne E-Mail wird ein Offline-Mitglied erstellt (kein Login möglich).</span>
+                </div>
+            </form>
+        </section>
+    }
 </main>
+
+@* ── EDIT MODAL (admin only) ──────────────────────────────────────────────── *@
+@if (User.IsInRole("Admin"))
+{
+    <div id="editModal" class="modal-overlay" style="display:none;" onclick="closeEditModalOnBackdrop(event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ Mitglied bearbeiten</h3>
+                <button type="button" class="modal-close-btn" onclick="closeEditModal()">✕</button>
+            </div>
+            <form method="post" asp-page-handler="EditPlayer">
+                <input type="hidden" id="editPlayerId" name="editPlayerId"/>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editFirstname">Vorname *</label>
+                        <input id="editFirstname" type="text" name="editFirstname" class="form-input" required/>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLastname">Nachname *</label>
+                        <input id="editLastname" type="text" name="editLastname" class="form-input" required/>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editEmail">E-Mail <span id="editEmailHint" class="optional-hint"></span></label>
+                        <input id="editEmail" type="email" name="editEmail" class="form-input" placeholder="z. B. max@example.com"/>
+                        <p id="editOfflineNote" class="offline-note" style="display:none;">
+                            💡 Eine E-Mail hinzufügen erstellt automatisch einen Login-Account.
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label for="editItn">ITN <span id="editItnHint" class="optional-hint"></span></label>
+                        <input id="editItn" type="number" name="editItn" class="form-input" step="0.1" min="1" max="10.3"/>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-action btn-outline-muted" onclick="closeEditModal()">Abbrechen
+                    </button>
+                    <button type="submit" class="btn-action btn-accent">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<script>
+    function openEditModal(id, firstname, lastname, itn, email, isOffline, hasNuLiga) {
+        document.getElementById('editPlayerId').value = id;
+        document.getElementById('editFirstname').value = firstname;
+        document.getElementById('editLastname').value = lastname;
+        document.getElementById('editEmail').value = email;
+
+        // Email field: always visible, but hint text changes for offline players
+        const emailHint = document.getElementById('editEmailHint');
+        const offlineNote = document.getElementById('editOfflineNote');
+        if (isOffline) {
+            emailHint.textContent = '(optional — wird Login-Account erstellen)';
+            offlineNote.style.display = 'block';
+        } else {
+            emailHint.textContent = '(optional)';
+            offlineNote.style.display = 'none';
+        }
+
+        // ITN field: disabled when ÖTV/NuLiga URL exists (auto-synced)
+        const itnInput = document.getElementById('editItn');
+        const itnHint = document.getElementById('editItnHint');
+        if (hasNuLiga) {
+            itnInput.value = itn;
+            itnInput.disabled = true;
+            itnInput.title = 'Wird automatisch vom ÖTV synchronisiert';
+            itnHint.textContent = '(automatisch vom ÖTV — nicht editierbar)';
+        } else {
+            itnInput.value = itn;
+            itnInput.disabled = false;
+            itnInput.title = '';
+            itnHint.textContent = '(optional)';
+        }
+
+        document.getElementById('editModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function closeEditModalOnBackdrop(event) {
+        if (event.target === document.getElementById('editModal')) {
+            closeEditModal();
+        }
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeEditModal();
+    });
+</script>
+
 </body>
 </html>

@@ -41,12 +41,6 @@
 
 <main class="main-container" id="main-content" data-me-id="@Model.LoggedInPlayer.Id">
 
-    @* Hidden form solely to provide the anti-forgery token for drag-and-drop AJAX calls *@
-    <form id="csrf-token-form" style="display:none;">
-        @Html.AntiForgeryToken()
-    </form>
-
-
     <div class="top-dashboard-grid">
         <section class="modern-card card-no-margin hallplan-header-card">
             <div class="hallplan-select-wrapper">
@@ -66,9 +60,9 @@
             {
                 <div class="hallplan-status-wrapper">
                     <div class="status-text-info">
-                        <span class="status-label">Mein Status</span>
+                        <span class="status-label">Mein Abo-Status</span>
                         <h3 class="status-heading @(Model.IsLoggedInPlayerPlaying ? "status-active" : "status-paused")">
-                            @(Model.IsLoggedInPlayerPlaying ? "✅ Eingeteilt" : "⏸️ Pausiert")
+                            @(Model.IsLoggedInPlayerPlaying ? "✅ Eingeteilt (Abo aktiv)" : "⏸️ Pausiert / Kein Abo")
                         </h3>
                     </div>
                     <form method="post" asp-page-handler="ChangePlayingState" id="statusForm" class="form-no-margin">
@@ -125,7 +119,7 @@
 
         <section class="modern-card card-highlight-left">
             <h2 class="section-title compact">🔄 Ersatzbank (Abo-Besitzer)</h2>
-            <p class="section-description">Ziehe einen Spieler mit bestehendem Abo von hier auf den Spielplan, um jemanden zu ersetzen.</p>
+            <p class="section-description">Spieler mit einem aktiven Abo, die derzeit keinem Spieltag zugeteilt sind. Ziehe sie auf den Spielplan, um jemanden zu ersetzen.</p>
 
             <div class="substitute-bench">
                 @if (Model.RegisteredPlayers.Any())

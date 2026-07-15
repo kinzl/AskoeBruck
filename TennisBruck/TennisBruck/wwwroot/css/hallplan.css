@@ -541,11 +541,11 @@ input:checked + .slider:before {
     color: #64748b;
 }
 
-/* Das 2x2 Grid rechts daneben */
+/* The 4-player row — all side by side on desktop */
 .players-2x2-grid {
     flex: 1; /* Nimmt den restlichen Platz ein */
     display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 Spalten */
+    grid-template-columns: repeat(4, 1fr); /* 4 columns = all players in one row */
     gap: 6px; /* Extrem enger Spalt zwischen den Spielern */
     padding: 8px;
 }
@@ -637,6 +637,7 @@ input:checked + .slider:before {
     }
 
     .players-2x2-grid {
+        grid-template-columns: 1fr 1fr; /* back to 2×2 on mobile */
         gap: 4px;
         padding: 4px;
     }

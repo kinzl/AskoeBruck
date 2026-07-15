@@ -430,7 +430,9 @@ public class Championship(
             return RedirectToPage();
         }
 
-        var team = db.Teams.SingleOrDefault(x => x.Id == teamId);
+        var team = db.Teams
+            .Include(t => t.TeamPlayers)
+            .SingleOrDefault(x => x.Id == teamId);
         if (team == null) return RedirectToPage();
 
         var groupTeam = new GroupTeam
@@ -439,6 +441,24 @@ public class Championship(
             TeamId = team.Id
         };
         db.GroupTeams.Add(groupTeam);
+
+        // Ensure every player in this team has a TournamentRegistration for this competition,
+        // so they show up correctly in the participant list.
+        foreach (var teamPlayer in team.TeamPlayers)
+        {
+            bool alreadyRegistered = db.TournamentRegistrations.Any(r =>
+                r.PlayerId == teamPlayer.PlayerId && r.CompetitionId == group.Competition.Id);
+            if (!alreadyRegistered)
+            {
+                db.TournamentRegistrations.Add(new TournamentRegistration
+                {
+                    PlayerId = teamPlayer.PlayerId,
+                    CompetitionId = group.Competition.Id,
+                    RegisteredAt = DateTime.Now
+                });
+            }
+        }
+
         db.SaveChanges();
 
         return RedirectToPage(new { Message = $"{team.PlayersToString()} in {group.GroupName} hinzugefügt" });
