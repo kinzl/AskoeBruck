@@ -62,7 +62,8 @@ public class Championship(
             .Where(m =>
                 (m.Group != null && m.Group.Competition.RegistrationUntil.Year == thisYear) ||
                 // Only show knockout matches when both opponents are known
-                (m is KnockoutMatch km && thisYearCompIds.Contains(km.CompetitionId) && m.Team1 != null && m.Team2 != null) ||
+                (m is KnockoutMatch km && thisYearCompIds.Contains(km.CompetitionId) && m.Team1 != null &&
+                 m.Team2 != null) ||
                 (m.Sets != null && m.Sets.Any()) ||
                 m.IsWalkover)
             .ToList();
@@ -97,6 +98,7 @@ public class Championship(
 
             UnregisteredPlayers = db.Players
                 .Where(p => p.TournamentRegistrations.All(r => r.CompetitionId != SelectedCompetition!.Id))
+                .OrderBy(x => x.Lastname)
                 .ToList();
 
             Groups = db.Groups
@@ -148,8 +150,11 @@ public class Championship(
         var groupIds = db.Groups.Where(g => g.CompetitionId == competitionId).Select(g => g.Id).ToList();
 
         // Delete all dependent records directly in the DB using bulk deletes
-        db.Sets.Where(s => groupIds.Contains(s.Match.Group.Id) || (s.Match as KnockoutMatch).CompetitionId == competitionId).ExecuteDelete();
-        db.Matches.Where(m => groupIds.Contains(m.Group.Id) || (m as KnockoutMatch).CompetitionId == competitionId).ExecuteDelete();
+        db.Sets.Where(s =>
+                groupIds.Contains(s.Match.Group.Id) || (s.Match as KnockoutMatch).CompetitionId == competitionId)
+            .ExecuteDelete();
+        db.Matches.Where(m => groupIds.Contains(m.Group.Id) || (m as KnockoutMatch).CompetitionId == competitionId)
+            .ExecuteDelete();
         db.GroupTeams.Where(gt => groupIds.Contains(gt.GroupId)).ExecuteDelete();
         db.Groups.Where(g => g.CompetitionId == competitionId).ExecuteDelete();
         db.TeamPlayer.Where(tp => tp.Team.CompetitionId == competitionId).ExecuteDelete();
@@ -217,7 +222,8 @@ public class Championship(
         {
             var registeredPlayer = db.Players.Find(playerId.Value);
             string name = registeredPlayer != null ? registeredPlayer.ToString() : "Spieler";
-            return RedirectToPage(new { Message = $"Spieler {name} wurde erfolgreich zum Bewerb {SelectedCompetition.Name} angemeldet" });
+            return RedirectToPage(new
+                { Message = $"Spieler {name} wurde erfolgreich zum Bewerb {SelectedCompetition.Name} angemeldet" });
         }
 
         return RedirectToPage(new { Message = $"Du hast dich beim Bewerb {SelectedCompetition.Name} angemeldet" });
@@ -422,6 +428,7 @@ public class Championship(
                     db.Sets.RemoveRange(m.Sets);
                 }
             }
+
             db.Matches.RemoveRange(matches);
             db.GroupTeams.Remove(groupTeam);
         }
@@ -441,6 +448,7 @@ public class Championship(
                 RemoveTeamFromGroupInternal(groupId, oldTeamId.Value);
                 db.SaveChanges();
             }
+
             return RedirectToPage(new { Message = "Zu Freilos geändert" });
         }
 
@@ -552,7 +560,8 @@ public class Championship(
             bool isTeam2 = match.Team2 != null && match.Team2.TeamPlayers.Any(p => p.PlayerId == currentUser.Id);
             if (!isTeam1 && !isTeam2 && !User.IsInRole("Admin")) return Forbid();
             if (match.Team1 == null || match.Team2 == null)
-                return RedirectToPage(new { Message = "Das Match kann nicht gewertet werden, da noch kein Gegner feststeht." });
+                return RedirectToPage(new
+                    { Message = "Das Match kann nicht gewertet werden, da noch kein Gegner feststeht." });
             var sets = score.Split(" ");
             for (var i = 0; i < sets.Length; i++)
             {
@@ -615,10 +624,13 @@ public class Championship(
             var nextMatch = await db.KnockoutMatch
                 .Include(m => m.Sets)
                 .FirstOrDefaultAsync(m => m.BracketNo == km.NextGame
-                                       && m.CompetitionId == km.CompetitionId
-                                       && m.PhaseName == km.PhaseName);
+                                          && m.CompetitionId == km.CompetitionId
+                                          && m.PhaseName == km.PhaseName);
             if (nextMatch != null && (nextMatch.IsWalkover || (nextMatch.Sets != null && nextMatch.Sets.Any())))
-                return RedirectToPage(new { Message = "Das Match kann nicht zurückgesetzt werden, da das Folgespiel bereits gespielt wurde." });
+                return RedirectToPage(new
+                {
+                    Message = "Das Match kann nicht zurückgesetzt werden, da das Folgespiel bereits gespielt wurde."
+                });
 
             UndoWinnerAdvancement(km, match.Winner);
         }
@@ -979,8 +991,8 @@ public class Championship(
             .Include(m => m.Team1)
             .Include(m => m.Team2)
             .FirstOrDefault(m => m.BracketNo == km.NextGame
-                              && m.CompetitionId == km.CompetitionId
-                              && m.PhaseName == km.PhaseName);
+                                 && m.CompetitionId == km.CompetitionId
+                                 && m.PhaseName == km.PhaseName);
 
         if (nextMatch == null) return;
 
@@ -1019,7 +1031,8 @@ public class Championship(
                 // Notify team 1 players
                 foreach (var p in team1Players)
                 {
-                    if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnOpponentAssigned))
+                    if (p.IdentityUser?.Email != null && (p.NotificationSettings == null ||
+                                                          p.NotificationSettings.EmailOnOpponentAssigned))
                     {
                         var subject = "🎾 Dein Gegner im K.O.-Raster steht fest!";
                         var body = $"Hallo {p.Firstname},<br><br>" +
@@ -1032,7 +1045,8 @@ public class Championship(
                 // Notify team 2 players
                 foreach (var p in team2Players)
                 {
-                    if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnOpponentAssigned))
+                    if (p.IdentityUser?.Email != null && (p.NotificationSettings == null ||
+                                                          p.NotificationSettings.EmailOnOpponentAssigned))
                     {
                         var subject = "🎾 Dein Gegner im K.O.-Raster steht fest!";
                         var body = $"Hallo {p.Firstname},<br><br>" +
@@ -1057,8 +1071,8 @@ public class Championship(
             .Include(m => m.Team1)
             .Include(m => m.Team2)
             .FirstOrDefault(m => m.BracketNo == km.NextGame
-                              && m.CompetitionId == km.CompetitionId
-                              && m.PhaseName == km.PhaseName);
+                                 && m.CompetitionId == km.CompetitionId
+                                 && m.PhaseName == km.PhaseName);
 
         if (nextMatch == null) return;
 
@@ -1215,6 +1229,7 @@ public class Championship(
                         TeamPlayers = new List<TeamPlayer> { new() { PlayerId = pId } }
                     });
                 }
+
                 await db.SaveChangesAsync();
             }
         }
@@ -1225,7 +1240,11 @@ public class Championship(
 
         if (!shuffledPlayers.Any())
         {
-            return RedirectToPage(new { Message = "Fehler: Keine Teams/Spieler für diesen Bewerb vorhanden. Generiere zuerst Teams oder füge Spieler hinzu." });
+            return RedirectToPage(new
+            {
+                Message =
+                    "Fehler: Keine Teams/Spieler für diesen Bewerb vorhanden. Generiere zuerst Teams oder füge Spieler hinzu."
+            });
         }
 
         var oldGroups = await db.Groups
