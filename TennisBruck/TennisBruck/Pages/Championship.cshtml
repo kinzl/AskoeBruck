@@ -54,13 +54,31 @@
             var isOldActive = oldCompetitions.Any(c => c.Id == Model.SelectedCompetition?.Id);
         }
         <div class="competition-pills">
-            @foreach (var competition in currentCompetitions)
+            @if (currentCompetitions.Count < 4)
             {
-                var isActive = Model.SelectedCompetition?.Id == competition.Id;
-                <button type="submit" name="selectedCompetitionId" value="@competition.Id"
-                        class="pill-btn @(isActive ? "active" : "")">
-                    @competition.Name
-                </button>
+                @foreach (var competition in currentCompetitions)
+                {
+                    var isActive = Model.SelectedCompetition?.Id == competition.Id;
+                    <button type="submit" name="selectedCompetitionId" value="@competition.Id"
+                            class="pill-btn @(isActive ? "active" : "")">
+                        @competition.Name
+                    </button>
+                }
+            }
+            else
+            {
+                var isCurrentActive = currentCompetitions.Any(c => c.Id == Model.SelectedCompetition?.Id);
+                <select name="selectedCompetitionId" class="pill-btn pill-select @(isCurrentActive ? "active" : "")"
+                        onchange="this.form.submit()">
+                    <option value="" disabled selected="@(!isCurrentActive)">Aktuelle Turniere</option>
+                    @foreach (var competition in currentCompetitions)
+                    {
+                        var isActive = Model.SelectedCompetition?.Id == competition.Id;
+                        <option value="@competition.Id" selected="@isActive">
+                            @competition.Name
+                        </option>
+                    }
+                </select>
             }
 
             @if (oldCompetitions.Any())
@@ -81,13 +99,16 @@
     </form>
 </header>
 
-<main class="main-container">
-    @if (!string.IsNullOrEmpty(Model.Message))
-    {
-        <div class="alert-success">
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="message-banner">
+        <div class="message-banner-inner">
             @Model.Message
         </div>
-    }
+    </div>
+}
+
+<main class="main-container">
 
     @if (Model.SelectedCompetition != null)
     {

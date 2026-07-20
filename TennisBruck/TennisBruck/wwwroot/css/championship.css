@@ -33,8 +33,8 @@ body {
    ========================================== */
 .app-header {
     background-color: var(--nav-bg);
-    height: 230px;
-    padding: 25px 20px 0 20px;
+    min-height: 140px;
+    padding: 25px 20px 20px 20px;
     box-sizing: border-box;
     text-align: center;
 }
@@ -50,10 +50,11 @@ body {
 .competition-pills {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
-    max-width: 800px;
+    max-width: 1060px;
     margin: 0 auto;
+    padding-bottom: 5px;
 }
 
 .pill-btn {
@@ -98,6 +99,22 @@ body {
 
 .pill-select.active {
     background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+/* Message banner — sits between header and main, no negative-margin overlap */
+.message-banner {
+    background: #dcfce7;
+    border-bottom: 2px solid #86efac;
+    padding: 12px 20px;
+}
+
+.message-banner-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    color: #166534;
+    font-weight: 600;
+    text-align: center;
+    font-size: 0.95rem;
 }
 
 /* ==========================================
