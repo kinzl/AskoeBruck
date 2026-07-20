@@ -475,6 +475,7 @@ public class Championship(
 
         var team = db.Teams
             .Include(t => t.TeamPlayers)
+            .ThenInclude(tp => tp.Player)
             .SingleOrDefault(x => x.Id == teamId.Value);
         if (team == null)
         {
@@ -514,7 +515,10 @@ public class Championship(
     public IActionResult OnPostRemoveTeamFromGroup(int groupId, int teamId)
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        var team = db.Teams.Find(teamId);
+        var team = db.Teams
+            .Include(t => t.TeamPlayers)
+            .ThenInclude(tp => tp.Player)
+            .SingleOrDefault(t => t.Id == teamId);
         var group = db.Groups.Find(groupId);
         string teamName = team != null ? team.PlayersToString() : "Team";
         string groupName = group != null ? group.GroupName : "Gruppe";
