@@ -105,7 +105,44 @@
                                     {
                                         @if (match.IsBye)
                                         {
-                                            <div class="bracket-bye"></div>
+                                            var byeIndex = globalInputIndex++;
+                                            bool byeAdvanced = match.Team1 != null;
+                                            <div class="match-scorecard bracket-match-card bracket-bye-card @(byeAdvanced ? "match-complete" : "")">
+                                                <input type="hidden" name="Inputs[@byeIndex].MatchId" value="@match.Id" />
+                                                <div class="bracket-match-info">Match @match.BracketNo · <span class="bye-label">Freilos</span></div>
+                                                @if (User.IsInRole("Admin") && match.RoundNo == 1)
+                                                {
+                                                    <div class="bracket-admin-selects">
+                                                        <div class="bracket-admin-row">
+                                                            <select name="Inputs[@byeIndex].Team1Id"
+                                                                    class="bracket-select @(byeAdvanced ? "select-winner" : "")"
+                                                                    disabled="@(byeAdvanced ? "disabled" : null)">
+                                                                <option value="">Team mit Freilos wählen</option>
+                                                                @foreach (var team in Model.RegisteredTeams)
+                                                                {
+                                                                    <option value="@team.Id"
+                                                                            selected="@(match.Team1?.Id == team.Id)">@team.PlayersToStringWithItn()</option>
+                                                                }
+                                                            </select>
+                                                            @if (byeAdvanced)
+                                                            {
+                                                                <span class="bracket-player-score">✓ weiter</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="bracket-slots-container">
+                                                        <div class="bracket-slot slot-top @(byeAdvanced ? "slot-winner" : "slot-tbd")">
+                                                            <span class="bracket-player-name">@(match.Team1?.PlayersToStringWithItn() ?? "TBD")</span>
+                                                        </div>
+                                                        <div class="bracket-slot slot-bottom slot-bye">
+                                                            <span class="bracket-player-name bye-label">Freilos</span>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
                                         }
                                         else
                                         {
@@ -132,6 +169,7 @@
 
                                                 @if (User.IsInRole("Admin") && match.RoundNo == 1)
                                                 {
+                                                    bool alreadyFreilos = match.IsWalkover && match.Team2 == null;
                                                     <div class="bracket-admin-selects">
                                                         <div class="bracket-admin-row">
                                                             <select name="Inputs[@currentIndex].Team1Id"
@@ -151,9 +189,10 @@
                                                         </div>
                                                         <div class="bracket-admin-row">
                                                             <select name="Inputs[@currentIndex].Team2Id"
-                                                                    class="bracket-select @GetTeamClass(match, match.Team2, "select-winner", "select-loser", "")"
+                                                                    class="bracket-select @GetTeamClass(match, match.Team2, "select-winner", "select-loser", "") @(alreadyFreilos ? "select-freilos" : "")"
                                                                     disabled="@(isDecided ? "disabled" : null)">
                                                                 <option value="">Team 2 wählen</option>
+                                                                <option value="-1" selected="@alreadyFreilos">Freilos</option>
                                                                 @foreach (var team in Model.RegisteredTeams)
                                                                 {
                                                                     <option value="@team.Id"

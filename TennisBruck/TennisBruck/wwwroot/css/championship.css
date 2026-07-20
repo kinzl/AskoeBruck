@@ -1686,3 +1686,37 @@ select:focus {
     gap: 8px;
     flex-wrap: wrap;
 }
+
+/* ==========================================
+   BYE MATCH CARD
+   ========================================== */
+.bracket-bye-card {
+    border-left-color: #10b981 !important;
+    border-left-style: dashed !important;
+    opacity: 0.9;
+}
+
+.bracket-bye-card.match-complete {
+    border-left-style: solid !important;
+    opacity: 1;
+}
+
+.bye-label {
+    color: #059669;
+    font-style: italic;
+    font-weight: 600;
+}
+
+.slot-bye {
+    color: #059669;
+    font-style: italic;
+    background: rgba(16, 185, 129, 0.06);
+}
+
+/* Freilos option selected in Team 2 dropdown */
+.bracket-select.select-freilos {
+    background-color: rgba(16, 185, 129, 0.12) !important;
+    color: #047857 !important;
+    border: 1px solid #10b981 !important;
+    font-weight: 700 !important;
+}

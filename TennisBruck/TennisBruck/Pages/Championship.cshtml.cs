@@ -756,6 +756,41 @@ public class Championship(
 
             if (input != null)
             {
+                if (match.IsBye)
+                {
+                    // Bye match: only Team1 slot is used. Assign team and immediately advance.
+                    if (input.Team1Id.HasValue && input.Team1Id.Value > 0)
+                    {
+                        var team = teamLookup.GetValueOrDefault(input.Team1Id.Value);
+                        if (team != null)
+                        {
+                            match.Team1 = team;
+                            match.Team2 = null;
+                            match.IsWalkover = true;
+                            match.Winner = team;
+                            db.SaveChanges();
+                            AdvanceWinnerInBracket(match);
+                        }
+                    }
+                    continue;
+                }
+
+                // Regular match marked as Freilos: Team2 slot set to -1 sentinel
+                if (input.Team2Id == -1 && input.Team1Id.HasValue && input.Team1Id.Value > 0)
+                {
+                    var team = teamLookup.GetValueOrDefault(input.Team1Id.Value);
+                    if (team != null)
+                    {
+                        match.Team1 = team;
+                        match.Team2 = null;
+                        match.IsWalkover = true;
+                        match.Winner = team;
+                        db.SaveChanges();
+                        AdvanceWinnerInBracket(match);
+                    }
+                    continue;
+                }
+
                 bool wasIncomplete = match.Team1 == null || match.Team2 == null;
 
                 if (input.Team1Id.HasValue && input.Team1Id.Value > 0)
