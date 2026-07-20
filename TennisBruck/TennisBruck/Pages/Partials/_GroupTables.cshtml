@@ -83,6 +83,7 @@
                                                 <form method="post" asp-page-handler="AddSinglePlayer" class="m-0">
                                                     <input type="hidden" name="groupId" value="@group.Id"/>
                                                     <input type="hidden" name="competitionId" value="@group.Competition.Id"/>
+                                                    <input type="hidden" name="oldTeamId" value="@(groupTeam?.Team.Id ?? 0)"/>
                                                     <select name="teamId" onchange="this.form.submit()" class="select-sm table-select">
                                                         <option value="">Freilos</option>
                                                         @if (groupTeam != null)

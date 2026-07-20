@@ -401,12 +401,53 @@ public class Championship(
 
     #endregion
 
-    public IActionResult OnPostAddSinglePlayer(int teamId, int groupId)
+    private void RemoveTeamFromGroupInternal(int groupId, int teamId)
+    {
+        var groupTeam = db.GroupTeams
+            .Include(gt => gt.Team)
+            .Include(gt => gt.Group)
+            .FirstOrDefault(gt => gt.GroupId == groupId && gt.TeamId == teamId);
+
+        if (groupTeam != null)
+        {
+            var matches = db.Matches
+                .Include(m => m.Sets)
+                .Where(m => m.Group.Id == groupId && (m.Team1.Id == teamId || m.Team2.Id == teamId))
+                .ToList();
+
+            foreach (var m in matches)
+            {
+                if (m.Sets != null && m.Sets.Any())
+                {
+                    db.Sets.RemoveRange(m.Sets);
+                }
+            }
+            db.Matches.RemoveRange(matches);
+            db.GroupTeams.Remove(groupTeam);
+        }
+    }
+
+    public IActionResult OnPostAddSinglePlayer(int? teamId, int groupId, int? oldTeamId)
     {
         if (!User.IsInRole("Admin")) return Forbid();
         var group = db.Groups
             .Include(g => g.Competition)
             .Single(g => g.Id == groupId);
+
+        if (!teamId.HasValue || teamId.Value == 0)
+        {
+            if (oldTeamId.HasValue && oldTeamId.Value > 0)
+            {
+                RemoveTeamFromGroupInternal(groupId, oldTeamId.Value);
+                db.SaveChanges();
+            }
+            return RedirectToPage(new { Message = "Zu Freilos geändert" });
+        }
+
+        if (oldTeamId.HasValue && oldTeamId.Value > 0 && oldTeamId.Value != teamId.Value)
+        {
+            RemoveTeamFromGroupInternal(groupId, oldTeamId.Value);
+        }
 
         // Team des Spielers im selben Bewerb suchen
         var existingGroupTeam = db.GroupTeams
@@ -415,13 +456,15 @@ public class Championship(
             .Include(gt => gt.Team)
             .ThenInclude(t => t.TeamPlayers)
             .SingleOrDefault(gt =>
-                gt.Team.Id == teamId &&
+                gt.Team.Id == teamId.Value &&
                 gt.Group.Competition.Id == group.Competition.Id
             );
 
         if (existingGroupTeam != null && existingGroupTeam.GroupId == groupId)
+        {
+            db.SaveChanges();
             return RedirectToPage(new { Message = "Spieler ist bereits in dieser Gruppe" });
-
+        }
 
         if (existingGroupTeam != null)
         {
@@ -432,8 +475,12 @@ public class Championship(
 
         var team = db.Teams
             .Include(t => t.TeamPlayers)
-            .SingleOrDefault(x => x.Id == teamId);
-        if (team == null) return RedirectToPage();
+            .SingleOrDefault(x => x.Id == teamId.Value);
+        if (team == null)
+        {
+            db.SaveChanges();
+            return RedirectToPage();
+        }
 
         var groupTeam = new GroupTeam
         {
@@ -467,16 +514,16 @@ public class Championship(
     public IActionResult OnPostRemoveTeamFromGroup(int groupId, int teamId)
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        var groupTeam = db.GroupTeams
-            .Include(gt => gt.Team)
-            .ThenInclude(t => t.TeamPlayers).Include(groupTeam => groupTeam.Group)
-            .Single(gt => gt.GroupId == groupId && gt.TeamId == teamId);
+        var team = db.Teams.Find(teamId);
+        var group = db.Groups.Find(groupId);
+        string teamName = team != null ? team.PlayersToString() : "Team";
+        string groupName = group != null ? group.GroupName : "Gruppe";
 
-        db.GroupTeams.Remove(groupTeam);
-
+        RemoveTeamFromGroupInternal(groupId, teamId);
         db.SaveChanges();
+
         return RedirectToPage(new
-            { Message = $"{groupTeam.Team.PlayersToString()} von {groupTeam.Group.GroupName} entfernt" });
+            { Message = $"{teamName} von {groupName} entfernt" });
     }
 
     #region Match Management
@@ -1068,13 +1115,15 @@ public class Championship(
             var entry = new GroupTableEntry { GroupTeam = groupTeam };
 
             var teamMatches = groupMatches.Where(m =>
-                m.Team1.Id == groupTeam.TeamId || m.Team2.Id == groupTeam.TeamId).ToList();
+                (m.Team1 != null && m.Team1.Id == groupTeam.TeamId) ||
+                (m.Team2 != null && m.Team2.Id == groupTeam.TeamId)).ToList();
 
-            entry.MatchesPlayed = teamMatches.Count;
+            var validMatches = teamMatches.Where(m => m.Team1 != null && m.Team2 != null).ToList();
+            entry.MatchesPlayed = validMatches.Count;
 
-            foreach (var match in teamMatches)
+            foreach (var match in validMatches)
             {
-                int team1Id = match.Team1.Id;
+                int team1Id = match.Team1!.Id;
                 bool isTeam1 = team1Id == groupTeam.TeamId;
 
                 if (match.IsWalkover)
