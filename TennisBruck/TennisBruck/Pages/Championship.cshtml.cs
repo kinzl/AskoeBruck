@@ -46,7 +46,7 @@ public class Championship(
         int? selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
         CurrentPlayer = currentPlayerService.GetCurrentUser()!;
         Message = message;
-        Competitions = db.Competitions.ToList();
+        Competitions = db.Competitions.OrderBy(x => x.Name).ToList();
 
         var thisYear = DateTime.Now.Year;
         var thisYearCompIds = Competitions.Where(c => c.RegistrationUntil.Year == thisYear).Select(c => c.Id).ToList();
@@ -83,7 +83,6 @@ public class Championship(
                 .Where(x => x.Competition.Id == SelectedCompetition!.Id)
                 .Any(x => x.Player.Id == CurrentPlayer.Id);
 
-
             RegisteredTeams = db.Teams
                 .Include(x => x.TeamPlayers)
                 .ThenInclude(x => x.Player)
@@ -94,6 +93,7 @@ public class Championship(
                 .Include(x => x.Competition)
                 .Include(x => x.Player)
                 .Where(x => x.Competition.Id == selectedCompetitionId)
+                .OrderBy(x => x.Player.Lastname)
                 .ToList();
 
             UnregisteredPlayers = db.Players
@@ -130,10 +130,7 @@ public class Championship(
 
             foreach (var group in Groups)
             {
-                // Holt alle Matches für genau diese Gruppe
                 var matchesForGroup = AllMatches.Where(m => m.Group?.Id == group.Id).ToList();
-
-                // Berechnet die Tabelle und speichert sie im Dictionary unter der Gruppen-ID
                 GroupTables[group.Id] = CalculateGroupTable(group.GroupTeams, matchesForGroup);
             }
         }
@@ -809,26 +806,46 @@ public class Championship(
             int player1Id = pair.SinglePlayerId.Value;
             int player2Id = pair.DoublePlayerId.Value;
 
-            // Prüfen, ob Spieler schon in einem Team in dieser Competition sind
-            bool exists = db.Teams
-                .Include(t => t.TeamPlayers)
-                .Any(t => t.TeamPlayers.Any(tp => tp.PlayerId == player1Id || tp.PlayerId == player2Id)
-                          && t.CompetitionId == SelectedCompetition!.Id);
-
-            if (exists) continue;
-
-            // Neues Doppel-Team erstellen
-            var team = new Team
+            if (pair.TeamId.HasValue && pair.TeamId.Value > 0)
             {
-                CompetitionId = SelectedCompetition!.Id,
-                TeamPlayers = new List<TeamPlayer>
+                // Update existing team: replace all TeamPlayers
+                var team = db.Teams
+                    .Include(t => t.TeamPlayers)
+                    .FirstOrDefault(t => t.Id == pair.TeamId.Value
+                                        && t.CompetitionId == SelectedCompetition!.Id);
+
+                if (team == null) continue;
+
+                db.TeamPlayer.RemoveRange(team.TeamPlayers);
+                team.TeamPlayers = new List<TeamPlayer>
                 {
                     new() { PlayerId = player1Id },
                     new() { PlayerId = player2Id }
-                }
-            };
+                };
+            }
+            else
+            {
+                // Prüfen, ob Spieler schon in einem Team in dieser Competition sind
+                bool exists = db.Teams
+                    .Include(t => t.TeamPlayers)
+                    .Any(t => t.TeamPlayers.Any(tp => tp.PlayerId == player1Id || tp.PlayerId == player2Id)
+                              && t.CompetitionId == SelectedCompetition!.Id);
 
-            db.Teams.Add(team);
+                if (exists) continue;
+
+                // Neues Doppel-Team erstellen
+                var team = new Team
+                {
+                    CompetitionId = SelectedCompetition!.Id,
+                    TeamPlayers = new List<TeamPlayer>
+                    {
+                        new() { PlayerId = player1Id },
+                        new() { PlayerId = player2Id }
+                    }
+                };
+
+                db.Teams.Add(team);
+            }
         }
 
         db.SaveChanges();
