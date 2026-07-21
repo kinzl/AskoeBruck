@@ -108,7 +108,7 @@
     </div>
 }
 
-<main class="main-container">
+<main class="main-container @(!string.IsNullOrEmpty(Model.Message) ? "has-message" : "")">
 
     @if (Model.SelectedCompetition != null)
     {

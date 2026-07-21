@@ -43,14 +43,17 @@
     <section class="modern-card">
         <div class="card-header">
             <h2>Aktive Mitglieder</h2>
+            <div class="search-container">
+                <input type="text" id="memberSearch" placeholder="🔍 Name suchen..." class="form-input search-input" onkeyup="filterMembers()" />
+            </div>
         </div>
 
         <div class="table-responsive">
             <table class="members-table">
                 <thead>
                 <tr>
-                    <th>Vorname</th>
-                    <th>Nachname</th>
+                    <th onclick="sortTable(0)" class="sortable-th" id="th-firstname">Vorname <span class="sort-icon">↕</span></th>
+                    <th onclick="sortTable(1)" class="sortable-th" id="th-lastname">Nachname <span class="sort-icon">↕</span></th>
                     <th class="col-itn">ITN</th>
                     @if (User.IsInRole("Admin"))
                     {
@@ -65,14 +68,14 @@
                 {
                     bool isOffline = player.IdentityUser == null;
                     <tr>
-                        <td class="fw-500">
+                        <td class="fw-500" data-val="@player.Firstname">
                             @player.Firstname
                             @if (isOffline)
                             {
                                 <span class="badge-offline" title="Offline-Mitglied — kein Login-Account">👤</span>
                             }
                         </td>
-                        <td class="fw-500">@player.Lastname</td>
+                        <td class="fw-500" data-val="@player.Lastname">@player.Lastname</td>
                         <td class="text-muted col-itn">@player.Itn</td>
                         @if (User.IsInRole("Admin"))
                         {
@@ -226,6 +229,67 @@
 }
 
 <script>
+    let currentSortCol = -1;
+    let currentSortDir = "asc";
+
+    function filterMembers() {
+        const input = document.getElementById("memberSearch");
+        const filter = input.value.toLowerCase().trim();
+        const table = document.querySelector(".members-table");
+        const trs = table.querySelectorAll("tbody tr");
+
+        trs.forEach(tr => {
+            const firstnameTd = tr.querySelector("td:nth-child(1)");
+            const lastnameTd = tr.querySelector("td:nth-child(2)");
+            if (firstnameTd && lastnameTd) {
+                const firstnameText = firstnameTd.getAttribute("data-val") || "";
+                const lastnameText = lastnameTd.getAttribute("data-val") || "";
+                const combined = (firstnameText + " " + lastnameText).toLowerCase();
+                if (combined.includes(filter)) {
+                    tr.style.display = "";
+                } else {
+                    tr.style.display = "none";
+                }
+            }
+        });
+    }
+
+    function sortTable(colIndex) {
+        const table = document.querySelector(".members-table");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        
+        if (currentSortCol === colIndex) {
+            currentSortDir = currentSortDir === "asc" ? "desc" : "asc";
+        } else {
+            currentSortCol = colIndex;
+            currentSortDir = "asc";
+        }
+        
+        rows.sort((a, b) => {
+            const cellA = a.querySelector(`td:nth-child(${colIndex + 1})`).getAttribute("data-val").toLowerCase();
+            const cellB = b.querySelector(`td:nth-child(${colIndex + 1})`).getAttribute("data-val").toLowerCase();
+            
+            return currentSortDir === "asc" 
+                ? cellA.localeCompare(cellB, 'de', { sensitivity: 'base' })
+                : cellB.localeCompare(cellA, 'de', { sensitivity: 'base' });
+        });
+        
+        tbody.innerHTML = "";
+        rows.forEach(row => tbody.appendChild(row));
+        
+        const firstnameIcon = document.getElementById("th-firstname").querySelector(".sort-icon");
+        const lastnameIcon = document.getElementById("th-lastname").querySelector(".sort-icon");
+        
+        if (colIndex === 0) {
+            firstnameIcon.textContent = currentSortDir === "asc" ? "▲" : "▼";
+            lastnameIcon.textContent = "↕";
+        } else if (colIndex === 1) {
+            lastnameIcon.textContent = currentSortDir === "asc" ? "▲" : "▼";
+            firstnameIcon.textContent = "↕";
+        }
+    }
+
     function openEditModal(id, firstname, lastname, itn, email, isOffline, hasNuLiga) {
         document.getElementById('editPlayerId').value = id;
         document.getElementById('editFirstname').value = firstname;

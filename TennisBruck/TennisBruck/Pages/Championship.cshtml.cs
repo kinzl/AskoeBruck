@@ -833,6 +833,63 @@ public class Championship(
         if (!User.IsInRole("Admin")) return Forbid();
         InitValues();
 
+        // 1. Validate for duplicates and same-player configurations
+        var assignedPlayerIds = new HashSet<int>();
+        var submittedTeamIds = pairs.Where(p => p.TeamId.HasValue).Select(p => p.TeamId!.Value).ToList();
+        
+        // Add players of other teams that are not in the submitted list to assignedPlayerIds
+        var otherTeams = db.Teams
+            .Include(t => t.TeamPlayers)
+            .Where(t => t.CompetitionId == SelectedCompetition!.Id && !submittedTeamIds.Contains(t.Id))
+            .ToList();
+
+        foreach (var otherTeam in otherTeams)
+        {
+            foreach (var tp in otherTeam.TeamPlayers)
+            {
+                assignedPlayerIds.Add(tp.PlayerId);
+            }
+        }
+
+        foreach (var pair in pairs)
+        {
+            if (!pair.SinglePlayerId.HasValue && !pair.DoublePlayerId.HasValue)
+                continue;
+
+            // Check if player A is the same as player B
+            if (pair.SinglePlayerId.HasValue && pair.DoublePlayerId.HasValue && pair.SinglePlayerId.Value == pair.DoublePlayerId.Value)
+            {
+                var player = db.Players.Find(pair.SinglePlayerId.Value);
+                string name = player != null ? $"{player.Firstname} {player.Lastname}" : "Ein Spieler";
+                return RedirectToPage(new { Message = $"Fehler: {name} kann nicht mit sich selbst ein Paar bilden." });
+            }
+
+            // Check duplicate for Player A
+            if (pair.SinglePlayerId.HasValue)
+            {
+                if (assignedPlayerIds.Contains(pair.SinglePlayerId.Value))
+                {
+                    var player = db.Players.Find(pair.SinglePlayerId.Value);
+                    string name = player != null ? $"{player.Firstname} {player.Lastname}" : "Ein Spieler";
+                    return RedirectToPage(new { Message = $"Fehler: {name} ist bereits einem anderen Team zugeteilt." });
+                }
+                assignedPlayerIds.Add(pair.SinglePlayerId.Value);
+            }
+
+            // Check duplicate for Player B
+            if (pair.DoublePlayerId.HasValue)
+            {
+                if (assignedPlayerIds.Contains(pair.DoublePlayerId.Value))
+                {
+                    var player = db.Players.Find(pair.DoublePlayerId.Value);
+                    string name = player != null ? $"{player.Firstname} {player.Lastname}" : "Ein Spieler";
+                    return RedirectToPage(new { Message = $"Fehler: {name} ist bereits einem anderen Team zugeteilt." });
+                }
+                assignedPlayerIds.Add(pair.DoublePlayerId.Value);
+            }
+        }
+
+        // 2. Process saves
         foreach (var pair in pairs)
         {
             if (!pair.SinglePlayerId.HasValue || !pair.DoublePlayerId.HasValue)
@@ -860,14 +917,6 @@ public class Championship(
             }
             else
             {
-                // Prüfen, ob Spieler schon in einem Team in dieser Competition sind
-                bool exists = db.Teams
-                    .Include(t => t.TeamPlayers)
-                    .Any(t => t.TeamPlayers.Any(tp => tp.PlayerId == player1Id || tp.PlayerId == player2Id)
-                              && t.CompetitionId == SelectedCompetition!.Id);
-
-                if (exists) continue;
-
                 // Neues Doppel-Team erstellen
                 var team = new Team
                 {
@@ -1355,14 +1404,27 @@ public class Championship(
 
         if (players.Count < 2) return RedirectToPage(new { id = championshipId });
 
-        var oldTeams = await db.Teams.Where(x => x.CompetitionId == championshipId).ToListAsync();
-        var oldGroupTeams = await db.GroupTeams
-            .Where(t => t.Group.CompetitionId == championshipId)
-            .ToListAsync();
+        var groupIds = await db.Groups.Where(g => g.CompetitionId == championshipId).Select(g => g.Id).ToListAsync();
 
-        db.GroupTeams.RemoveRange(oldGroupTeams);
-        db.Teams.RemoveRange(oldTeams);
-        await db.SaveChangesAsync();
+        // 1. Delete Sets for matches in this competition
+        await db.Sets.Where(s => groupIds.Contains(s.Match.Group.Id) || (s.Match as KnockoutMatch).CompetitionId == championshipId)
+            .ExecuteDeleteAsync();
+
+        // 2. Delete Matches in this competition
+        await db.Matches.Where(m => groupIds.Contains(m.Group.Id) || (m as KnockoutMatch).CompetitionId == championshipId)
+            .ExecuteDeleteAsync();
+
+        // 3. Delete GroupTeams
+        await db.GroupTeams.Where(gt => groupIds.Contains(gt.GroupId)).ExecuteDeleteAsync();
+
+        // 4. Delete Groups
+        await db.Groups.Where(g => g.CompetitionId == championshipId).ExecuteDeleteAsync();
+
+        // 5. Delete TeamPlayer mappings
+        await db.TeamPlayer.Where(tp => tp.Team.CompetitionId == championshipId).ExecuteDeleteAsync();
+
+        // 6. Delete Teams
+        await db.Teams.Where(t => t.CompetitionId == championshipId).ExecuteDeleteAsync();
 
         var rng = new Random();
         var shuffledPlayers = players.OrderBy(_ => rng.Next()).ToList();
