@@ -548,6 +548,72 @@ select:focus {
     text-align: center;
 }
 
+.card-header-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.match-filter-select-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.match-filter-select-wrapper .pill-select {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 20px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: var(--nav-bg);
+    cursor: pointer;
+}
+
+/* Filter Pills for All Matches */
+.match-filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.match-filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: var(--nav-bg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.match-filter-btn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.match-filter-btn.active {
+    background: var(--nav-bg);
+    color: #ffffff;
+    border-color: var(--nav-bg);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* Match Main Info Header (Players + Meta side-by-side) */
+.match-main-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex: 1;
+    min-width: 0;
+}
+
 /* Matches (Scorecard) */
 .match-scorecard {
     border: 1px solid #e2e8f0;
@@ -1446,27 +1512,103 @@ select:focus {
         font-size: 0.95rem;
     }
 
-    /* Match Scorecards — stay horizontal but compact */
+    /* Match Scorecards — stay horizontal and super compact on mobile */
     .match-scorecard {
-        padding: 10px;
+        padding: 8px 10px;
         margin-bottom: 8px;
+        gap: 6px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .match-main-info {
+        width: 100%;
         gap: 8px;
-        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .match-players-stacked {
+        max-width: none;
+        flex: 1;
+        min-width: 0;
+        margin-right: 0;
+        margin-bottom: 0;
     }
 
     .match-player-row {
-        padding: 6px 10px;
+        padding: 4px 8px;
         font-size: 0.82rem;
     }
 
-    .match-action-form {
-        flex-wrap: wrap;
-        width: 100%;
-        gap: 6px;
+    .match-player-row .player-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .match-player-score-inline {
+        font-size: 0.78rem;
+        padding: 1px 6px;
+        margin-left: 4px;
+        flex-shrink: 0;
     }
 
     .match-meta-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    .badge-phase {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        white-space: nowrap;
+    }
+
+    .match-action-form {
+        width: 100%;
+        margin-top: 2px;
+    }
+
+    .match-action-form .flex-center-gap {
+        display: flex;
+        flex-wrap: nowrap;
+        width: 100%;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .input-score-sm {
+        width: 80px;
+        min-width: 60px;
+        flex-shrink: 1;
+        padding: 4px 6px;
+        font-size: 0.8rem;
+        text-align: center;
+    }
+
+    .match-action-form .btn-action.btn-xs,
+    .match-action-form .btn-action.btn-warning.btn-xs {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .match-filter-pills {
         gap: 6px;
+        margin-bottom: 12px;
+    }
+
+    .match-filter-btn {
+        padding: 5px 10px;
+        font-size: 0.78rem;
     }
 
     /* K.O. Phase Admin Form */
@@ -1691,14 +1833,6 @@ select:focus {
 .match-player-row.winner .match-player-score-inline {
     background: rgba(16, 185, 129, 0.15);
     color: #047857;
-}
-
-@media (max-width: 768px) {
-    .match-players-stacked {
-        max-width: 100%;
-        margin-right: 0;
-        margin-bottom: 12px;
-    }
 }
 
 .match-meta-container {

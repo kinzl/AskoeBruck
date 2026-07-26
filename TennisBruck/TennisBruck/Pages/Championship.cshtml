@@ -387,113 +387,160 @@
             </section>
 
             <section class="modern-card mb-24">
-                <div class="card-header">
+                @{
+                    var filterGroups = Model.AllMatches
+                        .Select(m => m.Group != null ? m.Group.GroupName : ((m as KnockoutMatch)?.PhaseName ?? "K.O Phase"))
+                        .Distinct()
+                        .OrderBy(g => g)
+                        .ToList();
+                }
+
+                <div class="card-header card-header-flex">
                     <h2>🎾 Alle Matches in diesem Bewerb</h2>
-                </div>
-                @foreach (var match in Model.AllMatches)
-                {
-                    @if (match.Team1 != null && match.Team2 != null)
+                    @if (filterGroups.Count > 1)
                     {
-                        bool isMyMatch = Model.CurrentPlayer != null &&
-                                         (match.Team1.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id) ||
-                                          match.Team2.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id));
+                        <div class="match-filter-select-wrapper">
+                            <select id="matchGroupFilterSelect" class="pill-btn pill-select" onchange="filterAllMatches(this.value, null)">
+                                <option value="all">Alle Gruppen & K.O. Phasen (@Model.AllMatches.Count)</option>
+                                @foreach (var grp in filterGroups)
+                                {
+                                    var grpCount = Model.AllMatches.Count(m => (m.Group != null ? m.Group.GroupName : ((m as KnockoutMatch)?.PhaseName ?? "K.O Phase")) == grp);
+                                    <option value="@grp">@grp (@grpCount)</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                </div>
 
-                        string team1Score = "";
-                        string team2Score = "";
-                        if (match.IsWalkover)
+                @if (filterGroups.Count > 1)
+                {
+                    <div class="match-filter-pills">
+                        <button type="button" class="match-filter-btn active" data-filter="all" onclick="filterAllMatches('all', this)">
+                            Alle (@Model.AllMatches.Count)
+                        </button>
+                        @foreach (var grp in filterGroups)
                         {
-                            team1Score = match.WalkoverTeamId == match.Team1?.Id ? "w.o." : "";
-                            team2Score = match.WalkoverTeamId == match.Team2?.Id ? "w.o." : "";
+                            var grpCount = Model.AllMatches.Count(m => (m.Group != null ? m.Group.GroupName : ((m as KnockoutMatch)?.PhaseName ?? "K.O Phase")) == grp);
+                            <button type="button" class="match-filter-btn" data-filter="@grp" onclick="filterAllMatches('@grp', this)">
+                                @grp (@grpCount)
+                            </button>
                         }
-                        else if (match.Sets != null && match.Sets.Any())
+                    </div>
+                }
+
+                <div id="allMatchesList">
+                    @foreach (var match in Model.AllMatches)
+                    {
+                        @if (match.Team1 != null && match.Team2 != null)
                         {
-                            team1Score = string.Join(" ", match.Sets.Select(s => s.Player1GamesWon));
-                            team2Score = string.Join(" ", match.Sets.Select(s => s.Player2GamesWon));
-                        }
+                            var groupCategory = match.Group != null ? match.Group.GroupName : ((match as KnockoutMatch)?.PhaseName ?? "K.O Phase");
+                            bool isMyMatch = Model.CurrentPlayer != null &&
+                                             (match.Team1.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id) ||
+                                              match.Team2.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id));
 
-                        <div class="match-scorecard">
-                            <div class="match-players-stacked">
-                                <div class="match-player-row @GetRowClass(match, match.Team1)">
-                                    <span class="player-name">@match.Team1?.PlayersToString()</span>
-                                    @if (!string.IsNullOrEmpty(team1Score))
-                                    {
-                                        <span class="match-player-score-inline">@team1Score</span>
-                                    }
-                                </div>
-                                <div class="match-player-row @GetRowClass(match, match.Team2)">
-                                    <span class="player-name">@match.Team2?.PlayersToString()</span>
-                                    @if (!string.IsNullOrEmpty(team2Score))
-                                    {
-                                        <span class="match-player-score-inline">@team2Score</span>
-                                    }
-                                </div>
-                            </div>
-
-                            @{
-                                bool isDecided = match.IsWalkover || (match.Sets != null && match.Sets.Any());
-                                bool canDelete = isDecided && (User.IsInRole("Admin") || isMyMatch);
+                            string team1Score = "";
+                            string team2Score = "";
+                            if (match.IsWalkover)
+                            {
+                                team1Score = match.WalkoverTeamId == match.Team1?.Id ? "w.o." : "";
+                                team2Score = match.WalkoverTeamId == match.Team2?.Id ? "w.o." : "";
+                            }
+                            else if (match.Sets != null && match.Sets.Any())
+                            {
+                                team1Score = string.Join(" ", match.Sets.Select(s => s.Player1GamesWon));
+                                team2Score = string.Join(" ", match.Sets.Select(s => s.Player2GamesWon));
                             }
 
-                            <div class="match-meta-container">
-                                <span class="badge-phase">
-                                    @(match.Group != null ? match.Group.Competition.Name : "K.O Phase")
-                                </span>
-                                @if (canDelete)
+                            <div class="match-scorecard" data-group="@groupCategory">
+                                <div class="match-main-info">
+                                    <div class="match-players-stacked">
+                                        <div class="match-player-row @GetRowClass(match, match.Team1)">
+                                            <span class="player-name" title="@match.Team1?.PlayersToString()">@match.Team1?.PlayersToString()</span>
+                                            @if (!string.IsNullOrEmpty(team1Score))
+                                            {
+                                                <span class="match-player-score-inline">@team1Score</span>
+                                            }
+                                        </div>
+                                        <div class="match-player-row @GetRowClass(match, match.Team2)">
+                                            <span class="player-name" title="@match.Team2?.PlayersToString()">@match.Team2?.PlayersToString()</span>
+                                            @if (!string.IsNullOrEmpty(team2Score))
+                                            {
+                                                <span class="match-player-score-inline">@team2Score</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    @{
+                                        bool isDecided = match.IsWalkover || (match.Sets != null && match.Sets.Any());
+                                        bool canDelete = isDecided && (User.IsInRole("Admin") || isMyMatch);
+                                    }
+
+                                    <div class="match-meta-container">
+                                        <span class="badge-phase">
+                                            @groupCategory
+                                        </span>
+                                        @if (canDelete)
+                                        {
+                                            <form method="post" class="inline-form-zero" style="display:inline-block;">
+                                                <input type="hidden" name="matchId" value="@match.Id"/>
+                                                <button type="submit" class="btn-action btn-danger btn-xs" asp-page-handler="DeleteMatch">
+                                                    @(User.IsInRole("Admin") ? "Löschen" : "Rückgängig")
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </div>
+
+                                @if (User.IsInRole("Admin") && !isDecided)
                                 {
-                                    <form method="post" class="inline-form-zero" style="display:inline-block;">
+                                    <form method="post" class="match-action-form">
                                         <input type="hidden" name="matchId" value="@match.Id"/>
-                                        <button type="submit" class="btn-action btn-danger btn-xs" asp-page-handler="DeleteMatch">
-                                            @(User.IsInRole("Admin") ? "Löschen" : "Rückgängig")
-                                        </button>
+                                        <div class="flex-center-gap">
+                                            <input type="text" name="score" placeholder="6:4 6:2"
+                                                   class="input-score-sm"/>
+                                            <button class="btn-action btn-xs" asp-page-handler="SaveMatch">Speichern
+                                            </button>
+
+                                            <button type="submit" class="btn-action btn-warning btn-xs"
+                                                    asp-page-handler="AdminWalkover" name="walkoverTeamId"
+                                                    value="@if (match.Team1 != null) { @match.Team1.Id }"
+                                                    title="T1 aufgeben">
+                                                W.O. T1
+                                            </button>
+                                            <button type="submit" class="btn-action btn-warning btn-xs"
+                                                    asp-page-handler="AdminWalkover" name="walkoverTeamId"
+                                                    value="@if (match.Team2 != null) { @match.Team2.Id }"
+                                                    title="T2 aufgeben">
+                                                W.O. T2
+                                            </button>
+                                        </div>
+                                    </form>
+                                }
+                                else if (isMyMatch && !isDecided)
+                                {
+                                    <form method="post" class="match-action-form">
+                                        <input type="hidden" name="matchId" value="@match.Id"/>
+                                        <div class="flex-center-gap">
+                                            <input type="text" name="score" placeholder="6:4 6:2"
+                                                   class="input-score-sm"/>
+                                            <button class="btn-action btn-xs" asp-page-handler="SaveMatch">Speichern
+                                            </button>
+                                            <button type="submit" class="btn-action btn-warning btn-xs"
+                                                    asp-page-handler="GiveWalkover"
+                                                    onclick="return confirm('Möchtest du dieses Match wirklich aufgeben? Dein Gegner gewinnt durch w.o.');">
+                                                W.O. geben
+                                            </button>
+                                        </div>
                                     </form>
                                 }
                             </div>
-
-                            @if (User.IsInRole("Admin") && !isDecided)
-                            {
-                                <form method="post" class="match-action-form">
-                                    <input type="hidden" name="matchId" value="@match.Id"/>
-                                    <div class="flex-center-gap">
-                                        <input type="text" name="score" placeholder="6:4 6:2"
-                                               class="input-score-sm"/>
-                                        <button class="btn-action btn-xs" asp-page-handler="SaveMatch">Speichern
-                                        </button>
-
-                                        <button type="submit" class="btn-action btn-warning btn-xs"
-                                                asp-page-handler="AdminWalkover" name="walkoverTeamId"
-                                                value="@if (match.Team1 != null) { @match.Team1.Id }"
-                                                title="T1 aufgeben">
-                                            W.O. T1
-                                        </button>
-                                        <button type="submit" class="btn-action btn-warning btn-xs"
-                                                asp-page-handler="AdminWalkover" name="walkoverTeamId"
-                                                value="@if (match.Team2 != null) { @match.Team2.Id }"
-                                                title="T2 aufgeben">
-                                            W.O. T2
-                                        </button>
-                                    </div>
-                                </form>
-                            }
-                            else if (isMyMatch && !isDecided)
-                            {
-                                <form method="post" class="match-action-form">
-                                    <input type="hidden" name="matchId" value="@match.Id"/>
-                                    <div class="flex-center-gap">
-                                        <input type="text" name="score" placeholder="6:4 6:2"
-                                               class="input-score-sm"/>
-                                        <button class="btn-action btn-xs" asp-page-handler="SaveMatch">Speichern
-                                        </button>
-                                        <button type="submit" class="btn-action btn-warning btn-xs"
-                                                asp-page-handler="GiveWalkover"
-                                                onclick="return confirm('Möchtest du dieses Match wirklich aufgeben? Dein Gegner gewinnt durch w.o.');">
-                                            W.O. geben
-                                        </button>
-                                    </div>
-                                </form>
-                            }
-                        </div>
+                        }
                     }
-                }
+                </div>
+
+                <div id="noMatchesFilteredMsg" style="display: none; text-align: center; padding: 20px; color: var(--color-gray);">
+                    Keine Matches für diese Auswahl gefunden.
+                </div>
             </section>
         </div>
     }
@@ -542,6 +589,46 @@
 
 <script>
     window.existingTournamentPhases = @Html.Raw(Json.Serialize(Model.Matches.Select(m => m.PhaseName ?? "A-Bewerb").Distinct().ToList()));
+
+    function filterAllMatches(groupName, btn) {
+        // Sync active state of filter pills
+        const pillsContainer = document.querySelector('.match-filter-pills');
+        if (pillsContainer) {
+            pillsContainer.querySelectorAll('.match-filter-btn').forEach(b => {
+                const f = b.getAttribute('data-filter');
+                if (f === groupName) {
+                    b.classList.add('active');
+                } else {
+                    b.classList.remove('active');
+                }
+            });
+        }
+
+        // Sync select dropdown
+        const select = document.getElementById('matchGroupFilterSelect');
+        if (select && select.value !== groupName) {
+            select.value = groupName;
+        }
+
+        // Show/hide matches
+        const matches = document.querySelectorAll('#allMatchesList .match-scorecard');
+        let visibleCount = 0;
+
+        matches.forEach(card => {
+            const grp = card.getAttribute('data-group');
+            if (groupName === 'all' || grp === groupName) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const msg = document.getElementById('noMatchesFilteredMsg');
+        if (msg) {
+            msg.style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+    }
 </script>
 </body>
 </html>
