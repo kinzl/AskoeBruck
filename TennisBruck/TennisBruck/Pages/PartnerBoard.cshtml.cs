@@ -27,15 +27,9 @@ public class PartnerBoardModel(
     {
         CurrentPlayerId = currentPlayerService.GetCurrentUser()!.Id;
 
-        var oldSlots = await db.AvailabilitySlots
+        await db.AvailabilitySlots
             .Where(s => s.Date < DateTime.Today)
-            .ToListAsync();
-
-        if (oldSlots.Any())
-        {
-            db.AvailabilitySlots.RemoveRange(oldSlots);
-            await db.SaveChangesAsync();
-        }
+            .ExecuteDeleteAsync();
 
         IsFilterActive = FilterDateFrom.HasValue || FilterDateTo.HasValue ||
                          FilterTimeFrom.HasValue || FilterTimeTo.HasValue;

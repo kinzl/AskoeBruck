@@ -2,6 +2,7 @@
 @model TennisBruck.Pages.Championship
 
 @functions {
+
     string GetRowClass(TennisDb.Match match, Team team)
     {
         if (team == null) return "";
@@ -11,10 +12,13 @@
             {
                 return match.WalkoverTeamId == team.Id ? "walkover-loser" : "winner";
             }
+
             return match.Winner.Id == team.Id ? "winner" : "loser";
         }
+
         return "";
     }
+
 }
 
 @{
@@ -169,7 +173,8 @@
                                 <input type="time" name="newTime"
                                        value="@Model.SelectedCompetition.RegistrationUntil.ToString("HH:mm")"
                                        class="input-auto"/>
-                                <button asp-page-handler="SaveNewDate" class="btn-action btn-sm">Anmeldefrist aktualisieren
+                                <button asp-page-handler="SaveNewDate" class="btn-action btn-sm">Anmeldefrist
+                                    aktualisieren
                                 </button>
                             </form>
                         }
@@ -237,13 +242,15 @@
                                             @foreach (var registration in Model.RegisteredCompetitionPlayers)
                                             {
                                                 bool isSelected = firstPlayer != null && registration.Player.Id == firstPlayer.Id;
-                                                <option value="@registration.Player.Id" selected="@isSelected">@registration.Player.ToStringWithItn()</option>
+                                                <option value="@registration.Player.Id"
+                                                        selected="@isSelected">@registration.Player.ToStringWithItn()</option>
                                             }
                                         </select>
                                     }
                                     else
                                     {
-                                        <span class="pair-name">@(firstPlayer != null ? firstPlayer.ToStringWithItn() : "Offen")</span>
+                                        <span
+                                            class="pair-name">@(firstPlayer != null ? firstPlayer.ToStringWithItn() : "Offen")</span>
                                     }
 
                                     <span class="pair-plus">+</span>
@@ -255,13 +262,15 @@
                                             @foreach (var registration in Model.RegisteredCompetitionPlayers)
                                             {
                                                 bool isSelected = secondPlayer != null && registration.Player.Id == secondPlayer.Id;
-                                                <option value="@registration.Player.Id" selected="@isSelected">@registration.Player.ToStringWithItn()</option>
+                                                <option value="@registration.Player.Id"
+                                                        selected="@isSelected">@registration.Player.ToStringWithItn()</option>
                                             }
                                         </select>
                                     }
                                     else
                                     {
-                                        <span class="pair-name">@(secondPlayer != null ? secondPlayer.ToStringWithItn() : "Offen")</span>
+                                        <span
+                                            class="pair-name">@(secondPlayer != null ? secondPlayer.ToStringWithItn() : "Offen")</span>
                                     }
                                 </div>
 
@@ -400,7 +409,8 @@
                     @if (filterGroups.Count > 1)
                     {
                         <div class="match-filter-select-wrapper">
-                            <select id="matchGroupFilterSelect" class="pill-btn pill-select" onchange="filterAllMatches(this.value, null)">
+                            <select id="matchGroupFilterSelect" class="pill-btn pill-select"
+                                    onchange="filterAllMatches(this.value, null)">
                                 <option value="all">Alle Gruppen & K.O. Phasen (@Model.AllMatches.Count)</option>
                                 @foreach (var grp in filterGroups)
                                 {
@@ -415,13 +425,15 @@
                 @if (filterGroups.Count > 1)
                 {
                     <div class="match-filter-pills">
-                        <button type="button" class="match-filter-btn active" data-filter="all" onclick="filterAllMatches('all', this)">
+                        <button type="button" class="match-filter-btn active" data-filter="all"
+                                onclick="filterAllMatches('all', this)">
                             Alle (@Model.AllMatches.Count)
                         </button>
                         @foreach (var grp in filterGroups)
                         {
                             var grpCount = Model.AllMatches.Count(m => (m.Group != null ? m.Group.GroupName : ((m as KnockoutMatch)?.PhaseName ?? "K.O Phase")) == grp);
-                            <button type="button" class="match-filter-btn" data-filter="@grp" onclick="filterAllMatches('@grp', this)">
+                            <button type="button" class="match-filter-btn" data-filter="@grp"
+                                    onclick="filterAllMatches('@grp', this)">
                                 @grp (@grpCount)
                             </button>
                         }
@@ -455,14 +467,16 @@
                                 <div class="match-main-info">
                                     <div class="match-players-stacked">
                                         <div class="match-player-row @GetRowClass(match, match.Team1)">
-                                            <span class="player-name" title="@match.Team1?.PlayersToString()">@match.Team1?.PlayersToString()</span>
+                                            <span class="player-name"
+                                                  title="@match.Team1?.PlayersToString()">@match.Team1?.PlayersToString()</span>
                                             @if (!string.IsNullOrEmpty(team1Score))
                                             {
                                                 <span class="match-player-score-inline">@team1Score</span>
                                             }
                                         </div>
                                         <div class="match-player-row @GetRowClass(match, match.Team2)">
-                                            <span class="player-name" title="@match.Team2?.PlayersToString()">@match.Team2?.PlayersToString()</span>
+                                            <span class="player-name"
+                                                  title="@match.Team2?.PlayersToString()">@match.Team2?.PlayersToString()</span>
                                             @if (!string.IsNullOrEmpty(team2Score))
                                             {
                                                 <span class="match-player-score-inline">@team2Score</span>
@@ -483,7 +497,8 @@
                                         {
                                             <form method="post" class="inline-form-zero" style="display:inline-block;">
                                                 <input type="hidden" name="matchId" value="@match.Id"/>
-                                                <button type="submit" class="btn-action btn-danger btn-xs" asp-page-handler="DeleteMatch">
+                                                <button type="submit" class="btn-action btn-danger btn-xs"
+                                                        asp-page-handler="DeleteMatch">
                                                     @(User.IsInRole("Admin") ? "Löschen" : "Rückgängig")
                                                 </button>
                                             </form>
@@ -538,7 +553,8 @@
                     }
                 </div>
 
-                <div id="noMatchesFilteredMsg" style="display: none; text-align: center; padding: 20px; color: var(--color-gray);">
+                <div id="noMatchesFilteredMsg"
+                     style="display: none; text-align: center; padding: 20px; color: var(--color-gray);">
                     Keine Matches für diese Auswahl gefunden.
                 </div>
             </section>

@@ -36,34 +36,41 @@ public class Championship(
     public required List<Player> UnregisteredPlayers { get; set; }
     public Dictionary<int, List<GroupTableEntry>> GroupTables { get; set; } = new();
 
-    public IActionResult OnGet(string? message)
+    public async Task<IActionResult> OnGetAsync(string? message)
     {
-        return InitValues(message);
+        return await InitValuesAsync(message);
     }
 
-    private IActionResult InitValues(string? message = null)
+    private async Task<IActionResult> InitValuesAsync(string? message = null)
     {
-        int? selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
+        int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
         CurrentPlayer = currentPlayerService.GetCurrentUser()!;
         Message = message;
-        Competitions = db.Competitions.OrderBy(x => x.Name).ToList();
+
+        Competitions = await db.Competitions
+            .AsNoTracking()
+            .OrderBy(x => x.Name)
+            .ToListAsync();
 
         var thisYear = DateTime.Now.Year;
-        var thisYearCompIds = Competitions.Where(c => c.RegistrationUntil.Year == thisYear).Select(c => c.Id).ToList();
+        var thisYearCompIds = Competitions
+            .Where(c => c.RegistrationUntil.Year == thisYear)
+            .Select(c => c.Id)
+            .ToList();
 
-        PersonalMatches = db.Matches
+        PersonalMatches = (await db.Matches
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(m => m.Group.Competition)
             .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
             .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
             .Include(m => m.Sets)
             .Where(m => m.Team1.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id) ||
                         m.Team2.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id))
-            .ToList()
+            .ToListAsync())
             .Where(m =>
                 (m.Group != null && m.Group.Competition.RegistrationUntil.Year == thisYear) ||
-                // Only show knockout matches when both opponents are known
-                (m is KnockoutMatch km && thisYearCompIds.Contains(km.CompetitionId) && m.Team1 != null &&
-                 m.Team2 != null) ||
+                (m is KnockoutMatch km && thisYearCompIds.Contains(km.CompetitionId) && m.Team1 != null && m.Team2 != null) ||
                 (m.Sets != null && m.Sets.Any()) ||
                 m.IsWalkover)
             .ToList();
@@ -72,67 +79,92 @@ public class Championship(
         {
             SelectedCompetition = Competitions.FirstOrDefault(c => c.Id == selectedCompetitionId);
 
-            Matches = db.KnockoutMatch
-                .Include(x => x.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
-                .Include(x => x.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
-                .Include(x => x.Sets)
-                .Where(x => x.CompetitionId == selectedCompetitionId)
-                .ToList();
-
-            IsRegistered = db.TournamentRegistrations
-                .Where(x => x.Competition.Id == SelectedCompetition!.Id)
-                .Any(x => x.Player.Id == CurrentPlayer.Id);
-
-            RegisteredTeams = db.Teams
-                .Include(x => x.TeamPlayers)
-                .ThenInclude(x => x.Player)
-                .Where(x => x.Competition.Id == SelectedCompetition!.Id)
-                .ToList();
-
-            RegisteredCompetitionPlayers = db.TournamentRegistrations
-                .Include(x => x.Competition)
-                .Include(x => x.Player)
-                .Where(x => x.Competition.Id == selectedCompetitionId)
-                .OrderBy(x => x.Player.Lastname)
-                .ToList();
-
-            UnregisteredPlayers = db.Players
-                .Where(p => p.TournamentRegistrations.All(r => r.CompetitionId != SelectedCompetition!.Id))
-                .OrderBy(x => x.Lastname)
-                .ToList();
-
-            Groups = db.Groups
-                .Where(g => g.Competition.Id == selectedCompetitionId)
-                .Include(g => g.GroupTeams)
-                .ThenInclude(gt => gt.Team)
-                .ThenInclude(t => t.TeamPlayers)
-                .ThenInclude(tp => tp.Player)
-                .Include(g => g.Competition)
-                .ThenInclude(c => c.Teams)
-                .ToList();
-
-            AllMatches = db.Matches
-                .Include(x => x.Group)
-                .ThenInclude(x => x.Competition)
-                .Include(x => x.Team1)
-                .Include(x => x.Team2)
-                .Include(x => x.Sets)
-                .Where(x => x.Group != null && x.Group.Competition.Id == SelectedCompetition!.Id)
-                .ToList();
-
-            AllMatches.AddRange(db.KnockoutMatch
-                .Include(x => x.Group)
-                .ThenInclude(x => x.Competition)
-                .Include(x => x.Team1)
-                .Include(x => x.Team2)
-                .Include(x => x.Sets)
-                .Where(x => x.Competition.Id == SelectedCompetition!.Id));
-
-            foreach (var group in Groups)
+            if (SelectedCompetition != null)
             {
-                var matchesForGroup = AllMatches.Where(m => m.Group?.Id == group.Id).ToList();
-                GroupTables[group.Id] = CalculateGroupTable(group.GroupTeams, matchesForGroup);
+                Matches = await db.KnockoutMatch
+                    .AsNoTracking()
+                    .AsSplitQuery()
+                    .Include(x => x.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                    .Include(x => x.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                    .Include(x => x.Sets)
+                    .Where(x => x.CompetitionId == selectedCompetitionId)
+                    .ToListAsync();
+
+                RegisteredTeams = await db.Teams
+                    .AsNoTracking()
+                    .AsSplitQuery()
+                    .Include(x => x.TeamPlayers).ThenInclude(x => x.Player)
+                    .Where(x => x.Competition.Id == selectedCompetitionId)
+                    .ToListAsync();
+
+                RegisteredCompetitionPlayers = await db.TournamentRegistrations
+                    .AsNoTracking()
+                    .Include(x => x.Competition)
+                    .Include(x => x.Player)
+                    .Where(x => x.Competition.Id == selectedCompetitionId)
+                    .OrderBy(x => x.Player.Lastname)
+                    .ToListAsync();
+
+                IsRegistered = RegisteredCompetitionPlayers.Any(x => x.Player.Id == CurrentPlayer.Id);
+
+                var registeredPlayerIds = RegisteredCompetitionPlayers.Select(r => r.Player.Id).ToHashSet();
+
+                UnregisteredPlayers = await db.Players
+                    .AsNoTracking()
+                    .Where(p => !registeredPlayerIds.Contains(p.Id))
+                    .OrderBy(x => x.Lastname)
+                    .ToListAsync();
+
+                Groups = await db.Groups
+                    .AsNoTracking()
+                    .AsSplitQuery()
+                    .Where(g => g.Competition.Id == selectedCompetitionId)
+                    .Include(g => g.GroupTeams)
+                        .ThenInclude(gt => gt.Team)
+                        .ThenInclude(t => t.TeamPlayers)
+                        .ThenInclude(tp => tp.Player)
+                    .Include(g => g.Competition)
+                        .ThenInclude(c => c.Teams)
+                    .ToListAsync();
+
+                var groupMatches = await db.Matches
+                    .AsNoTracking()
+                    .AsSplitQuery()
+                    .Include(x => x.Group).ThenInclude(x => x.Competition)
+                    .Include(x => x.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                    .Include(x => x.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                    .Include(x => x.Sets)
+                    .Where(x => x.Group != null && x.Group.Competition.Id == selectedCompetitionId)
+                    .ToListAsync();
+
+                var knockoutMatches = await db.KnockoutMatch
+                    .AsNoTracking()
+                    .AsSplitQuery()
+                    .Include(x => x.Group).ThenInclude(x => x.Competition)
+                    .Include(x => x.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                    .Include(x => x.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                    .Include(x => x.Sets)
+                    .Where(x => x.Competition.Id == selectedCompetitionId)
+                    .Cast<Match>()
+                    .ToListAsync();
+
+                AllMatches = groupMatches.Concat(knockoutMatches).ToList();
+
+                foreach (var group in Groups)
+                {
+                    var matchesForGroup = AllMatches.Where(m => m.Group?.Id == group.Id).ToList();
+                    GroupTables[group.Id] = CalculateGroupTable(group.GroupTeams, matchesForGroup);
+                }
             }
+        }
+        else
+        {
+            Matches = [];
+            RegisteredTeams = [];
+            RegisteredCompetitionPlayers = [];
+            UnregisteredPlayers = [];
+            Groups = [];
+            AllMatches = [];
         }
 
         return Page();
@@ -144,23 +176,28 @@ public class Championship(
     {
         if (!User.IsInRole("Admin")) return Forbid();
 
+        DeleteCompetitionDependencies(competitionId, deleteCompetitionSelf: true);
+
+        HttpContext.Session.SetString("selectedCompetitionId", "0");
+        return RedirectToPage(new { Message = "Bewerb wurde gelöscht" });
+    }
+
+    private void DeleteCompetitionDependencies(int competitionId, bool deleteCompetitionSelf = false)
+    {
         var groupIds = db.Groups.Where(g => g.CompetitionId == competitionId).Select(g => g.Id).ToList();
 
-        // Delete all dependent records directly in the DB using bulk deletes
-        db.Sets.Where(s =>
-                groupIds.Contains(s.Match.Group.Id) || (s.Match as KnockoutMatch).CompetitionId == competitionId)
-            .ExecuteDelete();
-        db.Matches.Where(m => groupIds.Contains(m.Group.Id) || (m as KnockoutMatch).CompetitionId == competitionId)
-            .ExecuteDelete();
+        db.Sets.Where(s => groupIds.Contains(s.Match.Group.Id) || (s.Match as KnockoutMatch).CompetitionId == competitionId).ExecuteDelete();
+        db.Matches.Where(m => groupIds.Contains(m.Group.Id) || (m as KnockoutMatch).CompetitionId == competitionId).ExecuteDelete();
         db.GroupTeams.Where(gt => groupIds.Contains(gt.GroupId)).ExecuteDelete();
         db.Groups.Where(g => g.CompetitionId == competitionId).ExecuteDelete();
         db.TeamPlayer.Where(tp => tp.Team.CompetitionId == competitionId).ExecuteDelete();
         db.Teams.Where(t => t.CompetitionId == competitionId).ExecuteDelete();
-        db.TournamentRegistrations.Where(r => r.CompetitionId == competitionId).ExecuteDelete();
-        db.Competitions.Where(c => c.Id == competitionId).ExecuteDelete();
 
-        HttpContext.Session.SetString("selectedCompetitionId", "0");
-        return RedirectToPage(new { Message = "Bewerb wurde gelöscht" });
+        if (deleteCompetitionSelf)
+        {
+            db.TournamentRegistrations.Where(r => r.CompetitionId == competitionId).ExecuteDelete();
+            db.Competitions.Where(c => c.Id == competitionId).ExecuteDelete();
+        }
     }
 
     public IActionResult OnPostCreateCompetition(string competitionName, bool? isSingle)
@@ -191,20 +228,24 @@ public class Championship(
 
     public IActionResult OnPostRegister(int? playerId = null)
     {
-        InitValues();
-        int targetPlayerId = playerId ?? CurrentPlayer.Id;
+        int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
+        var selectedCompetition = db.Competitions.FirstOrDefault(c => c.Id == selectedCompetitionId);
+        if (selectedCompetition == null) return RedirectToPage(new { Message = "Bewerb nicht gefunden" });
+
+        var currentPlayer = currentPlayerService.GetCurrentUser()!;
+        int targetPlayerId = playerId ?? currentPlayer.Id;
 
         db.TournamentRegistrations.Add(new TournamentRegistration()
         {
-            Competition = SelectedCompetition!,
+            Competition = selectedCompetition,
             PlayerId = targetPlayerId,
             RegisteredAt = DateTime.Now
         });
-        if (SelectedCompetition!.IsSingle)
+        if (selectedCompetition.IsSingle)
         {
             var team = new Team
             {
-                CompetitionId = SelectedCompetition.Id,
+                CompetitionId = selectedCompetition.Id,
                 TeamPlayers = new List<TeamPlayer>
                 {
                     new() { PlayerId = targetPlayerId }
@@ -220,45 +261,48 @@ public class Championship(
             var registeredPlayer = db.Players.Find(playerId.Value);
             string name = registeredPlayer != null ? registeredPlayer.ToString() : "Spieler";
             return RedirectToPage(new
-                { Message = $"Spieler {name} wurde erfolgreich zum Bewerb {SelectedCompetition.Name} angemeldet" });
+                { Message = $"Spieler {name} wurde erfolgreich zum Bewerb {selectedCompetition.Name} angemeldet" });
         }
 
-        return RedirectToPage(new { Message = $"Du hast dich beim Bewerb {SelectedCompetition.Name} angemeldet" });
+        return RedirectToPage(new { Message = $"Du hast dich beim Bewerb {selectedCompetition.Name} angemeldet" });
     }
 
     public IActionResult OnPostUnregister()
     {
-        InitValues();
+        int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
+        var selectedCompetition = db.Competitions.FirstOrDefault(c => c.Id == selectedCompetitionId);
+        var currentPlayer = currentPlayerService.GetCurrentUser()!;
+
         var registeredPlayer = db.TournamentRegistrations
-            .SingleOrDefault(x => x.Player.Id == CurrentPlayer.Id && x.Competition.Id == SelectedCompetition!.Id);
+            .SingleOrDefault(x => x.Player.Id == currentPlayer.Id && x.Competition.Id == selectedCompetitionId);
 
         var teamPlayer = db.TeamPlayer.SingleOrDefault(x =>
-            x.Player.Id == CurrentPlayer.Id && x.Team.Competition.Id == SelectedCompetition!.Id);
+            x.Player.Id == currentPlayer.Id && x.Team.Competition.Id == selectedCompetitionId);
 
         var team = db.Teams.SingleOrDefault(x =>
-            x.Competition.Id == SelectedCompetition!.Id && x.TeamPlayers.Any(y => y.Player.Id == CurrentPlayer.Id));
+            x.Competition.Id == selectedCompetitionId && x.TeamPlayers.Any(y => y.Player.Id == currentPlayer.Id));
 
         if (registeredPlayer != null) db.TournamentRegistrations.Remove(registeredPlayer);
         if (teamPlayer != null) db.TeamPlayer.Remove(teamPlayer);
         if (team != null) db.Teams.Remove(team);
 
-
         var groupTeam = db.GroupTeams.SingleOrDefault(x =>
-            x.Group.Competition.Id == SelectedCompetition!.Id &&
-            x.Team.TeamPlayers.Any(y => y.Player.Id == CurrentPlayer.Id));
+            x.Group.Competition.Id == selectedCompetitionId &&
+            x.Team.TeamPlayers.Any(y => y.Player.Id == currentPlayer.Id));
         if (groupTeam != null)
         {
             db.GroupTeams.Remove(groupTeam);
         }
 
         db.SaveChanges();
-        return RedirectToPage(new { Message = $"Du hast dich vom Bewerb {SelectedCompetition!.Name} abgemeldet" });
+        return RedirectToPage(new { Message = $"Du hast dich vom Bewerb {selectedCompetition?.Name} abgemeldet" });
     }
 
     public IActionResult OnPostDeleteTeam(int teamId)
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        InitValues();
+        int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
+        var selectedCompetition = db.Competitions.FirstOrDefault(c => c.Id == selectedCompetitionId);
 
         var team = db.Teams.Include(t => t.TeamPlayers).SingleOrDefault(t => t.Id == teamId);
         if (team != null)
@@ -283,11 +327,11 @@ public class Championship(
             db.Teams.Remove(team);
 
             // If it's a singles competition, also remove the tournament registration for the player
-            if (SelectedCompetition != null && SelectedCompetition.IsSingle)
+            if (selectedCompetition != null && selectedCompetition.IsSingle)
             {
                 var playerId = team.TeamPlayers.First().PlayerId;
                 var reg = db.TournamentRegistrations.SingleOrDefault(tr =>
-                    tr.PlayerId == playerId && tr.CompetitionId == SelectedCompetition.Id);
+                    tr.PlayerId == playerId && tr.CompetitionId == selectedCompetition.Id);
                 if (reg != null) db.TournamentRegistrations.Remove(reg);
             }
 
@@ -305,22 +349,17 @@ public class Championship(
     public IActionResult OnPostCreateGroup()
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        InitValues();
+        int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
+        var selectedCompetition = db.Competitions.FirstOrDefault(c => c.Id == selectedCompetitionId);
+        if (selectedCompetition == null) return RedirectToPage(new { Message = "Bewerb nicht gefunden" });
+
+        int existingCount = db.Groups.Count(x => x.CompetitionId == selectedCompetitionId);
         db.Groups.Add(new Group
         {
-            Competition = SelectedCompetition!,
+            Competition = selectedCompetition,
             MaxAmount = 1,
-            GroupName = "Gruppe "
+            GroupName = $"Gruppe {(char)('A' + existingCount)}"
         });
-        db.SaveChanges();
-
-        var groups = db.Groups.Where(x => x.Competition.Id == SelectedCompetition!.Id).ToList();
-
-        for (int i = 0; i < groups.Count; i++)
-        {
-            groups[i].GroupName = $"Gruppe {(char)(i + 65)}";
-        }
-
         db.SaveChanges();
 
         return RedirectToPage(new { Message = "Neue Gruppe erstellt" });
@@ -338,31 +377,24 @@ public class Championship(
     public IActionResult OnPostSaveGroups()
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        InitValues();
+        int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
 
         // Delete old matches
-        var removedMatches = db.Matches
-            .Where(m => m.Group.Competition.Id == SelectedCompetition!.Id)
-            .ToList();
-
-        db.Matches.RemoveRange(removedMatches);
-        db.SaveChanges();
+        db.Matches
+            .Where(m => m.Group.Competition.Id == selectedCompetitionId)
+            .ExecuteDelete();
 
         // load groups with teams
         var groups = db.Groups
-            .Where(g => g.Competition.Id == SelectedCompetition!.Id)
+            .Where(g => g.Competition.Id == selectedCompetitionId)
             .Include(g => g.GroupTeams)
             .ThenInclude(gt => gt.Team)
-            .ThenInclude(t => t.TeamPlayers) // TeamPlayer
-            .ThenInclude(tp => tp.Player)
             .ToList();
 
-        // create matches (Robin round)
+        // create matches (Round robin)
         foreach (var group in groups)
         {
-            var teams = group.GroupTeams
-                .Select(gt => gt.Team)
-                .ToList();
+            var teams = group.GroupTeams.Select(gt => gt.Team).ToList();
 
             for (int i = 0; i < teams.Count; i++)
             {
@@ -653,7 +685,6 @@ public class Championship(
     public IActionResult OnPostCreateBracket()
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        InitValues();
         if (!_knownBrackets.Contains(SelectedSize)) return RedirectToPage();
 
         // Default value checks
@@ -674,11 +705,11 @@ public class Championship(
     public IActionResult OnPostDeletePhase(string phaseToDelete)
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        InitValues();
+        int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
 
         if (string.IsNullOrWhiteSpace(phaseToDelete)) return RedirectToPage();
 
-        db.KnockoutMatch.Where(k => k.CompetitionId == SelectedCompetition!.Id && k.PhaseName == phaseToDelete)
+        db.KnockoutMatch.Where(k => k.CompetitionId == selectedCompetitionId && k.PhaseName == phaseToDelete)
             .ExecuteDelete();
         db.SaveChanges();
 
@@ -737,17 +768,21 @@ public class Championship(
     public IActionResult OnPostApplyUserInputs()
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        InitValues();
+        int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
 
         var teamLookup = db.Teams
             .Include(t => t.TeamPlayers)
             .ThenInclude(tp => tp.Player)
-            .Where(t => t.CompetitionId == SelectedCompetition!.Id)
+            .Where(t => t.CompetitionId == selectedCompetitionId)
             .ToDictionary(t => t.Id);
+
+        var knockoutMatches = db.KnockoutMatch
+            .Where(m => m.CompetitionId == selectedCompetitionId && m.RoundNo == 1)
+            .ToList();
 
         var newlyCompletedMatches = new List<KnockoutMatch>();
 
-        foreach (var match in Matches)
+        foreach (var match in knockoutMatches)
         {
             if (match.Winner != null || match.IsWalkover) continue;
             if (match.RoundNo > 1) continue;
@@ -793,23 +828,8 @@ public class Championship(
 
                 bool wasIncomplete = match.Team1 == null || match.Team2 == null;
 
-                if (input.Team1Id.HasValue && input.Team1Id.Value > 0)
-                {
-                    match.Team1 = teamLookup.GetValueOrDefault(input.Team1Id.Value);
-                }
-                else
-                {
-                    match.Team1 = null;
-                }
-
-                if (input.Team2Id.HasValue && input.Team2Id.Value > 0)
-                {
-                    match.Team2 = teamLookup.GetValueOrDefault(input.Team2Id.Value);
-                }
-                else
-                {
-                    match.Team2 = null;
-                }
+                match.Team1 = input.Team1Id is > 0 ? teamLookup.GetValueOrDefault(input.Team1Id.Value) : null;
+                match.Team2 = input.Team2Id is > 0 ? teamLookup.GetValueOrDefault(input.Team2Id.Value) : null;
 
                 if (wasIncomplete && match.Team1 != null && match.Team2 != null)
                 {
@@ -831,7 +851,7 @@ public class Championship(
     public IActionResult OnPostSavePairs(List<PlayerCompetitionPairs> pairs)
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        InitValues();
+        int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
 
         // 1. Validate for duplicates and same-player configurations
         var assignedPlayerIds = new HashSet<int>();
@@ -840,7 +860,7 @@ public class Championship(
         // Add players of other teams that are not in the submitted list to assignedPlayerIds
         var otherTeams = db.Teams
             .Include(t => t.TeamPlayers)
-            .Where(t => t.CompetitionId == SelectedCompetition!.Id && !submittedTeamIds.Contains(t.Id))
+            .Where(t => t.CompetitionId == selectedCompetitionId && !submittedTeamIds.Contains(t.Id))
             .ToList();
 
         foreach (var otherTeam in otherTeams)
@@ -939,9 +959,9 @@ public class Championship(
     public IActionResult OnPostSaveNewDate(string newDate, string newTime)
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        InitValues();
+        int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
 
-        var selectedCompetition = db.Competitions.Single(x => x.Id == SelectedCompetition!.Id);
+        var selectedCompetition = db.Competitions.Single(x => x.Id == selectedCompetitionId);
 
         var date = DateOnly.Parse(newDate);
         var time = TimeOnly.Parse(newTime);
@@ -1033,7 +1053,6 @@ public class Championship(
     public async Task<IActionResult> OnPostRemoveRegistrationAsync(int playerId, int competitionId)
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        InitValues();
 
         // 1. Find and remove tournament registration
         var reg = await db.TournamentRegistrations.FirstOrDefaultAsync(tr =>
@@ -1109,52 +1128,43 @@ public class Championship(
 
     private void NotifyOpponentsIfAssigned(KnockoutMatch nextMatch)
     {
-        if (nextMatch.Team1 != null && nextMatch.Team2 != null)
+        if (nextMatch.Team1 == null || nextMatch.Team2 == null) return;
+
+        var team1 = db.Teams
+            .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.NotificationSettings)
+            .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.IdentityUser)
+            .FirstOrDefault(t => t.Id == nextMatch.Team1.Id);
+
+        var team2 = db.Teams
+            .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.NotificationSettings)
+            .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.IdentityUser)
+            .FirstOrDefault(t => t.Id == nextMatch.Team2.Id);
+
+        if (team1 == null || team2 == null) return;
+
+        var team1Players = team1.TeamPlayers.Select(tp => tp.Player).ToList();
+        var team2Players = team2.TeamPlayers.Select(tp => tp.Player).ToList();
+
+        var team1Names = string.Join(" / ", team1Players.Select(p => $"{p.Firstname} {p.Lastname}"));
+        var team2Names = string.Join(" / ", team2Players.Select(p => $"{p.Firstname} {p.Lastname}"));
+
+        var notifications = new[]
         {
-            var team1 = db.Teams
-                .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.NotificationSettings)
-                .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.IdentityUser)
-                .FirstOrDefault(t => t.Id == nextMatch.Team1.Id);
+            (players: team1Players, myNames: team1Names, oppNames: team2Names),
+            (players: team2Players, myNames: team2Names, oppNames: team1Names)
+        };
 
-            var team2 = db.Teams
-                .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.NotificationSettings)
-                .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.IdentityUser)
-                .FirstOrDefault(t => t.Id == nextMatch.Team2.Id);
-
-            if (team1 != null && team2 != null)
+        foreach (var (players, myNames, oppNames) in notifications)
+        {
+            foreach (var p in players)
             {
-                var team1Players = team1.TeamPlayers.Select(tp => tp.Player).ToList();
-                var team2Players = team2.TeamPlayers.Select(tp => tp.Player).ToList();
-
-                var team1Names = string.Join(" / ", team1Players.Select(p => $"{p.Firstname} {p.Lastname}"));
-                var team2Names = string.Join(" / ", team2Players.Select(p => $"{p.Firstname} {p.Lastname}"));
-
-                // Notify team 1 players
-                foreach (var p in team1Players)
+                if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnOpponentAssigned))
                 {
-                    if (p.IdentityUser?.Email != null && (p.NotificationSettings == null ||
-                                                          p.NotificationSettings.EmailOnOpponentAssigned))
-                    {
-                        var subject = "🎾 Dein Gegner im K.O.-Raster steht fest!";
-                        var body = $"Hallo {p.Firstname},<br><br>" +
-                                   $"dein nächster Gegner im K.O.-Raster steht fest! Du ({team1Names}) spielst gegen <strong>{team2Names}</strong>.<br><br>" +
-                                   $"Viel Erfolg beim Match!<br>Dein TennisBruck-Team";
-                        _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
-                    }
-                }
-
-                // Notify team 2 players
-                foreach (var p in team2Players)
-                {
-                    if (p.IdentityUser?.Email != null && (p.NotificationSettings == null ||
-                                                          p.NotificationSettings.EmailOnOpponentAssigned))
-                    {
-                        var subject = "🎾 Dein Gegner im K.O.-Raster steht fest!";
-                        var body = $"Hallo {p.Firstname},<br><br>" +
-                                   $"dein nächster Gegner im K.O.-Raster steht fest! Du ({team2Names}) spielst gegen <strong>{team1Names}</strong>.<br><br>" +
-                                   $"Viel Erfolg beim Match!<br>Dein TennisBruck-Team";
-                        _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
-                    }
+                    var subject = "🎾 Dein Gegner im K.O.-Raster steht fest!";
+                    var body = $"Hallo {p.Firstname},<br><br>" +
+                               $"dein nächster Gegner im K.O.-Raster steht fest! Du ({myNames}) spielst gegen <strong>{oppNames}</strong>.<br><br>" +
+                               $"Viel Erfolg beim Match!<br>Dein TennisBruck-Team";
+                    _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
                 }
             }
         }
@@ -1404,27 +1414,7 @@ public class Championship(
 
         if (players.Count < 2) return RedirectToPage(new { id = championshipId });
 
-        var groupIds = await db.Groups.Where(g => g.CompetitionId == championshipId).Select(g => g.Id).ToListAsync();
-
-        // 1. Delete Sets for matches in this competition
-        await db.Sets.Where(s => groupIds.Contains(s.Match.Group.Id) || (s.Match as KnockoutMatch).CompetitionId == championshipId)
-            .ExecuteDeleteAsync();
-
-        // 2. Delete Matches in this competition
-        await db.Matches.Where(m => groupIds.Contains(m.Group.Id) || (m as KnockoutMatch).CompetitionId == championshipId)
-            .ExecuteDeleteAsync();
-
-        // 3. Delete GroupTeams
-        await db.GroupTeams.Where(gt => groupIds.Contains(gt.GroupId)).ExecuteDeleteAsync();
-
-        // 4. Delete Groups
-        await db.Groups.Where(g => g.CompetitionId == championshipId).ExecuteDeleteAsync();
-
-        // 5. Delete TeamPlayer mappings
-        await db.TeamPlayer.Where(tp => tp.Team.CompetitionId == championshipId).ExecuteDeleteAsync();
-
-        // 6. Delete Teams
-        await db.Teams.Where(t => t.CompetitionId == championshipId).ExecuteDeleteAsync();
+        DeleteCompetitionDependencies(championshipId);
 
         var rng = new Random();
         var shuffledPlayers = players.OrderBy(_ => rng.Next()).ToList();

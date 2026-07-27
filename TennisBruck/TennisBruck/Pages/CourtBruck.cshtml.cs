@@ -248,7 +248,6 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
             return RedirectToPage(new { date = reservation.StartTime.ToString("yyyy-MM-dd"), message = "Zugriff verweigert.", isError = true });
         }
 
-        // Find contiguous block
         var allDayRes = db.Reservations
             .Where(r => r.CourtNumber == reservation.CourtNumber &&
                         r.StartTime.Date == reservation.StartTime.Date &&
@@ -256,38 +255,13 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
                         r.EventName == reservation.EventName)
             .ToList();
 
-        var blockToDelete = new List<Reservation> { reservation };
-
-        // Check backwards
-        var currentTime = reservation.StartTime;
-        while (true)
-        {
-            currentTime = currentTime.AddMinutes(-30);
-            var prev = allDayRes.FirstOrDefault(r => r.StartTime == currentTime);
-            if (prev != null)
-                blockToDelete.Add(prev);
-            else
-                break;
-        }
-
-        // Check forwards
-        currentTime = reservation.StartTime;
-        while (true)
-        {
-            currentTime = currentTime.AddMinutes(30);
-            var next = allDayRes.FirstOrDefault(r => r.StartTime == currentTime);
-            if (next != null)
-                blockToDelete.Add(next);
-            else
-                break;
-        }
-
+        var blockToDelete = GetContiguousBlock(reservation, allDayRes);
         db.Reservations.RemoveRange(blockToDelete);
         db.SaveChanges();
 
         return RedirectToPage(new { date = reservation.StartTime.ToString("yyyy-MM-dd"), message = "Die Reservierung(en) wurde(n) erfolgreich gelöscht." });
     }
-    
+
     public async Task<IActionResult> OnPostDeleteSelectedReservationsAsync(List<int> selectedReservationIds)
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser();
@@ -309,7 +283,7 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
             .Where(r => selectedReservationIds.Contains(r.Id))
             .ToListAsync();
 
-        var allReservationsToDelete = new List<Reservation>();
+        var allReservationsToDelete = new HashSet<Reservation>();
 
         foreach (var reservation in selectedReservations)
         {
@@ -320,33 +294,9 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
                             r.EventName == reservation.EventName)
                 .ToListAsync();
 
-            if (!allReservationsToDelete.Any(r => r.Id == reservation.Id))
+            foreach (var r in GetContiguousBlock(reservation, allDayRes))
             {
-                allReservationsToDelete.Add(reservation);
-            }
-
-            // Check backwards
-            var currentTime = reservation.StartTime;
-            while (true)
-            {
-                currentTime = currentTime.AddMinutes(-30);
-                var prev = allDayRes.FirstOrDefault(r => r.StartTime == currentTime);
-                if (prev != null && !allReservationsToDelete.Any(r => r.Id == prev.Id))
-                    allReservationsToDelete.Add(prev);
-                else
-                    break;
-            }
-
-            // Check forwards
-            currentTime = reservation.StartTime;
-            while (true)
-            {
-                currentTime = currentTime.AddMinutes(30);
-                var next = allDayRes.FirstOrDefault(r => r.StartTime == currentTime);
-                if (next != null && !allReservationsToDelete.Any(r => r.Id == next.Id))
-                    allReservationsToDelete.Add(next);
-                else
-                    break;
+                allReservationsToDelete.Add(r);
             }
         }
 
@@ -355,5 +305,26 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
         return RedirectToPage(new
             { date = CurrentDate.ToString("yyyy-MM-dd"), message = "Die ausgewählten Reservierungen wurden erfolgreich gelöscht." });
+    }
+
+    private static List<Reservation> GetContiguousBlock(Reservation reservation, List<Reservation> allDayRes)
+    {
+        var block = new List<Reservation> { reservation };
+
+        for (var t = reservation.StartTime.AddMinutes(-30); ; t = t.AddMinutes(-30))
+        {
+            var prev = allDayRes.FirstOrDefault(r => r.StartTime == t);
+            if (prev == null) break;
+            block.Add(prev);
+        }
+
+        for (var t = reservation.StartTime.AddMinutes(30); ; t = t.AddMinutes(30))
+        {
+            var next = allDayRes.FirstOrDefault(r => r.StartTime == t);
+            if (next == null) break;
+            block.Add(next);
+        }
+
+        return block;
     }
 }
