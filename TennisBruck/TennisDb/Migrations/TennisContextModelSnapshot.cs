@@ -620,6 +620,9 @@ namespace TennisDb.Migrations
                     b.Property<string>("EventName")
                         .HasColumnType("text");
 
+                    b.Property<int?>("PartnerId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("PlayerId")
                         .HasColumnType("integer");
 
@@ -627,6 +630,8 @@ namespace TennisDb.Migrations
                         .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PartnerId");
 
                     b.HasIndex("PlayerId");
 
@@ -988,9 +993,15 @@ namespace TennisDb.Migrations
 
             modelBuilder.Entity("TennisDb.Reservation", b =>
                 {
+                    b.HasOne("TennisDb.Player", "Partner")
+                        .WithMany()
+                        .HasForeignKey("PartnerId");
+
                     b.HasOne("TennisDb.Player", "Player")
                         .WithMany()
                         .HasForeignKey("PlayerId");
+
+                    b.Navigation("Partner");
 
                     b.Navigation("Player");
                 });
@@ -1101,7 +1112,8 @@ namespace TennisDb.Migrations
                 {
                     b.Navigation("HallEntities");
 
-                    b.Navigation("NotificationSettings");
+                    b.Navigation("NotificationSettings")
+                        .IsRequired();
 
                     b.Navigation("TournamentRegistrations");
                 });

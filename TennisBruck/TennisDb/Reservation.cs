@@ -9,6 +9,8 @@ public class Reservation
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public Player? Player { get; set; }
+    public int? PartnerId { get; set; }
+    public Player? Partner { get; set; }
 
     [NotMapped]
     public string DisplayName 
@@ -20,6 +22,11 @@ public class Reservation
                 return EventName;
             }
             
+            if (Player != null && Partner != null)
+            {
+                return $"{Player.Firstname} {Player.Lastname} / {Partner.Firstname} {Partner.Lastname}";
+            }
+
             return Player != null ? Player.ToString() : "Unbekannt";
         }
     }

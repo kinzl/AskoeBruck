@@ -18,9 +18,9 @@
     /* Farben für die Reservierungs-Zustände */
     --slot-reserved-bg: #f8fafc;
     --slot-reserved-text: #64748b;
-    --slot-my-res-bg: #e0f2fe;     /* Leichtes Blau für eigene */
-    --slot-my-res-text: #0369a1;
-    --slot-event-bg: #fef08a;      /* Gelb für Events */
+    --slot-my-res-bg: #dcfce7;     /* Soft Emerald-Grün für eigene Reservierungen */
+    --slot-my-res-text: #14532d;    /* Dunkles Forstgrün für Lesbarkeit */
+    --slot-event-bg: #fef08a;      /* Soft Gelb/Gold für Events */
     --slot-event-text: #854d0e;
     --danger-color: #ef4444;
 }
@@ -364,6 +364,7 @@ body {
 .slot-my-reservation {
     background-color: var(--slot-my-res-bg);
     color: var(--slot-my-res-text);
+    border-left: 3px solid #22c55e !important;
 }
 
 .slot-event {
@@ -533,4 +534,144 @@ body {
         padding: 4px 5px;
         font-size: 0.8rem;
     }
+}
+
+/* ==========================================
+   INTERACTIVE RESERVATION MODAL
+   ========================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.modal-card {
+    background: #ffffff;
+    border-radius: var(--border-radius-lg);
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPop {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+    background: var(--nav-bg);
+    color: var(--text-light);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.modal-close:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modal-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.modal-footer {
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-footer-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-left: auto;
+}
+
+.btn-modal-cancel {
+    background: #e2e8f0;
+    color: var(--text-dark);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-modal-cancel:hover {
+    background: #cbd5e1;
+}
+
+.btn-modal-delete {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btn-modal-delete:hover {
+    opacity: 0.9;
+}
+
+.clickable-res {
+    cursor: pointer;
+    transition: filter 0.2s, transform 0.1s;
+}
+
+.clickable-res:hover {
+    filter: brightness(0.95);
 }
