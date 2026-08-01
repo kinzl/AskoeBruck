@@ -1,0 +1,101 @@
+@using TennisBruck.Pages.Partials
+@model DoublePairsConfigViewModel
+
+<section class="modern-card">
+    <div class="card-header">
+        <h2>👥 Doppel-Paare Konfigurieren</h2>
+        @if (Model.IsAdmin)
+        {
+            <form method="post" class="m-0">
+                <input type="hidden" name="competitionId" value="@Model.CompetitionId"/>
+                <input type="hidden" name="ChampionshipId" value="@Model.CompetitionId"/>
+                <button type="submit" asp-page-handler="GeneratePairs" class="btn-action btn-sm"
+                        onclick="return confirm('Bisherige Doppel Paare werden gelöscht und neu zugeordnet. Möchtest du das wirklich?');">
+                    🔀 Zufällig auslosen
+                </button>
+            </form>
+        }
+    </div>
+
+    @{
+        int totalPairs = Math.Max(Model.RegisteredTeams.Count, Model.RegisteredPlayers.Count / 2);
+    }
+
+    <form method="post" asp-page-handler="SavePairs">
+        <input type="hidden" name="competitionId" value="@Model.CompetitionId"/>
+        <input type="hidden" name="ChampionshipId" value="@Model.CompetitionId"/>
+
+        <div class="pairs-list">
+            @for (int i = 0; i < totalPairs; i++)
+            {
+                var currentTeam = i < Model.RegisteredTeams.Count ? Model.RegisteredTeams[i] : null;
+                var firstPlayer = currentTeam?.TeamPlayers.ElementAtOrDefault(0)?.Player;
+                var secondPlayer = currentTeam?.TeamPlayers.ElementAtOrDefault(1)?.Player;
+
+                @if (currentTeam != null && Model.IsAdmin)
+                {
+                    <input type="hidden" name="pairs[@i].TeamId" value="@currentTeam.Id"/>
+                }
+
+                <div class="pair-row">
+                    <span class="pair-number">#@(i + 1)</span>
+
+                    <div class="pair-players">
+                        @if (Model.IsAdmin)
+                        {
+                            <select name="pairs[@i].SinglePlayerId" class="pair-select">
+                                <option value="">Spieler A...</option>
+                                @foreach (var player in Model.RegisteredPlayers)
+                                {
+                                    bool isSelected = firstPlayer != null && player.Id == firstPlayer.Id;
+                                    <option value="@player.Id" selected="@isSelected">@player.ToStringWithItn()</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <span class="pair-name">@(firstPlayer != null ? firstPlayer.ToStringWithItn() : "Offen")</span>
+                        }
+
+                        <span class="pair-plus">+</span>
+
+                        @if (Model.IsAdmin)
+                        {
+                            <select name="pairs[@i].DoublePlayerId" class="pair-select">
+                                <option value="">Spieler B...</option>
+                                @foreach (var player in Model.RegisteredPlayers)
+                                {
+                                    bool isSelected = secondPlayer != null && player.Id == secondPlayer.Id;
+                                    <option value="@player.Id" selected="@isSelected">@player.ToStringWithItn()</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <span class="pair-name">@(secondPlayer != null ? secondPlayer.ToStringWithItn() : "Offen")</span>
+                        }
+                    </div>
+
+                    @if (currentTeam != null && Model.IsAdmin)
+                    {
+                        <button type="button" class="pair-delete-btn" title="Paar löschen"
+                                onclick="document.getElementById('deleteTeamIdInput').value='@currentTeam.Id'; if(confirm('Möchtest du dieses Paar wirklich löschen?')) document.getElementById('deleteTeamForm').submit();">
+                            🗑️
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (Model.IsAdmin)
+        {
+            <div class="pairs-save-row">
+                <button type="submit" class="btn-action btn-accent">💾 Paare Speichern</button>
+            </div>
+        }
+    </form>
+</section>
+
+<form method="post" asp-page-handler="DeleteTeam" id="deleteTeamForm" style="display:none;">
+    <input type="hidden" name="teamId" id="deleteTeamIdInput"/>
+</form>
