@@ -586,6 +586,9 @@ namespace TennisDb.Migrations
                     b.Property<bool>("EmailOnOpponentAssigned")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("EmailOnPyramidChallenge")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("EmailOnSlotCancelled")
                         .HasColumnType("boolean");
 

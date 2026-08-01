@@ -63,6 +63,7 @@ public class Settings(
         dbPlayer.NotificationSettings.EmailOnSlotFull = CurrentPlayer.NotificationSettings?.EmailOnSlotFull ?? true;
         dbPlayer.NotificationSettings.EmailOnSlotCancelled = CurrentPlayer.NotificationSettings?.EmailOnSlotCancelled ?? true;
         dbPlayer.NotificationSettings.EmailOnSlotJoined = CurrentPlayer.NotificationSettings?.EmailOnSlotJoined ?? true;
+        dbPlayer.NotificationSettings.EmailOnPyramidChallenge = CurrentPlayer.NotificationSettings?.EmailOnPyramidChallenge ?? true;
 
         await db.SaveChangesAsync();
 

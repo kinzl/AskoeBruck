@@ -71,210 +71,14 @@
 
     @if (Model.SelectedCompetition != null)
     {
-        <section class="modern-card mb-4" style="margin-bottom: 20px;">
-            <div class="competition-info-flex">
-                <div class="competition-info-header-content">
-                    <h2 class="competition-title">@Model.SelectedCompetition.Name</h2>
-                    <p class="registration-text">
-                        Anmeldeschluss: <strong class="text-dark">@Model.SelectedCompetition.RegistrationUntil.ToString("dd.MM.yyyy HH:mm")</strong>
-                    </p>
-                    @{
-                        var registrationOpen = Model.SelectedCompetition.RegistrationUntil >= CityTime.GetViennaTimeZone();
-                    }
-                    <div class="competition-status-row" style="margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        @if (registrationOpen)
-                        {
-                            <span class="badge-open">Anmeldung offen</span>
-                        }
-                        else
-                        {
-                            <span class="badge-closed">Anmeldung geschlossen</span>
-                        }
-                        <span class="badge-count">Spieler: @(Model.SelectedCompetition.IsSingle ? Model.RegisteredTeams.Count : Model.TournamentRegistrations.Count)</span>
-                    </div>
-                </div>
-
-                <div class="competition-info-actions">
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <form method="post" asp-page-handler="SaveNewDate" class="admin-time-form">
-                            <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id" />
-                            <span class="text-sm text-muted" style="font-size: 0.8rem; font-weight: 600;">Admin:</span>
-                            <input type="date" name="newDate" value="@Model.SelectedCompetition.RegistrationUntil.ToString("yyyy-MM-dd")" class="input-auto" required />
-                            <input type="time" name="newTime" value="@Model.SelectedCompetition.RegistrationUntil.ToString("HH:mm")" class="input-auto" required />
-                            <button type="submit" class="btn-dark-pill" style="height: 34px; padding: 0 12px; font-size: 0.82rem;">Anmeldefrist aktualisieren</button>
-                        </form>
-                    }
-                </div>
+        <!-- 1. PYRAMID VISUAL DISPLAY AT THE TOP -->
+        <div class="modern-card">
+            <div class="card-header card-header-flex">
+                <h2 class="card-title-lg">@Model.SelectedCompetition.Name</h2>
+                <span
+                    class="badge-count font-weight-bold">@(Model.SelectedCompetition.IsSingle ? "Einzel" : "Doppel")</span>
             </div>
 
-            @if (User.IsInRole("Admin"))
-            {
-                <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 15px 0;" />
-                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                    <h5 style="margin: 0; font-weight: 700; color: #1e293b;">👤 Spieler anmelden (Admin)</h5>
-                    <form method="post" asp-page-handler="AdminRegisterPlayer" class="flex-center-gap flex-wrap" style="gap: 8px;">
-                        <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id" />
-                        <select name="playerId" class="form-input" style="width: 220px;" required>
-                            <option value="">-- Spieler auswählen --</option>
-                            @foreach (var player in Model.UnregisteredPlayers)
-                            {
-                                <option value="@player.Id">@player.ToStringWithItn()</option>
-                            }
-                        </select>
-                        <button type="submit" class="btn-dark-pill">➕ Spieler anmelden</button>
-                    </form>
-                </div>
-            }
-        </section>
-
-            <!-- USER SELF-REGISTRATION SECTION -->
-            @if (User.Identity!.IsAuthenticated)
-            {
-                <div class="user-join-card">
-                    <div class="user-join-info">
-                        @if (Model.IsCurrentUserInPyramid)
-                        {
-                            <h4 class="user-join-title">Du nimmst an dieser Pyramide teil!</h4>
-                            <p class="user-join-desc">Deine aktuelle Position ist <strong>Rang #@Model.MyRank?.Rank</strong>. Fordere oben platzierte Spieler heraus!</p>
-                        }
-                        else if (!Model.SelectedCompetition.IsSingle)
-                        {
-                            <h4 class="user-join-title">Doppel-Pyramide Anmeldung</h4>
-                            <p class="user-join-desc">
-                                📅 Anmeldefrist bis <strong>@Model.SelectedCompetition.RegistrationUntil.ToString("dd.MM.yyyy HH:mm") Uhr</strong>.<br />
-                                Nach Ablauf der Frist teilt der Admin die Doppel-Paare zu.
-                            </p>
-                        }
-                        else
-                        {
-                            <h4 class="user-join-title">Jetzt an der Einzel-Pyramide teilnehmen!</h4>
-                            <p class="user-join-desc">Melde dich an, um in die Rangliste eingereiht zu werden und andere herauszufordern.</p>
-                        }
-                    </div>
-
-                    @if (!Model.IsCurrentUserInPyramid)
-                    {
-                        @if (!Model.SelectedCompetition.IsSingle)
-                        {
-                            @if (Model.IsRegistrationOpen)
-                            {
-                                @if (!Model.IsCurrentUserRegisteredInPool)
-                                {
-                                    <form method="post" asp-page-handler="RegisterSelf">
-                                        <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id" />
-                                        <button type="submit" class="btn-join">Für Doppel anmelden 🎾</button>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <div class="flex-center-gap">
-                                        <span class="user-status-pill">Angemeldet im Pool</span>
-                                        <form method="post" asp-page-handler="WithdrawSelfRegistration">
-                                            <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id" />
-                                            <button type="submit" class="btn-dark-pill" style="background:#ef4444;" onclick="return confirm('Anmeldung stornieren?');">Stornieren</button>
-                                        </form>
-                                    </div>
-                                }
-                            }
-                            else
-                            {
-                                <div class="user-status-pill" style="background:#f1f5f9; color:#64748b;">
-                                    🔒 Anmeldefrist abgelaufen
-                                </div>
-                            }
-                        }
-                        else
-                        {
-                            <form method="post" asp-page-handler="JoinPyramid" class="user-join-form">
-                                <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id" />
-                                <button type="submit" class="btn-join">Anmelden 🎾</button>
-                            </form>
-                        }
-                    }
-                    else
-                    {
-                        <div class="user-status-pill">
-                            <span>In Pyramide eingereiht</span>
-                        </div>
-                    }
-                </div>
-            }
-
-            @if (!Model.SelectedCompetition.IsSingle && Model.TournamentRegistrations.Any())
-            {
-                <div class="modern-card mb-4" style="margin-top: 15px; margin-bottom: 20px;">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; margin-bottom: 15px;">
-                        <h3 style="font-size: 1.1rem; font-weight: 600; color: #1e293b; margin: 0;">
-                            🎾 Angemeldete Spieler im Pool (@Model.TournamentRegistrations.Count)
-                        </h3>
-                    </div>
-
-                    <table class="participant-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 60px;">#</th>
-                                <th>Spieler</th>
-                                <th>ITN</th>
-                                @if (User.IsInRole("Admin"))
-                                {
-                                    <th style="text-align: right; width: 140px;">Aktion</th>
-                                }
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @{ int poolCounter = 1; }
-                            @foreach (var reg in Model.TournamentRegistrations)
-                            {
-                                <tr>
-                                    <td><strong>#@poolCounter</strong></td>
-                                    <td>@reg.Player.Firstname @reg.Player.Lastname</td>
-                                    <td>
-                                        <span class="badge-count" style="background:#e2e8f0; color:#475569; padding: 2px 8px; font-size: 0.85rem;">
-                                            @(reg.Player.Itn.HasValue ? reg.Player.Itn.Value.ToString("0.0") : "-")
-                                        </span>
-                                    </td>
-                                    @if (User.IsInRole("Admin"))
-                                    {
-                                        <td style="text-align: right;">
-                                            <form method="post" asp-page-handler="AdminRemoveRegistration" class="inline-form-zero" style="display: inline;">
-                                                <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id" />
-                                                <input type="hidden" name="playerId" value="@reg.PlayerId" />
-                                                <button type="submit" class="btn-danger btn-xs btn-action-micro" title="Aus Pool entfernen" onclick="return confirm('Spieler aus dem Anmelde-Pool entfernen?');">
-                                                    Entfernen 🗑️
-                                                </button>
-                                            </form>
-                                        </td>
-                                    }
-                                </tr>
-                                poolCounter++;
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-
-            @if (!Model.SelectedCompetition.IsSingle)
-            {
-                var pairablePlayers = Model.TournamentRegistrations.Select(r => r.Player)
-                    .Concat(Model.RegisteredTeams.SelectMany(t => t.TeamPlayers.Select(tp => tp.Player)))
-                    .Concat(Model.AllPlayers)
-                    .DistinctBy(p => p.Id)
-                    .OrderBy(p => p.Lastname)
-                    .ThenBy(p => p.Firstname)
-                    .ToList();
-
-                <partial name="Partials/_DoublePairsConfig" model='new TennisBruck.Pages.Partials.DoublePairsConfigViewModel
-                {
-                    CompetitionId = Model.SelectedCompetition.Id,
-                    RegistrationUntil = Model.SelectedCompetition.RegistrationUntil,
-                    IsAdmin = User.IsInRole("Admin"),
-                    RegisteredPlayers = pairablePlayers,
-                    RegisteredTeams = Model.RegisteredTeams ?? new List<TennisDb.Team>()
-                }' />
-            }
-
-            <!-- PYRAMID VISUAL DISPLAY -->
             @if (Model.PyramidLevels.Any())
             {
                 <div class="pyramid-container">
@@ -284,7 +88,6 @@
                             @foreach (var node in level.Nodes)
                             {
                                 string rankClass = node.PyramidRank.Rank == 1 ? "rank-top" : node.PyramidRank.Rank <= 3 ? "rank-second" : node.PyramidRank.Rank <= 6 ? "rank-third" : "";
-
                                 string myTeamClass = node.IsMyTeam ? "node-my-team" : "";
 
                                 <div class="pyramid-node @rankClass @myTeamClass">
@@ -323,72 +126,295 @@
             {
                 <div class="pyramid-empty-box">
                     <p>In dieser Pyramide sind noch keine Teilnehmer eingetragen.</p>
-                    <p class="pyramid-empty-subtext">Nutze die Schaltfläche oben, um als Erster der Pyramide
+                    <p class="pyramid-empty-subtext">Nutze die Anmeldefunktion unten, um als Erster der Pyramide
                         beizutreten!</p>
                 </div>
             }
+        </div>
 
-            <!-- ACTIVE CHALLENGES SECTION -->
-            @if (Model.ActiveChallenges.Any())
-            {
-                <div class="challenges-section">
-                    <h3 class="section-title">Offene Forderungen</h3>
-                    @foreach (var ch in Model.ActiveChallenges)
+        <!-- 2. USER SELF-REGISTRATION SECTION -->
+        @if (User.Identity!.IsAuthenticated)
+        {
+            <div class="user-join-card">
+                <div class="user-join-info">
+                    @if (Model.IsCurrentUserInPyramid)
                     {
-                        bool isMyMatch = Model.CurrentPlayer != null &&
-                                             (ch.ChallengerTeam.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id) ||
-                                              ch.DefenderTeam.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id));
-
-                        var cardVm = new MatchCardViewModel
-                        {
-                            MatchId = ch.Id,
-                            Team1Name = ch.ChallengerTeam.PlayersToString(),
-                            Team2Name = ch.DefenderTeam.PlayersToString(),
-                            Team1Id = ch.ChallengerTeamId,
-                            Team2Id = ch.DefenderTeamId,
-                            BadgeText = $"{ch.ChallengeDate.ToString("dd.MM.yyyy")}",
-                            IsAdmin = User.IsInRole("Admin"),
-                            IsMyMatch = isMyMatch,
-                            SaveHandler = "SaveMatch",
-                            WalkoverHandler = "AdminWalkover",
-                            GiveWalkoverHandler = "GiveWalkover",
-                            DeleteHandler = "CancelChallenge",
-                            DeleteButtonText = "Stornieren"
-                        };
-
-                        <partial name="_MatchScorecard" model="cardVm"/>
+                        <h4 class="user-join-title">Du nimmst an dieser Pyramide teil!</h4>
+                        <p class="user-join-desc">Deine aktuelle Position ist <strong>Rang #@Model.MyRank?.Rank</strong>.
+                            Fordere oben platzierte Spieler heraus!</p>
+                    }
+                    else if (!Model.SelectedCompetition.IsSingle)
+                    {
+                        <h4 class="user-join-title">Doppel-Pyramide Anmeldung</h4>
+                        <p class="user-join-desc">
+                            📅 Anmeldefrist bis
+                            <strong>@Model.SelectedCompetition.RegistrationUntil.ToString("dd.MM.yyyy HH:mm") Uhr</strong>.<br/>
+                            Nach Ablauf der Frist teilt der Admin die Doppel-Paare zu.
+                        </p>
+                    }
+                    else
+                    {
+                        <h4 class="user-join-title">Jetzt an der Einzel-Pyramide teilnehmen!</h4>
+                        <p class="user-join-desc">Melde dich an, um in die Rangliste eingereiht zu werden und andere
+                            herauszufordern.</p>
                     }
                 </div>
-            }
 
-            <!-- RECENT CHALLENGES HISTORY -->
-            @if (Model.PastChallenges.Any())
-            {
-                <div class="challenges-section challenges-section-history">
-                    <h3 class="section-title">Vergangene Forderungs-Matches</h3>
-                    @foreach (var ch in Model.PastChallenges)
+                @if (!Model.IsCurrentUserInPyramid)
+                {
+                    @if (!Model.SelectedCompetition.IsSingle)
                     {
-                        var challengerWon = ch.WinnerTeamId == ch.ChallengerTeamId;
-                        var defenderWon = ch.WinnerTeamId == ch.DefenderTeamId;
-
-                        var cardVm = new MatchCardViewModel
+                        @if (Model.IsRegistrationOpen)
                         {
-                            MatchId = ch.Id,
-                            Team1Name = ch.ChallengerTeam.PlayersToString(),
-                            Team2Name = ch.DefenderTeam.PlayersToString(),
-                            Team1Score = challengerWon ? ch.Score : null,
-                            Team2Score = defenderWon ? ch.Score : null,
-                            IsTeam1Winner = challengerWon,
-                            IsTeam2Winner = defenderWon,
-                            BadgeText = $"{ch.MatchDate?.ToString("dd.MM.yyyy") ?? ch.ChallengeDate.ToString("dd.MM.yyyy")}"
-                        };
+                            @if (!Model.IsCurrentUserRegisteredInPool)
+                            {
+                                <form method="post" asp-page-handler="RegisterSelf">
+                                    <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+                                    <button type="submit" class="btn-join">Für Doppel anmelden 🎾</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <div class="flex-center-gap">
+                                    <span class="user-status-pill">Angemeldet im Pool</span>
+                                    <form method="post" asp-page-handler="WithdrawSelfRegistration">
+                                        <input type="hidden" name="competitionId"
+                                               value="@Model.SelectedCompetition.Id"/>
+                                        <button type="submit" class="btn-dark-pill btn-danger-pill"
+                                                onclick="return confirm('Anmeldung stornieren?');">Stornieren
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="user-status-pill pill-disabled">
+                                🔒 Anmeldefrist abgelaufen
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <form method="post" asp-page-handler="JoinPyramid" class="user-join-form">
+                            <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+                            <button type="submit" class="btn-join">Anmelden 🎾</button>
+                        </form>
+                    }
+                }
+                else
+                {
+                    <div class="user-status-pill">
+                        <span>In Pyramide eingereiht</span>
+                    </div>
+                }
+            </div>
+        }
 
-                        <partial name="_MatchScorecard" model="cardVm"/>
+        <!-- 3. ACTIVE CHALLENGES SECTION -->
+        @if (Model.ActiveChallenges.Any())
+        {
+            <div class="challenges-section">
+                <h3 class="section-title">Offene Forderungen</h3>
+                @foreach (var ch in Model.ActiveChallenges)
+                {
+                    bool isMyMatch = Model.CurrentPlayer != null &&
+                                         (ch.ChallengerTeam.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id) ||
+                                          ch.DefenderTeam.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id));
+
+                    var cardVm = new MatchCardViewModel
+                    {
+                        MatchId = ch.Id,
+                        Team1Name = ch.ChallengerTeam.PlayersToString(),
+                        Team2Name = ch.DefenderTeam.PlayersToString(),
+                        Team1Id = ch.ChallengerTeamId,
+                        Team2Id = ch.DefenderTeamId,
+                        BadgeText = $"{ch.ChallengeDate.ToString("dd.MM.yyyy")}",
+                        IsAdmin = User.IsInRole("Admin"),
+                        IsMyMatch = isMyMatch,
+                        SaveHandler = "SaveMatch",
+                        WalkoverHandler = "AdminWalkover",
+                        GiveWalkoverHandler = "GiveWalkover",
+                        DeleteHandler = "CancelChallenge",
+                        DeleteButtonText = "Stornieren"
+                    };
+
+                    <partial name="_MatchScorecard" model="cardVm"/>
+                }
+            </div>
+        }
+
+        <!-- 4. RECENT CHALLENGES HISTORY -->
+        @if (Model.PastChallenges.Any())
+        {
+            <div class="challenges-section challenges-section-history">
+                <h3 class="section-title">Vergangene Forderungs-Matches</h3>
+                @foreach (var ch in Model.PastChallenges)
+                {
+                    var challengerWon = ch.WinnerTeamId == ch.ChallengerTeamId;
+                    var defenderWon = ch.WinnerTeamId == ch.DefenderTeamId;
+
+                    var cardVm = new MatchCardViewModel
+                    {
+                        MatchId = ch.Id,
+                        Team1Name = ch.ChallengerTeam.PlayersToString(),
+                        Team2Name = ch.DefenderTeam.PlayersToString(),
+                        Team1Score = challengerWon ? ch.Score : null,
+                        Team2Score = defenderWon ? ch.Score : null,
+                        IsTeam1Winner = challengerWon,
+                        IsTeam2Winner = defenderWon,
+                        BadgeText = $"{ch.MatchDate?.ToString("dd.MM.yyyy") ?? ch.ChallengeDate.ToString("dd.MM.yyyy")}"
+                    };
+
+                    <partial name="_MatchScorecard" model="cardVm"/>
+                }
+            </div>
+        }
+
+        <!-- 5. COMPETITION INFO & ADMIN FRIST CARD -->
+        <section class="modern-card">
+            <div class="competition-info-flex">
+                <div class="competition-info-header-content">
+                    <h2 class="competition-title">@Model.SelectedCompetition.Name - Details</h2>
+                    <p class="registration-text">
+                        Anmeldeschluss: <strong
+                            class="text-dark">@Model.SelectedCompetition.RegistrationUntil.ToString("dd.MM.yyyy HH:mm")</strong>
+                    </p>
+                    @{
+                        var registrationOpen = Model.SelectedCompetition.RegistrationUntil >= CityTime.GetViennaTimeZone();
+                    }
+                    <div class="competition-status-row">
+                        @if (registrationOpen)
+                        {
+                            <span class="badge-open">Anmeldung offen</span>
+                        }
+                        else
+                        {
+                            <span class="badge-closed">Anmeldung geschlossen</span>
+                        }
+                        <span
+                            class="badge-count">Spieler: @(Model.SelectedCompetition.IsSingle ? Model.RegisteredTeams.Count : Model.TournamentRegistrations.Count)</span>
+                    </div>
+                </div>
+
+                <div class="competition-info-actions">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <form method="post" asp-page-handler="SaveNewDate" class="admin-time-form">
+                            <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+                            <span class="admin-label">Admin:</span>
+                            <input type="date" name="newDate"
+                                   value="@Model.SelectedCompetition.RegistrationUntil.ToString("yyyy-MM-dd")"
+                                   class="input-auto" required/>
+                            <input type="time" name="newTime"
+                                   value="@Model.SelectedCompetition.RegistrationUntil.ToString("HH:mm")"
+                                   class="input-auto" required/>
+                            <button type="submit" class="btn-dark-pill btn-admin-submit">Anmeldefrist aktualisieren
+                            </button>
+                        </form>
                     }
                 </div>
-            }
+            </div>
 
-        <!-- ADMIN PANEL FOR PARTICIPANTS -->
+            @if (User.IsInRole("Admin"))
+            {
+                <hr class="dashed-divider"/>
+                <div class="admin-player-bar">
+                    <h5 class="admin-player-title">👤 Spieler anmelden (Admin)</h5>
+                    <form method="post" asp-page-handler="AdminRegisterPlayer" class="admin-player-form">
+                        <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+                        <select name="playerId" class="form-input select-admin-player" required>
+                            <option value="">-- Spieler auswählen --</option>
+                            @foreach (var player in Model.UnregisteredPlayers)
+                            {
+                                <option value="@player.Id">@player.ToStringWithItn()</option>
+                            }
+                        </select>
+                        <button type="submit" class="btn-dark-pill">➕ Spieler anmelden</button>
+                    </form>
+                </div>
+            }
+        </section>
+
+        <!-- 6. POOL / DOUBLE PAIRS CONFIG (DOUBLES) -->
+        @if (!Model.SelectedCompetition.IsSingle && Model.TournamentRegistrations.Any())
+        {
+            <div class="modern-card pool-card">
+                <div class="card-header card-header-flex">
+                    <h3 class="card-title-md">
+                        🎾 Angemeldete Spieler im Pool (@Model.TournamentRegistrations.Count)
+                    </h3>
+                </div>
+
+                <table class="participant-table">
+                    <thead>
+                    <tr>
+                        <th class="th-rank">#</th>
+                        <th>Spieler</th>
+                        <th>ITN</th>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <th class="th-action">Aktion</th>
+                        }
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @{ int poolCounter = 1; }
+                    @foreach (var reg in Model.TournamentRegistrations)
+                    {
+                        <tr>
+                            <td><strong>#@poolCounter</strong></td>
+                            <td>@reg.Player.Firstname @reg.Player.Lastname</td>
+                            <td>
+                                    <span class="badge-count badge-itn">
+                                        @(reg.Player.Itn.HasValue ? reg.Player.Itn.Value.ToString("0.0") : "-")
+                                    </span>
+                            </td>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <td class="td-action-right">
+                                    <form method="post" asp-page-handler="AdminRemoveRegistration"
+                                          class="inline-form-zero">
+                                        <input type="hidden" name="competitionId"
+                                               value="@Model.SelectedCompetition.Id"/>
+                                        <input type="hidden" name="playerId" value="@reg.PlayerId"/>
+                                        <button type="submit" class="btn-danger btn-xs btn-action-micro"
+                                                title="Aus Pool entfernen"
+                                                onclick="return confirm('Spieler aus dem Anmelde-Pool entfernen?');">
+                                            Entfernen 🗑️
+                                        </button>
+                                    </form>
+                                </td>
+                            }
+                        </tr>
+                        poolCounter++;
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (!Model.SelectedCompetition.IsSingle)
+        {
+            var pairablePlayers = Model.TournamentRegistrations.Select(r => r.Player)
+                .Concat(Model.RegisteredTeams.SelectMany(t => t.TeamPlayers.Select(tp => tp.Player)))
+                .Concat(Model.AllPlayers)
+                .DistinctBy(p => p.Id)
+                .OrderBy(p => p.Lastname)
+                .ThenBy(p => p.Firstname)
+                .ToList();
+
+            <partial name="Partials/_DoublePairsConfig" model='new TennisBruck.Pages.Partials.DoublePairsConfigViewModel
+            {
+                CompetitionId = Model.SelectedCompetition.Id,
+                RegistrationUntil = Model.SelectedCompetition.RegistrationUntil,
+                IsAdmin = User.IsInRole("Admin"),
+                RegisteredPlayers = pairablePlayers,
+                RegisteredTeams = Model.RegisteredTeams ?? new List<TennisDb.Team>()
+            }'/>
+        }
+
+        <!-- 7. ADMIN PANEL FOR PARTICIPANTS -->
         @if (User.IsInRole("Admin"))
         {
             <div class="modern-card">
@@ -415,7 +441,7 @@
                                     <td><strong>#@node.PyramidRank.Rank</strong></td>
                                     <td>@node.PyramidRank.Team.PlayersToString()</td>
                                     <td>
-                                        <form method="post" asp-page-handler="DeleteTeam" class="inline-form-zero"
+                                        <form method="post" asp-page-handler="DeletePyramidRank" class="inline-form-zero"
                                               onsubmit="return confirm('Möchtest du diesen Teilnehmer wirklich aus der Pyramide entfernen?');">
                                             <input type="hidden" name="competitionId"
                                                    value="@Model.SelectedCompetition.Id"/>
@@ -474,7 +500,7 @@
         </div>
     }
 
-    <!-- ADMIN STRIP BOTTOM (CREATE / DELETE COMPETITION) -->
+    <!-- 8. ADMIN STRIP BOTTOM (CREATE / DELETE COMPETITION) -->
     <partial name="_AdminStrip" model='(Model.SelectedCompetition?.Id, "Neuer Pyramiden-Bewerb Name")'/>
 
 </main>

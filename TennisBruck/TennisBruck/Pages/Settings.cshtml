@@ -154,13 +154,24 @@
                     </label>
                 </div>
 
-                <div class="notification-item mb-30">
+                <div class="notification-item">
                     <div class="notification-info">
                         <span class="notification-title">Spielpartner-Suche Teilnahme</span>
                         <span class="notification-desc">Wenn sich ein Spieler für deine Spielersuche anmeldet.</span>
                     </div>
                     <label class="switch">
                         <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnSlotJoined"/>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="notification-item mb-30">
+                    <div class="notification-info">
+                        <span class="notification-title">Pyramide-Forderung erhalten</span>
+                        <span class="notification-desc">Sobald dich ein anderer Spieler in der Pyramide herausfordert.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" asp-for="CurrentPlayer.NotificationSettings.EmailOnPyramidChallenge"/>
                         <span class="slider"></span>
                     </label>
                 </div>

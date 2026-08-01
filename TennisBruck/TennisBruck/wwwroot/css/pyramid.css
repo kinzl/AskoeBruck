@@ -33,11 +33,9 @@ body {
 }
 
 /* --- HEADER --- */
-/* --- HEADER --- */
 .app-header {
     background-color: var(--nav-bg);
-    min-height: 200px;
-    padding: 25px 20px 20px 20px;
+    padding: 25px 20px 30px 20px;
     box-sizing: border-box;
     text-align: center;
 }
@@ -86,7 +84,8 @@ body {
     justify-content: center;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 15px;
+    margin-top: 18px;
+    margin-bottom: 10px;
 }
 
 .pill-btn {
@@ -140,7 +139,7 @@ body {
 /* --- MAIN CONTAINER --- */
 .main-container {
     max-width: 1100px;
-    margin: -30px auto 40px auto;
+    margin: 24px auto 40px auto;
     padding: 0 20px;
     display: flex;
     flex-direction: column;
@@ -740,4 +739,121 @@ body {
         flex-direction: column;
         align-items: stretch;
     }
+}
+
+/* --- CLEAN SEPARATION CLASSES --- */
+.card-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 15px;
+}
+
+.card-title-lg {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+}
+
+.card-title-md {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.font-weight-bold {
+    font-weight: 700;
+}
+
+.btn-danger-pill {
+    background-color: var(--danger-color, #ef4444) !important;
+}
+
+.pill-disabled {
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+}
+
+.competition-status-row {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted, #64748b);
+}
+
+.btn-admin-submit {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 0.82rem;
+}
+
+.dashed-divider {
+    border: 0;
+    border-top: 1px dashed #cbd5e1;
+    margin: 15px 0;
+}
+
+.admin-player-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.admin-player-title {
+    margin: 0;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.admin-player-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.select-admin-player {
+    width: 220px !important;
+}
+
+.pool-card {
+    margin-top: 15px;
+    margin-bottom: 20px;
+}
+
+.th-rank {
+    width: 60px;
+}
+
+.th-action {
+    text-align: right;
+    width: 140px;
+}
+
+.td-action-right {
+    text-align: right;
+}
+
+.badge-itn {
+    background: #e2e8f0 !important;
+    color: #475569 !important;
+    padding: 2px 8px !important;
+    font-size: 0.85rem !important;
+}
+
+.hidden-form {
+    display: none;
 }

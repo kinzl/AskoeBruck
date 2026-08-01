@@ -24,7 +24,8 @@ public class CurrentPlayerService(IHttpContextAccessor httpContextAccessor, Tenn
                 EmailOnOpponentAssigned = true,
                 EmailOnSlotFull = true,
                 EmailOnSlotCancelled = true,
-                EmailOnSlotJoined = true
+                EmailOnSlotJoined = true,
+                EmailOnPyramidChallenge = true
             };
             db.SaveChanges();
         }

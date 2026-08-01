@@ -17,4 +17,7 @@ public class PlayerNotificationSettings
 
     /// <summary>Email to the slot creator when a new player joins their partner board slot.</summary>
     public bool EmailOnSlotJoined { get; set; } = true;
+
+    /// <summary>Email when challenged in the pyramid competition.</summary>
+    public bool EmailOnPyramidChallenge { get; set; } = true;
 }

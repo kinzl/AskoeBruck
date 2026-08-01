@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +7,7 @@ using TennisDb;
 
 namespace TennisBruck.Pages;
 
-public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerService) : PageModel
+public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerService, IEmailSender emailSender) : PageModel
 {
     public List<Competition> PyramidCompetitions { get; set; } = [];
     public Competition? SelectedCompetition { get; set; }
@@ -414,9 +415,12 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
             return RedirectToPage(new { competitionId, message = "Bitte melde dich an.", isError = true });
         }
 
+        var comp = await db.Competitions.FirstOrDefaultAsync(c => c.Id == competitionId);
+
         var myRank = await db.PyramidRanks
             .Include(r => r.Team)
                 .ThenInclude(t => t.TeamPlayers)
+                    .ThenInclude(tp => tp.Player)
             .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.Team.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id));
 
         if (myRank == null)
@@ -425,6 +429,14 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         }
 
         var defenderRank = await db.PyramidRanks
+            .Include(r => r.Team)
+                .ThenInclude(t => t.TeamPlayers)
+                    .ThenInclude(tp => tp.Player)
+                        .ThenInclude(p => p.IdentityUser)
+            .Include(r => r.Team)
+                .ThenInclude(t => t.TeamPlayers)
+                    .ThenInclude(tp => tp.Player)
+                        .ThenInclude(p => p.NotificationSettings)
             .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.TeamId == defenderTeamId);
 
         if (defenderRank == null)
@@ -464,6 +476,29 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
 
         db.PyramidChallenges.Add(challenge);
         await db.SaveChangesAsync();
+
+        // Send email notification if enabled in defender's notification settings
+        if (defenderRank.Team != null && comp != null)
+        {
+            var challengerNames = string.Join(" & ", myRank.Team.TeamPlayers.Select(tp => $"{tp.Player.Firstname} {tp.Player.Lastname}"));
+            var compName = comp.Name;
+
+            foreach (var tp in defenderRank.Team.TeamPlayers)
+            {
+                var defenderPlayer = tp.Player;
+                if (defenderPlayer?.IdentityUser?.Email != null &&
+                    (defenderPlayer.NotificationSettings == null || defenderPlayer.NotificationSettings.EmailOnPyramidChallenge))
+                {
+                    var subject = $"🎾 Neue Forderung in der Pyramide '{compName}'!";
+                    var body = $"Hallo {defenderPlayer.Firstname},<br><br>" +
+                               $"Du wurdest in der Pyramide <strong>{compName}</strong> von <strong>{challengerNames}</strong> herausgefordert!<br><br>" +
+                               $"Bitte vereinbart zeitnah einen Spieltermin und tragt das Ergebnis nach dem Match in der Anwendung ein.<br><br>" +
+                               $"Viel Erfolg!<br>Dein TennisBruck-Team";
+
+                    _ = emailSender.SendEmailAsync(defenderPlayer.IdentityUser.Email, subject, body);
+                }
+            }
+        }
 
         return RedirectToPage(new { competitionId, message = "Forderung erfolgreich ausgesprochen!" });
     }
@@ -549,7 +584,7 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         return RedirectToPage(new { competitionId, message = "Forderung wurde storniert." });
     }
 
-    public async Task<IActionResult> OnPostDeleteTeamAsync(int competitionId, int teamId)
+    public async Task<IActionResult> OnPostDeletePyramidRankAsync(int competitionId, int teamId)
     {
         if (!User.IsInRole("Admin"))
         {
