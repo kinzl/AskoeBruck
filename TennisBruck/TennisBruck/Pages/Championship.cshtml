@@ -34,6 +34,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
     <script src="https://underscorejs.org/underscore-min.js"></script>
+    <link rel="stylesheet" href="~/css/tournaments.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/championship.css" asp-append-version="true"/>
     <script src="js/toggleVisibility.js"></script>
     <script src="js/tournament.js"></script>
@@ -116,187 +117,77 @@
 
     @if (Model.SelectedCompetition != null)
     {
+        var registrationOpen = Model.SelectedCompetition.RegistrationUntil >= CityTime.GetViennaTimeZone();
+
         <section class="modern-card">
             <div class="competition-info-flex">
-                <div>
+                <div class="competition-info-header-content">
                     <h2 class="competition-title">@Model.SelectedCompetition.Name</h2>
                     <p class="registration-text">
-                        Anmeldeschluss: <strong
-                            class="text-dark">@Model.SelectedCompetition.RegistrationUntil.ToString("dd.MM.yyyy HH:mm")</strong>
+                        Anmeldeschluss: <strong class="text-dark">@Model.SelectedCompetition.RegistrationUntil.ToString("dd.MM.yyyy HH:mm")</strong>
                     </p>
-                </div>
-                @{
-                    var registrationOpen = Model.SelectedCompetition.RegistrationUntil >= CityTime.GetViennaTimeZone();
-                }
-
-                @if (registrationOpen)
-                {
-                    <form method="post" class="competition-action-form">
-                        <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
-                        <button class="btn-action btn-large-shadow @(Model.IsRegistered ? "btn-danger" : "btn-accent")"
-                                asp-page-handler="@(Model.IsRegistered ? "Unregister" : "Register")">
-                            @(Model.IsRegistered ? "❌ Wieder abmelden" : "🎾 Jetzt Teilnehmen")
-                        </button>
+                    <div class="competition-status-row" style="margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        @if (registrationOpen)
+                        {
+                            <span class="badge-open">Anmeldung offen</span>
+                        }
+                        else
+                        {
+                            <span class="badge-closed">Anmeldung geschlossen</span>
+                        }
                         <span class="badge-count">Spieler: @Model.RegisteredCompetitionPlayers.Count</span>
-                    </form>
+                    </div>
+                </div>
+
+                <div class="competition-info-actions">
+                    @if (registrationOpen)
+                    {
+                        <form method="post" class="competition-action-form" style="margin: 0;">
+                            <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
+                            <button class="btn-action btn-large-shadow @(Model.IsRegistered ? "btn-danger" : "btn-accent")"
+                                    asp-page-handler="@(Model.IsRegistered ? "Unregister" : "Register")">
+                                @(Model.IsRegistered ? "❌ Wieder abmelden" : "🎾 Jetzt Teilnehmen")
+                            </button>
+                        </form>
+                    }
+                    else if (Model.IsRegistered)
+                    {
+                        <form method="post" class="m-0">
+                            <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
+                            <button class="btn-action btn-danger" asp-page-handler="SelfWithdraw"
+                                    onclick="return confirm('Möchtest du das Turnier wirklich komplett abbrechen? ALLE deine noch offenen Matches werden als Sieg (w.o.) für deine Gegner gewertet. Das kann nicht rückgängig gemacht werden!');">
+                                Turnier abbrechen (w.o.)
+                            </button>
+                        </form>
+                    }
 
                     @if (User.IsInRole("Admin"))
                     {
                         <form method="post" class="admin-time-form">
-                            <span class="text-sm text-muted">Admin-Anpassung:</span>
+                            <span class="text-sm text-muted" style="font-size: 0.8rem; font-weight: 600;">Admin:</span>
                             <input type="date" name="newDate"
                                    value="@Model.SelectedCompetition.RegistrationUntil.ToString("yyyy-MM-dd")"
-                                   class="input-auto"/>
+                                   class="input-auto" required/>
                             <input type="time" name="newTime"
                                    value="@Model.SelectedCompetition.RegistrationUntil.ToString("HH:mm")"
-                                   class="input-auto"/>
-                            <button asp-page-handler="SaveNewDate" class="btn-action btn-sm">Anmeldefrist aktualisieren
-                            </button>
+                                   class="input-auto" required/>
+                            <button asp-page-handler="SaveNewDate" class="btn-action btn-sm">Anmeldefrist aktualisieren</button>
                         </form>
                     }
-                }
-                else
-                {
-                    <div class="registration-closed-row">
-                        <div class="registration-closed-badges">
-                            <span class="badge-closed">Anmeldung geschlossen</span>
-                            <span class="badge-count">Spieler: @Model.RegisteredCompetitionPlayers.Count</span>
-                        </div>
-
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <form method="post" class="admin-time-form admin-time-form--inline">
-                                <span class="text-sm text-muted">Admin-Anpassung:</span>
-                                <input type="date" name="newDate"
-                                       value="@Model.SelectedCompetition.RegistrationUntil.ToString("yyyy-MM-dd")"
-                                       class="input-auto"/>
-                                <input type="time" name="newTime"
-                                       value="@Model.SelectedCompetition.RegistrationUntil.ToString("HH:mm")"
-                                       class="input-auto"/>
-                                <button asp-page-handler="SaveNewDate" class="btn-action btn-sm">Anmeldefrist
-                                    aktualisieren
-                                </button>
-                            </form>
-                        }
-
-                        @if (Model.IsRegistered)
-                        {
-                            <form method="post" class="m-0">
-                                <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
-                                <button class="btn-action btn-danger" asp-page-handler="SelfWithdraw"
-                                        onclick="return confirm('Möchtest du das Turnier wirklich komplett abbrechen? ALLE deine noch offenen Matches werden als Sieg (w.o.) für deine Gegner gewertet. Das kann nicht rückgängig gemacht werden!');">
-                                    Turnier abbrechen (w.o.)
-                                </button>
-                            </form>
-                        }
-                    </div>
-                }
+                </div>
             </div>
-
         </section>
 
         @if (!Model.SelectedCompetition.IsSingle)
         {
-            <section class="modern-card">
-                <div class="card-header">
-                    <h2>👥 Doppel-Paare Konfigurieren</h2>
-                    @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < CityTime.GetViennaTimeZone())
-                    {
-                        <form method="post" class="m-0">
-                            <input type="hidden" name="ChampionshipId" value="@Model.SelectedCompetition.Id"/>
-                            <button type="submit" asp-page-handler="GeneratePairs" class="btn-action btn-sm"
-                                    onclick="return confirm('Bisherige Doppel Paare werden gelöscht und neu zugeordnet. Möchtest du das wirklich?');">
-                                🔀 Zufällig auslosen
-                            </button>
-                        </form>
-                    }
-                </div>
-
-                @{
-                    int totalPairs = Model.RegisteredCompetitionPlayers.Count / 2;
-                }
-
-                <form method="post" asp-page-handler="SavePairs">
-                    <input type="hidden" name="ChampionshipId" value="@Model.SelectedCompetition?.Id"/>
-
-                    <div class="pairs-list">
-                        @for (int i = 0; i < totalPairs; i++)
-                        {
-                            var currentTeam = Model.RegisteredTeams != null && i < Model.RegisteredTeams.Count ? Model.RegisteredTeams[i] : null;
-                            var firstPlayer = currentTeam?.TeamPlayers.ElementAtOrDefault(0)?.Player;
-                            var secondPlayer = currentTeam?.TeamPlayers.ElementAtOrDefault(1)?.Player;
-
-                            @if (currentTeam != null && User.IsInRole("Admin"))
-                            {
-                                <input type="hidden" name="pairs[@i].TeamId" value="@currentTeam.Id"/>
-                            }
-
-                            <div class="pair-row">
-                                <span class="pair-number">#@(i + 1)</span>
-
-                                <div class="pair-players">
-                                    @if (User.IsInRole("Admin"))
-                                    {
-                                        <select name="pairs[@i].SinglePlayerId" class="pair-select">
-                                            <option value="">Spieler A...</option>
-                                            @foreach (var registration in Model.RegisteredCompetitionPlayers)
-                                            {
-                                                bool isSelected = firstPlayer != null && registration.Player.Id == firstPlayer.Id;
-                                                <option value="@registration.Player.Id"
-                                                        selected="@isSelected">@registration.Player.ToStringWithItn()</option>
-                                            }
-                                        </select>
-                                    }
-                                    else
-                                    {
-                                        <span
-                                            class="pair-name">@(firstPlayer != null ? firstPlayer.ToStringWithItn() : "Offen")</span>
-                                    }
-
-                                    <span class="pair-plus">+</span>
-
-                                    @if (User.IsInRole("Admin"))
-                                    {
-                                        <select name="pairs[@i].DoublePlayerId" class="pair-select">
-                                            <option value="">Spieler B...</option>
-                                            @foreach (var registration in Model.RegisteredCompetitionPlayers)
-                                            {
-                                                bool isSelected = secondPlayer != null && registration.Player.Id == secondPlayer.Id;
-                                                <option value="@registration.Player.Id"
-                                                        selected="@isSelected">@registration.Player.ToStringWithItn()</option>
-                                            }
-                                        </select>
-                                    }
-                                    else
-                                    {
-                                        <span
-                                            class="pair-name">@(secondPlayer != null ? secondPlayer.ToStringWithItn() : "Offen")</span>
-                                    }
-                                </div>
-
-                                @if (currentTeam != null && User.IsInRole("Admin"))
-                                {
-                                    <button type="button" class="pair-delete-btn" title="Paar löschen"
-                                            onclick="document.getElementById('deleteTeamIdInput').value='@currentTeam.Id'; if(confirm('Möchtest du dieses Paar wirklich löschen?')) document.getElementById('deleteTeamForm').submit();">
-                                        🗑️
-                                    </button>
-                                }
-                            </div>
-                        }
-                    </div>
-
-                    @if (User.IsInRole("Admin") && Model.SelectedCompetition.RegistrationUntil < CityTime.GetViennaTimeZone())
-                    {
-                        <div class="pairs-save-row">
-                            <button type="submit" class="btn-action btn-accent">💾 Paare Speichern</button>
-                        </div>
-                    }
-                </form>
-            </section>
-
-            <form method="post" asp-page-handler="DeleteTeam" id="deleteTeamForm" style="display:none;">
-                <input type="hidden" name="teamId" id="deleteTeamIdInput"/>
-            </form>
+            <partial name="Partials/_DoublePairsConfig" model='new TennisBruck.Pages.Partials.DoublePairsConfigViewModel
+            {
+                CompetitionId = Model.SelectedCompetition.Id,
+                RegistrationUntil = Model.SelectedCompetition.RegistrationUntil,
+                IsAdmin = User.IsInRole("Admin"),
+                RegisteredPlayers = Model.RegisteredCompetitionPlayers.Select(r => r.Player).ToList(),
+                RegisteredTeams = Model.RegisteredTeams ?? new List<TennisDb.Team>()
+            }' />
         }
 
         <partial name="Partials/_GroupTables" model="Model"/>
@@ -454,8 +345,8 @@
                             string team2Score = "";
                             if (match.IsWalkover)
                             {
-                                team1Score = match.WalkoverTeamId == match.Team1?.Id ? "w.o." : "";
-                                team2Score = match.WalkoverTeamId == match.Team2?.Id ? "w.o." : "";
+                                team1Score = match.WalkoverTeamId == match.Team1.Id ? "w.o." : "";
+                                team2Score = match.WalkoverTeamId == match.Team2.Id ? "w.o." : "";
                             }
                             else if (match.Sets != null && match.Sets.Any())
                             {
@@ -463,92 +354,33 @@
                                 team2Score = string.Join(" ", match.Sets.Select(s => s.Player2GamesWon));
                             }
 
-                            <div class="match-scorecard" data-group="@groupCategory">
-                                <div class="match-main-info">
-                                    <div class="match-players-stacked">
-                                        <div class="match-player-row @GetRowClass(match, match.Team1)">
-                                            <span class="player-name"
-                                                  title="@match.Team1?.PlayersToString()">@match.Team1?.PlayersToString()</span>
-                                            @if (!string.IsNullOrEmpty(team1Score))
-                                            {
-                                                <span class="match-player-score-inline">@team1Score</span>
-                                            }
-                                        </div>
-                                        <div class="match-player-row @GetRowClass(match, match.Team2)">
-                                            <span class="player-name"
-                                                  title="@match.Team2?.PlayersToString()">@match.Team2?.PlayersToString()</span>
-                                            @if (!string.IsNullOrEmpty(team2Score))
-                                            {
-                                                <span class="match-player-score-inline">@team2Score</span>
-                                            }
-                                        </div>
-                                    </div>
+                            bool isDecided = match.IsWalkover || (match.Sets != null && match.Sets.Any());
+                            bool canDelete = isDecided && (User.IsInRole("Admin") || isMyMatch);
 
-                                    @{
-                                        bool isDecided = match.IsWalkover || (match.Sets != null && match.Sets.Any());
-                                        bool canDelete = isDecided && (User.IsInRole("Admin") || isMyMatch);
-                                    }
+                            var cardVm = new TennisBruck.Pages.MatchCardViewModel
+                            {
+                                MatchId = match.Id,
+                                Team1Name = match.Team1.PlayersToString(),
+                                Team2Name = match.Team2.PlayersToString(),
+                                Team1Score = team1Score,
+                                Team2Score = team2Score,
+                                IsTeam1Winner = match.Winner?.Id == match.Team1.Id,
+                                IsTeam2Winner = match.Winner?.Id == match.Team2.Id,
+                                IsWalkover = match.IsWalkover,
+                                WalkoverTeamId = match.WalkoverTeamId,
+                                Team1Id = match.Team1.Id,
+                                Team2Id = match.Team2.Id,
+                                BadgeText = groupCategory,
+                                DataGroup = groupCategory,
+                                IsDecided = isDecided,
+                                IsMyMatch = isMyMatch,
+                                IsAdmin = User.IsInRole("Admin"),
+                                CanDelete = canDelete,
+                                DeleteHandler = "DeleteMatch",
+                                DeleteButtonText = User.IsInRole("Admin") ? "Löschen" : "Rückgängig"
+                            };
 
-                                    <div class="match-meta-container">
-                                        <span class="badge-phase">
-                                            @groupCategory
-                                        </span>
-                                        @if (canDelete)
-                                        {
-                                            <form method="post" class="inline-form-zero" style="display:inline-block;">
-                                                <input type="hidden" name="matchId" value="@match.Id"/>
-                                                <button type="submit" class="btn-action btn-danger btn-xs"
-                                                        asp-page-handler="DeleteMatch">
-                                                    @(User.IsInRole("Admin") ? "Löschen" : "Rückgängig")
-                                                </button>
-                                            </form>
-                                        }
-                                    </div>
-                                </div>
-
-                                @if (User.IsInRole("Admin") && !isDecided)
-                                {
-                                    <form method="post" class="match-action-form">
-                                        <input type="hidden" name="matchId" value="@match.Id"/>
-                                        <div class="flex-center-gap">
-                                            <input type="text" name="score" placeholder="6:4 6:2"
-                                                   class="input-score-sm"/>
-                                            <button class="btn-action btn-xs" asp-page-handler="SaveMatch">Speichern
-                                            </button>
-
-                                            <button type="submit" class="btn-action btn-warning btn-xs"
-                                                    asp-page-handler="AdminWalkover" name="walkoverTeamId"
-                                                    value="@if (match.Team1 != null) { @match.Team1.Id }"
-                                                    title="T1 aufgeben">
-                                                W.O. T1
-                                            </button>
-                                            <button type="submit" class="btn-action btn-warning btn-xs"
-                                                    asp-page-handler="AdminWalkover" name="walkoverTeamId"
-                                                    value="@if (match.Team2 != null) { @match.Team2.Id }"
-                                                    title="T2 aufgeben">
-                                                W.O. T2
-                                            </button>
-                                        </div>
-                                    </form>
-                                }
-                                else if (isMyMatch && !isDecided)
-                                {
-                                    <form method="post" class="match-action-form">
-                                        <input type="hidden" name="matchId" value="@match.Id"/>
-                                        <div class="flex-center-gap">
-                                            <input type="text" name="score" placeholder="6:4 6:2"
-                                                   class="input-score-sm"/>
-                                            <button class="btn-action btn-xs" asp-page-handler="SaveMatch">Speichern
-                                            </button>
-                                            <button type="submit" class="btn-action btn-warning btn-xs"
-                                                    asp-page-handler="GiveWalkover"
-                                                    onclick="return confirm('Möchtest du dieses Match wirklich aufgeben? Dein Gegner gewinnt durch w.o.');">
-                                                W.O. geben
-                                            </button>
-                                        </div>
-                                    </form>
-                                }
-                            </div>
+                            <partial name="_MatchScorecard" model="cardVm" />
                         }
                     }
                 </div>
@@ -569,37 +401,7 @@
         </div>
     }
 
-    @if (User.IsInRole("Admin"))
-    {
-        <section class="admin-strip">
-            <h3 class="admin-strip-title">⚠️ Admin Bereich</h3>
-            <div class="admin-strip-flex">
-
-                <form method="post" class="admin-create-form">
-                    <input type="text" name="competitionName" placeholder="Neuer Bewerb Name" required
-                           class="flex-1"/>
-                    <div class="admin-radio-wrapper">
-                        <input id="radioSingle" type="radio" name="isSingle" value="true" checked/>
-                        <label for="radioSingle" class="admin-radio-label">Einzel</label>
-                        <input id="radioDouble" type="radio" name="isSingle" value="false"/>
-                        <label for="radioDouble" class="admin-radio-label">Doppel</label>
-                    </div>
-                    <button class="btn-action" asp-page-handler="CreateCompetition">Erstellen</button>
-                </form>
-
-                @if (Model.SelectedCompetition != null)
-                {
-                    <form method="post">
-                        <input type="hidden" name="competitionId" value="@Model.SelectedCompetition!.Id"/>
-                        <button class="btn-action btn-danger" asp-page-handler="DeleteCompetition"
-                                onclick="return confirm('Diesen Bewerb wirklich unwiderruflich löschen?');">
-                            Aktuellen Bewerb löschen
-                        </button>
-                    </form>
-                }
-            </div>
-        </section>
-    }
+    <partial name="_AdminStrip" model='(Model.SelectedCompetition?.Id, "Neuer Bewerb Name")' />
 
 </main>
 

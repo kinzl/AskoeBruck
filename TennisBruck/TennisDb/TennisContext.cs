@@ -37,6 +37,8 @@ public class TennisContext : IdentityDbContext<IdentityUser>, IDataProtectionKey
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
     public DbSet<AvailabilitySlot> AvailabilitySlots { get; set; }
     public DbSet<PlayerNotificationSettings> PlayerNotificationSettings { get; set; }
+    public DbSet<PyramidRank> PyramidRanks { get; set; }
+    public DbSet<PyramidChallenge> PyramidChallenges { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

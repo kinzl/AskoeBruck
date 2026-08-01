@@ -85,20 +85,25 @@ body {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    padding-right: 30px;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 16px;
+    padding: 8px 34px 8px 16px !important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: calc(100% - 10px) center !important;
+    background-size: 14px !important;
+    cursor: pointer;
+}
+
+.pill-select::-ms-expand {
+    display: none;
 }
 
 .pill-select option {
-    background-color: var(--card-bg);
-    color: var(--text-dark);
+    background-color: #1e293b;
+    color: #ffffff;
 }
 
 .pill-select.active {
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
 }
 
 /* Message banner — sits between header and main, no negative-margin overlap */
@@ -445,14 +450,7 @@ select:focus {
     margin: 5px 0 0 0;
 }
 
-.admin-time-form {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #f1f5f9;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
+
 
 /* Double Pairs */
 .double-pair-wrapper {

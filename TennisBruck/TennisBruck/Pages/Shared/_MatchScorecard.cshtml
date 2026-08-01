@@ -1,0 +1,95 @@
+@model TennisBruck.Pages.MatchCardViewModel
+
+<div class="match-scorecard" @(string.IsNullOrEmpty(Model.DataGroup) ? "" : $"data-group=\"{Model.DataGroup}\"")>
+    <div class="match-main-info">
+        <div class="match-players-stacked">
+            <div class="match-player-row @(Model.IsTeam1Winner ? "winner" : (Model.IsTeam2Winner ? "loser" : (Model.IsWalkover && Model.WalkoverTeamId == Model.Team1Id ? "walkover-loser" : "")))">
+                <span class="player-name" title="@Model.Team1Name">@Model.Team1Name</span>
+                @if (!string.IsNullOrEmpty(Model.Team1Score))
+                {
+                    <span class="match-player-score-inline">@Model.Team1Score</span>
+                }
+            </div>
+            <div class="match-player-row @(Model.IsTeam2Winner ? "winner" : (Model.IsTeam1Winner ? "loser" : (Model.IsWalkover && Model.WalkoverTeamId == Model.Team2Id ? "walkover-loser" : "")))">
+                <span class="player-name" title="@Model.Team2Name">@Model.Team2Name</span>
+                @if (!string.IsNullOrEmpty(Model.Team2Score))
+                {
+                    <span class="match-player-score-inline">@Model.Team2Score</span>
+                }
+            </div>
+        </div>
+
+        <div class="match-meta-container">
+            @if (!string.IsNullOrEmpty(Model.BadgeText))
+            {
+                <span class="badge-phase">@Model.BadgeText</span>
+            }
+
+            @if (Model.CanDelete)
+            {
+                <form method="post" class="inline-form-zero" style="display:inline-block;" asp-page-handler="@Model.DeleteHandler">
+                    <input type="hidden" name="matchId" value="@Model.MatchId"/>
+                    <input type="hidden" name="challengeId" value="@Model.MatchId"/>
+                    <button type="submit" class="btn-action btn-danger btn-xs"
+                            onclick="@(Model.DeleteHandler == "CancelChallenge" ? "return confirm('Forderung stornieren?');" : "")">
+                        @Model.DeleteButtonText
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+
+    @if (Model.UseResultModal)
+    {
+        <div class="match-action-form">
+            <button type="button" class="btn-action btn-xs btn-accent" 
+                    onclick="openResultModal(@Model.MatchId, '@Model.Team1Name', @Model.Team1Id, '@Model.Team2Name', @Model.Team2Id)">
+                📝 Ergebnis eintragen
+            </button>
+
+            <form method="post" asp-page-handler="@Model.DeleteHandler" class="inline-form-zero" onsubmit="return confirm('Forderung stornieren?');">
+                <input type="hidden" name="matchId" value="@Model.MatchId" />
+                <input type="hidden" name="challengeId" value="@Model.MatchId" />
+                <button type="submit" class="btn-action btn-danger btn-xs">Stornieren</button>
+            </form>
+        </div>
+    }
+    else if (Model.IsAdmin && !Model.IsDecided)
+    {
+        <form method="post" class="match-action-form">
+            <input type="hidden" name="matchId" value="@Model.MatchId"/>
+            <input type="hidden" name="challengeId" value="@Model.MatchId"/>
+            <div class="flex-center-gap">
+                <input type="text" name="score" placeholder="6:4 6:2" class="input-score-sm"/>
+                <button type="submit" class="btn-dark-pill" asp-page-handler="@Model.SaveHandler">Speichern</button>
+
+                <button type="submit" class="btn-dark-pill"
+                        asp-page-handler="@Model.WalkoverHandler" name="walkoverTeamId"
+                        value="@Model.Team1Id" title="T1 aufgeben">
+                    W.O. T1
+                </button>
+                <button type="submit" class="btn-dark-pill"
+                        asp-page-handler="@Model.WalkoverHandler" name="walkoverTeamId"
+                        value="@Model.Team2Id" title="T2 aufgeben">
+                    W.O. T2
+                </button>
+            </div>
+        </form>
+    }
+    else if (!Model.IsDecided && (Model.IsMyMatch || Model.UseResultModal))
+    {
+        <form method="post" class="match-action-form">
+            <input type="hidden" name="matchId" value="@Model.MatchId"/>
+            <input type="hidden" name="challengeId" value="@Model.MatchId"/>
+            <div class="flex-center-gap">
+                <input type="text" name="score" placeholder="6:4 6:2" class="input-score-sm"/>
+                <button type="submit" class="btn-dark-pill" asp-page-handler="@Model.SaveHandler">Eintragen</button>
+                <button type="submit" class="btn-dark-pill"
+                        asp-page-handler="@(string.IsNullOrEmpty(Model.GiveWalkoverHandler) ? "GiveWalkover" : Model.GiveWalkoverHandler)"
+                        onclick="return confirm('Möchtest du dieses Match wirklich aufgeben? Dein Gegner gewinnt durch w.o.');">
+                    W.O. geben
+                </button>
+            </div>
+        </form>
+    }
+</div>

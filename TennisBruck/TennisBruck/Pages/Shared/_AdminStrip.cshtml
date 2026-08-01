@@ -1,0 +1,31 @@
+@model (int? SelectedCompetitionId, string Placeholder)
+
+@if (User.IsInRole("Admin"))
+{
+    <section class="admin-strip">
+        <h3 class="admin-strip-title">⚠️ Admin Bereich</h3>
+        <div class="admin-strip-flex">
+            <form method="post" asp-page-handler="CreateCompetition" class="admin-create-form">
+                <input type="text" name="competitionName" placeholder="@Model.Placeholder" required class="form-input flex-1"/>
+                <div class="admin-radio-wrapper">
+                    <input id="radioSingle" type="radio" name="isSingle" value="true" checked/>
+                    <label for="radioSingle" class="admin-radio-label">Einzel</label>
+                    <input id="radioDouble" type="radio" name="isSingle" value="false"/>
+                    <label for="radioDouble" class="admin-radio-label">Doppel</label>
+                </div>
+                <button type="submit" class="btn-action">Erstellen</button>
+            </form>
+
+            @if (Model.SelectedCompetitionId.HasValue)
+            {
+                <form method="post" asp-page-handler="DeleteCompetition">
+                    <input type="hidden" name="competitionId" value="@Model.SelectedCompetitionId.Value"/>
+                    <button type="submit" class="btn-action btn-danger"
+                            onclick="return confirm('Diesen Bewerb wirklich unwiderruflich löschen?');">
+                        Aktuellen Bewerb löschen
+                    </button>
+                </form>
+            }
+        </div>
+    </section>
+}
