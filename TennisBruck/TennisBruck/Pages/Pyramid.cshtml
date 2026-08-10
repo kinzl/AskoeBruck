@@ -441,7 +441,8 @@
                                     <td><strong>#@node.PyramidRank.Rank</strong></td>
                                     <td>@node.PyramidRank.Team.PlayersToString()</td>
                                     <td>
-                                        <form method="post" asp-page-handler="DeletePyramidRank" class="inline-form-zero"
+                                        <form method="post" asp-page-handler="DeletePyramidRank"
+                                              class="inline-form-zero"
                                               onsubmit="return confirm('Möchtest du diesen Teilnehmer wirklich aus der Pyramide entfernen?');">
                                             <input type="hidden" name="competitionId"
                                                    value="@Model.SelectedCompetition.Id"/>

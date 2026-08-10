@@ -80,6 +80,12 @@
       <Compile Update="Pages\GroupTableEntry.cs">
         <DependentUpon>Championship.cshtml</DependentUpon>
       </Compile>
+      <Compile Update="Pages\PyramidLevel.cs">
+        <DependentUpon>Pyramid.cshtml</DependentUpon>
+      </Compile>
+      <Compile Update="Pages\PyramidPositionNode.cs">
+        <DependentUpon>Pyramid.cshtml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

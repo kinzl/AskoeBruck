@@ -1,13 +1,10 @@
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using TennisBruck.Services;
-using TennisDb;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 
 namespace TennisBruck.Pages;
 
-public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerService, IEmailSender emailSender) : PageModel
+public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerService, IEmailSender emailSender)
+    : PageModel
 {
     public List<Competition> PyramidCompetitions { get; set; } = [];
     public Competition? SelectedCompetition { get; set; }
@@ -23,25 +20,16 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
     public Team? MyTeam { get; private set; }
     public PyramidRank? MyRank { get; private set; }
     public bool IsCurrentUserInPyramid => MyRank != null;
-    public bool IsRegistrationOpen => SelectedCompetition != null && DateTime.Now <= SelectedCompetition.RegistrationUntil;
-    public bool IsCurrentUserRegisteredInPool => CurrentPlayer != null && TournamentRegistrations.Any(r => r.PlayerId == CurrentPlayer.Id && !r.HasWithdrawn);
+
+    public bool IsRegistrationOpen =>
+        SelectedCompetition != null && DateTime.Now <= SelectedCompetition.RegistrationUntil;
+
+    public bool IsCurrentUserRegisteredInPool => CurrentPlayer != null &&
+                                                 TournamentRegistrations.Any(r =>
+                                                     r.PlayerId == CurrentPlayer.Id && !r.HasWithdrawn);
 
     [BindProperty] public string? Message { get; set; }
     [BindProperty] public bool IsError { get; set; }
-
-    public class PyramidLevel
-    {
-        public int LevelNumber { get; set; }
-        public List<PyramidPositionNode> Nodes { get; set; } = [];
-    }
-
-    public class PyramidPositionNode
-    {
-        public required PyramidRank PyramidRank { get; set; }
-        public PyramidChallenge? ActiveChallenge { get; set; }
-        public bool IsMyTeam { get; set; }
-        public bool CanBeChallengedByCurrentUser { get; set; }
-    }
 
     public async Task<IActionResult> OnGetAsync(int? competitionId, string? message, bool isError = false)
     {
@@ -56,13 +44,15 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
             .OrderBy(c => c.Name)
             .ToListAsync();
 
-        if (!PyramidCompetitions.Any())
+        if (PyramidCompetitions.Count == 0)
         {
             return Page();
         }
 
-        int targetCompId = competitionId ?? HttpContext.Session.GetInt32("SelectedPyramidCompId") ?? PyramidCompetitions.First().Id;
-        SelectedCompetition = PyramidCompetitions.FirstOrDefault(c => c.Id == targetCompId) ?? PyramidCompetitions.First();
+        int targetCompId = competitionId ??
+                           HttpContext.Session.GetInt32("SelectedPyramidCompId") ?? PyramidCompetitions.First().Id;
+        SelectedCompetition =
+            PyramidCompetitions.FirstOrDefault(c => c.Id == targetCompId) ?? PyramidCompetitions.First();
         HttpContext.Session.SetInt32("SelectedPyramidCompId", SelectedCompetition.Id);
 
         var rawRegistrations = await db.TournamentRegistrations
@@ -77,8 +67,8 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         // Fetch ranks for selected competition
         var ranks = await db.PyramidRanks
             .Include(r => r.Team)
-                .ThenInclude(t => t.TeamPlayers)
-                    .ThenInclude(tp => tp.Player)
+            .ThenInclude(t => t.TeamPlayers)
+            .ThenInclude(tp => tp.Player)
             .Where(r => r.CompetitionId == SelectedCompetition.Id)
             .OrderBy(r => r.Rank)
             .ToListAsync();
@@ -88,11 +78,11 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         // Fetch challenges
         var challenges = await db.PyramidChallenges
             .Include(c => c.ChallengerTeam)
-                .ThenInclude(t => t.TeamPlayers)
-                    .ThenInclude(tp => tp.Player)
+            .ThenInclude(t => t.TeamPlayers)
+            .ThenInclude(tp => tp.Player)
             .Include(c => c.DefenderTeam)
-                .ThenInclude(t => t.TeamPlayers)
-                    .ThenInclude(tp => tp.Player)
+            .ThenInclude(t => t.TeamPlayers)
+            .ThenInclude(tp => tp.Player)
             .Where(c => c.CompetitionId == SelectedCompetition.Id)
             .OrderByDescending(c => c.ChallengeDate)
             .ToListAsync();
@@ -115,7 +105,8 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
             MyTeam = MyRank?.Team;
 
             // List available double partners (players not yet registered in this pyramid and not current user)
-            AvailablePartners = AllPlayers.Where(p => p.Id != CurrentPlayer.Id && !inRankPlayerIds.Contains(p.Id)).ToList();
+            AvailablePartners = AllPlayers.Where(p => p.Id != CurrentPlayer.Id && !inRankPlayerIds.Contains(p.Id))
+                .ToList();
         }
 
         // Build Pyramid Levels (Level 1 has 1 rank, Level 2 has 2 ranks, Level 3 has 3 ranks, etc.)
@@ -130,7 +121,7 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
             for (int i = 0; i < levelSize && rankIndex < ranks.Count; i++)
             {
                 var currentRank = ranks[rankIndex];
-                var activeChallenge = ActiveChallenges.FirstOrDefault(c => 
+                var activeChallenge = ActiveChallenges.FirstOrDefault(c =>
                     c.ChallengerTeamId == currentRank.TeamId || c.DefenderTeamId == currentRank.TeamId);
 
                 bool isMyTeam = MyTeam != null && currentRank.TeamId == MyTeam.Id;
@@ -139,7 +130,8 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
                 bool canBeChallenged = false;
                 if (MyRank != null && !isMyTeam && MyRank.Rank > currentRank.Rank)
                 {
-                    bool IAmInChallenge = ActiveChallenges.Any(c => c.ChallengerTeamId == MyTeam!.Id || c.DefenderTeamId == MyTeam!.Id);
+                    bool IAmInChallenge = ActiveChallenges.Any(c =>
+                        c.ChallengerTeamId == MyTeam!.Id || c.DefenderTeamId == MyTeam!.Id);
                     bool TargetIsInChallenge = activeChallenge != null;
                     int rankDifference = MyRank.Rank - currentRank.Rank;
 
@@ -178,15 +170,11 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
-        {
-            return RedirectToPage(new { competitionId, message = "Bitte melde dich zuerst an.", isError = true });
-        }
+            return RedirectToPage(nameof(Login));
 
         var comp = await db.Competitions.FirstOrDefaultAsync(c => c.Id == competitionId);
         if (comp == null)
-        {
             return RedirectToPage(new { message = "Wettbewerb nicht gefunden.", isError = true });
-        }
 
         // Check if user is already registered in this pyramid
         var existingTeam = await db.TeamPlayer
@@ -195,23 +183,21 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
             .FirstOrDefaultAsync();
 
         if (existingTeam != null)
-        {
-            return RedirectToPage(new { competitionId, message = "Du nimmst bereits an dieser Pyramide teil.", isError = true });
-        }
+            return RedirectToPage(new
+                { competitionId, message = "Du nimmst bereits an dieser Pyramide teil.", isError = true });
 
         Player? p2 = null;
         if (!comp.IsSingle)
         {
             if (!partnerId.HasValue || partnerId.Value == CurrentPlayer.Id)
             {
-                return RedirectToPage(new { competitionId, message = "Bitte wähle deinen Doppelpartner aus.", isError = true });
+                return RedirectToPage(new
+                    { competitionId, message = "Bitte wähle deinen Doppelpartner aus.", isError = true });
             }
 
             p2 = await db.Players.FirstOrDefaultAsync(p => p.Id == partnerId.Value);
             if (p2 == null)
-            {
                 return RedirectToPage(new { competitionId, message = "Doppelpartner nicht gefunden.", isError = true });
-            }
 
             var existingPartnerTeam = await db.TeamPlayer
                 .Include(tp => tp.Team)
@@ -219,9 +205,8 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
                 .FirstOrDefaultAsync();
 
             if (existingPartnerTeam != null)
-            {
-                return RedirectToPage(new { competitionId, message = $"{p2} nimmt bereits an dieser Pyramide teil.", isError = true });
-            }
+                return RedirectToPage(new
+                    { competitionId, message = $"{p2} nimmt bereits an dieser Pyramide teil.", isError = true });
         }
 
         // Create new Team
@@ -236,9 +221,8 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         // Add TeamPlayers
         db.TeamPlayer.Add(new TeamPlayer { TeamId = newTeam.Id, PlayerId = CurrentPlayer.Id });
         if (p2 != null)
-        {
             db.TeamPlayer.Add(new TeamPlayer { TeamId = newTeam.Id, PlayerId = p2.Id });
-        }
+
         await db.SaveChangesAsync();
 
         // Assign Rank at the bottom of the pyramid
@@ -256,20 +240,17 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         db.PyramidRanks.Add(pyramidRank);
         await db.SaveChangesAsync();
 
-        return RedirectToPage(new { competitionId, message = "Du wurdest erfolgreich in die Pyramide eingetragen! Viel Erfolg!" });
+        return RedirectToPage(new
+            { competitionId, message = "Du wurdest erfolgreich in die Pyramide eingetragen! Viel Erfolg!" });
     }
 
-    public async Task<IActionResult> OnPostCreateCompetitionAsync(string competitionName, bool isSingle, DateTime? registrationUntil)
+    public async Task<IActionResult> OnPostCreateCompetitionAsync(string competitionName, bool isSingle,
+        DateTime? registrationUntil)
     {
-        if (!User.IsInRole("Admin"))
-        {
-            return RedirectToPage(new { message = "Zugriff verweigert.", isError = true });
-        }
-
+        if (!User.IsInRole("Admin")) return Forbid();
+        
         if (string.IsNullOrWhiteSpace(competitionName))
-        {
             return RedirectToPage(new { message = "Bitte einen Namen für die Pyramide eingeben.", isError = true });
-        }
 
         var newComp = new Competition
         {
@@ -283,16 +264,13 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         await db.SaveChangesAsync();
 
         HttpContext.Session.SetInt32("SelectedPyramidCompId", newComp.Id);
-        return RedirectToPage(new { competitionId = newComp.Id, message = $"Pyramide '{newComp.Name}' wurde erfolgreich erstellt!" });
+        return RedirectToPage(new
+            { competitionId = newComp.Id, message = $"Pyramide '{newComp.Name}' wurde erfolgreich erstellt!" });
     }
 
     public async Task<IActionResult> OnPostDeleteCompetitionAsync(int competitionId)
     {
-        if (!User.IsInRole("Admin"))
-        {
-            return RedirectToPage(new { competitionId, message = "Zugriff verweigert.", isError = true });
-        }
-
+        if (!User.IsInRole("Admin")) return Forbid();
         var challenges = await db.PyramidChallenges.Where(c => c.CompetitionId == competitionId).ToListAsync();
         db.PyramidChallenges.RemoveRange(challenges);
 
@@ -307,9 +285,7 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
 
         var comp = await db.Competitions.FirstOrDefaultAsync(c => c.Id == competitionId);
         if (comp != null)
-        {
             db.Competitions.Remove(comp);
-        }
 
         await db.SaveChangesAsync();
 
@@ -319,23 +295,15 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
 
     public async Task<IActionResult> OnPostAddTeamAsync(int competitionId, int player1Id, int? player2Id)
     {
-        if (!User.IsInRole("Admin"))
-        {
-            return RedirectToPage(new { competitionId, message = "Zugriff verweigert.", isError = true });
-        }
-
+        if (!User.IsInRole("Admin")) return Forbid();
         var comp = await db.Competitions.FirstOrDefaultAsync(c => c.Id == competitionId);
         if (comp == null)
-        {
             return RedirectToPage(new { message = "Wettbewerb nicht gefunden.", isError = true });
-        }
 
         // Check player 1
         var p1 = await db.Players.FirstOrDefaultAsync(p => p.Id == player1Id);
         if (p1 == null)
-        {
             return RedirectToPage(new { competitionId, message = "Spieler 1 nicht gefunden.", isError = true });
-        }
 
         var existingTeamWithP1 = await db.TeamPlayer
             .Include(tp => tp.Team)
@@ -343,23 +311,23 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
             .FirstOrDefaultAsync();
 
         if (existingTeamWithP1 != null)
-        {
-            return RedirectToPage(new { competitionId, message = $"{p1} ist bereits in dieser Pyramide eingetragen.", isError = true });
-        }
+            return RedirectToPage(new
+                { competitionId, message = $"{p1} ist bereits in dieser Pyramide eingetragen.", isError = true });
 
         Player? p2 = null;
         if (!comp.IsSingle)
         {
             if (!player2Id.HasValue || player2Id.Value == player1Id)
-            {
-                return RedirectToPage(new { competitionId, message = "Für eine Doppel-Pyramide müssen zwei verschiedene Spieler gewählt werden.", isError = true });
-            }
+                return RedirectToPage(new
+                {
+                    competitionId,
+                    message = "Für eine Doppel-Pyramide müssen zwei verschiedene Spieler gewählt werden.",
+                    isError = true
+                });
 
             p2 = await db.Players.FirstOrDefaultAsync(p => p.Id == player2Id.Value);
             if (p2 == null)
-            {
                 return RedirectToPage(new { competitionId, message = "Spieler 2 nicht gefunden.", isError = true });
-            }
 
             var existingTeamWithP2 = await db.TeamPlayer
                 .Include(tp => tp.Team)
@@ -367,9 +335,8 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
                 .FirstOrDefaultAsync();
 
             if (existingTeamWithP2 != null)
-            {
-                return RedirectToPage(new { competitionId, message = $"{p2} ist bereits in dieser Pyramide eingetragen.", isError = true });
-            }
+                return RedirectToPage(new
+                    { competitionId, message = $"{p2} ist bereits in dieser Pyramide eingetragen.", isError = true });
         }
 
         // Create new Team
@@ -384,9 +351,7 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         // Add TeamPlayers
         db.TeamPlayer.Add(new TeamPlayer { TeamId = newTeam.Id, PlayerId = p1.Id });
         if (p2 != null)
-        {
             db.TeamPlayer.Add(new TeamPlayer { TeamId = newTeam.Id, PlayerId = p2.Id });
-        }
         await db.SaveChangesAsync();
 
         // Next Rank Number
@@ -411,48 +376,47 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
-        {
             return RedirectToPage(new { competitionId, message = "Bitte melde dich an.", isError = true });
-        }
 
         var comp = await db.Competitions.FirstOrDefaultAsync(c => c.Id == competitionId);
 
         var myRank = await db.PyramidRanks
             .Include(r => r.Team)
-                .ThenInclude(t => t.TeamPlayers)
-                    .ThenInclude(tp => tp.Player)
-            .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.Team.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id));
+            .ThenInclude(t => t.TeamPlayers)
+            .ThenInclude(tp => tp.Player)
+            .FirstOrDefaultAsync(r =>
+                r.CompetitionId == competitionId && r.Team.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id));
 
         if (myRank == null)
-        {
-            return RedirectToPage(new { competitionId, message = "Du nimmst nicht an dieser Pyramide teil.", isError = true });
-        }
+            return RedirectToPage(new
+                { competitionId, message = "Du nimmst nicht an dieser Pyramide teil.", isError = true });
 
         var defenderRank = await db.PyramidRanks
             .Include(r => r.Team)
-                .ThenInclude(t => t.TeamPlayers)
-                    .ThenInclude(tp => tp.Player)
-                        .ThenInclude(p => p.IdentityUser)
+            .ThenInclude(t => t.TeamPlayers)
+            .ThenInclude(tp => tp.Player)
+            .ThenInclude(p => p.IdentityUser)
             .Include(r => r.Team)
-                .ThenInclude(t => t.TeamPlayers)
-                    .ThenInclude(tp => tp.Player)
-                        .ThenInclude(p => p.NotificationSettings)
+            .ThenInclude(t => t.TeamPlayers)
+            .ThenInclude(tp => tp.Player)
+            .ThenInclude(p => p.NotificationSettings)
             .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.TeamId == defenderTeamId);
 
         if (defenderRank == null)
-        {
             return RedirectToPage(new { competitionId, message = "Gefordertes Team nicht gefunden.", isError = true });
-        }
 
         if (myRank.Rank <= defenderRank.Rank)
-        {
-            return RedirectToPage(new { competitionId, message = "Du kannst nur Teams herausfordern, die im Rang über dir stehen.", isError = true });
-        }
+            return RedirectToPage(new
+            {
+                competitionId, message = "Du kannst nur Teams herausfordern, die im Rang über dir stehen.",
+                isError = true
+            });
 
         if (myRank.Rank - defenderRank.Rank > 3)
-        {
-            return RedirectToPage(new { competitionId, message = "Du kannst nur Teams bis zu 3 Ränge über dir herausfordern.", isError = true });
-        }
+            return RedirectToPage(new
+            {
+                competitionId, message = "Du kannst nur Teams bis zu 3 Ränge über dir herausfordern.", isError = true
+            });
 
         // Check existing open challenge for either team
         bool activeChallengeExists = await db.PyramidChallenges.AnyAsync(c =>
@@ -461,9 +425,11 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
              c.ChallengerTeamId == defenderTeamId || c.DefenderTeamId == defenderTeamId));
 
         if (activeChallengeExists)
-        {
-            return RedirectToPage(new { competitionId, message = "Mindestens eines der Teams befindet sich bereits in einer aktiven Forderung.", isError = true });
-        }
+            return RedirectToPage(new
+            {
+                competitionId, message = "Mindestens eines der Teams befindet sich bereits in einer aktiven Forderung.",
+                isError = true
+            });
 
         var challenge = new PyramidChallenge
         {
@@ -478,38 +444,38 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         await db.SaveChangesAsync();
 
         // Send email notification if enabled in defender's notification settings
-        if (defenderRank.Team != null && comp != null)
+        if (comp == null)
+            return RedirectToPage(new { competitionId, message = "Forderung erfolgreich ausgesprochen!" });
+
+        var challengerNames = string.Join(" & ",
+            myRank.Team.TeamPlayers.Select(tp => $"{tp.Player.Firstname} {tp.Player.Lastname}"));
+        var compName = comp.Name;
+
+        foreach (var tp in defenderRank.Team.TeamPlayers)
         {
-            var challengerNames = string.Join(" & ", myRank.Team.TeamPlayers.Select(tp => $"{tp.Player.Firstname} {tp.Player.Lastname}"));
-            var compName = comp.Name;
-
-            foreach (var tp in defenderRank.Team.TeamPlayers)
+            var defenderPlayer = tp.Player;
+            if (defenderPlayer.IdentityUser?.Email != null &&
+                (defenderPlayer.NotificationSettings.EmailOnPyramidChallenge))
             {
-                var defenderPlayer = tp.Player;
-                if (defenderPlayer?.IdentityUser?.Email != null &&
-                    (defenderPlayer.NotificationSettings == null || defenderPlayer.NotificationSettings.EmailOnPyramidChallenge))
-                {
-                    var subject = $"🎾 Neue Forderung in der Pyramide '{compName}'!";
-                    var body = $"Hallo {defenderPlayer.Firstname},<br><br>" +
-                               $"Du wurdest in der Pyramide <strong>{compName}</strong> von <strong>{challengerNames}</strong> herausgefordert!<br><br>" +
-                               $"Bitte vereinbart zeitnah einen Spieltermin und tragt das Ergebnis nach dem Match in der Anwendung ein.<br><br>" +
-                               $"Viel Erfolg!<br>Dein TennisBruck-Team";
+                var subject = $"🎾 Neue Forderung in der Pyramide '{compName}'!";
+                var body = $"Hallo {defenderPlayer.Firstname},<br><br>" +
+                           $"Du wurdest in der Pyramide <strong>{compName}</strong> von <strong>{challengerNames}</strong> herausgefordert!<br><br>" +
+                           $"Bitte vereinbart zeitnah einen Spieltermin und tragt das Ergebnis nach dem Match in der Anwendung ein.<br><br>" +
+                           $"Viel Erfolg!<br>Dein TennisBruck-Team";
 
-                    _ = emailSender.SendEmailAsync(defenderPlayer.IdentityUser.Email, subject, body);
-                }
+                _ = emailSender.SendEmailAsync(defenderPlayer.IdentityUser.Email, subject, body);
             }
         }
 
         return RedirectToPage(new { competitionId, message = "Forderung erfolgreich ausgesprochen!" });
     }
 
-    public async Task<IActionResult> OnPostSubmitResultAsync(int competitionId, int challengeId, int winnerTeamId, string score)
+    public async Task<IActionResult> OnPostSubmitResultAsync(int competitionId, int challengeId, int winnerTeamId,
+        string score)
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
-        {
             return RedirectToPage(new { competitionId, message = "Bitte melde dich an.", isError = true });
-        }
 
         var challenge = await db.PyramidChallenges
             .Include(c => c.ChallengerTeam)
@@ -517,17 +483,16 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
             .FirstOrDefaultAsync(c => c.Id == challengeId);
 
         if (challenge == null || challenge.Status != 0)
-        {
-            return RedirectToPage(new { competitionId, message = "Forderung nicht gefunden oder bereits abgeschlossen.", isError = true });
-        }
+            return RedirectToPage(new
+                { competitionId, message = "Forderung nicht gefunden oder bereits abgeschlossen.", isError = true });
 
-        bool isChallengerMember = await db.TeamPlayer.AnyAsync(tp => tp.TeamId == challenge.ChallengerTeamId && tp.PlayerId == CurrentPlayer.Id);
-        bool isDefenderMember = await db.TeamPlayer.AnyAsync(tp => tp.TeamId == challenge.DefenderTeamId && tp.PlayerId == CurrentPlayer.Id);
+        bool isChallengerMember = await db.TeamPlayer.AnyAsync(tp =>
+            tp.TeamId == challenge.ChallengerTeamId && tp.PlayerId == CurrentPlayer.Id);
+        bool isDefenderMember = await db.TeamPlayer.AnyAsync(tp =>
+            tp.TeamId == challenge.DefenderTeamId && tp.PlayerId == CurrentPlayer.Id);
 
         if (!User.IsInRole("Admin") && !isChallengerMember && !isDefenderMember)
-        {
             return RedirectToPage(new { competitionId, message = "Zugriff verweigert.", isError = true });
-        }
 
         challenge.Status = 1; // Completed
         challenge.WinnerTeamId = winnerTeamId;
@@ -537,14 +502,14 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         // SWAP RANK LOGIC: If Challenger wins, Challenger and Defender swap pyramid ranks!
         if (winnerTeamId == challenge.ChallengerTeamId)
         {
-            var challengerRank = await db.PyramidRanks.FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.TeamId == challenge.ChallengerTeamId);
-            var defenderRank = await db.PyramidRanks.FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.TeamId == challenge.DefenderTeamId);
+            var challengerRank = await db.PyramidRanks.FirstOrDefaultAsync(r =>
+                r.CompetitionId == competitionId && r.TeamId == challenge.ChallengerTeamId);
+            var defenderRank = await db.PyramidRanks.FirstOrDefaultAsync(r =>
+                r.CompetitionId == competitionId && r.TeamId == challenge.DefenderTeamId);
 
             if (challengerRank != null && defenderRank != null)
             {
-                int tempRank = challengerRank.Rank;
-                challengerRank.Rank = defenderRank.Rank;
-                defenderRank.Rank = tempRank;
+                (challengerRank.Rank, defenderRank.Rank) = (defenderRank.Rank, challengerRank.Rank);
             }
         }
 
@@ -561,22 +526,17 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
-        {
             return RedirectToPage(new { competitionId, message = "Bitte melde dich an.", isError = true });
-        }
 
         var challenge = await db.PyramidChallenges.FirstOrDefaultAsync(c => c.Id == challengeId);
         if (challenge == null)
-        {
             return RedirectToPage(new { competitionId, message = "Forderung nicht gefunden.", isError = true });
-        }
 
-        bool isChallengerMember = await db.TeamPlayer.AnyAsync(tp => tp.TeamId == challenge.ChallengerTeamId && tp.PlayerId == CurrentPlayer.Id);
+        bool isChallengerMember = await db.TeamPlayer.AnyAsync(tp =>
+            tp.TeamId == challenge.ChallengerTeamId && tp.PlayerId == CurrentPlayer.Id);
 
         if (!User.IsInRole("Admin") && !isChallengerMember)
-        {
             return RedirectToPage(new { competitionId, message = "Zugriff verweigert.", isError = true });
-        }
 
         challenge.Status = 2; // Cancelled
         await db.SaveChangesAsync();
@@ -587,11 +547,10 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
     public async Task<IActionResult> OnPostDeletePyramidRankAsync(int competitionId, int teamId)
     {
         if (!User.IsInRole("Admin"))
-        {
             return RedirectToPage(new { competitionId, message = "Zugriff verweigert.", isError = true });
-        }
 
-        var rank = await db.PyramidRanks.FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.TeamId == teamId);
+        var rank =
+            await db.PyramidRanks.FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.TeamId == teamId);
         if (rank != null)
         {
             db.PyramidRanks.Remove(rank);
@@ -625,9 +584,7 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         int targetId = challengeId ?? matchId ?? 0;
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
-        {
             return RedirectToPage(new { message = "Bitte melde dich an.", isError = true });
-        }
 
         var challenge = await db.PyramidChallenges
             .Include(c => c.ChallengerTeam)
@@ -635,22 +592,20 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
             .FirstOrDefaultAsync(c => c.Id == targetId);
 
         if (challenge == null || challenge.Status != 0)
-        {
-            return RedirectToPage(new { message = "Forderung nicht gefunden oder bereits abgeschlossen.", isError = true });
-        }
+            return RedirectToPage(new
+                { message = "Forderung nicht gefunden oder bereits abgeschlossen.", isError = true });
 
-        bool isChallengerMember = await db.TeamPlayer.AnyAsync(tp => tp.TeamId == challenge.ChallengerTeamId && tp.PlayerId == CurrentPlayer.Id);
-        bool isDefenderMember = await db.TeamPlayer.AnyAsync(tp => tp.TeamId == challenge.DefenderTeamId && tp.PlayerId == CurrentPlayer.Id);
+        bool isChallengerMember = await db.TeamPlayer.AnyAsync(tp =>
+            tp.TeamId == challenge.ChallengerTeamId && tp.PlayerId == CurrentPlayer.Id);
+        bool isDefenderMember = await db.TeamPlayer.AnyAsync(tp =>
+            tp.TeamId == challenge.DefenderTeamId && tp.PlayerId == CurrentPlayer.Id);
 
         if (!User.IsInRole("Admin") && !isChallengerMember && !isDefenderMember)
-        {
             return RedirectToPage(new { message = "Zugriff verweigert.", isError = true });
-        }
 
         if (string.IsNullOrWhiteSpace(score))
-        {
-            return RedirectToPage(new { competitionId = challenge.CompetitionId, message = "Bitte ein Ergebnis eingeben.", isError = true });
-        }
+            return RedirectToPage(new
+                { competitionId = challenge.CompetitionId, message = "Bitte ein Ergebnis eingeben.", isError = true });
 
         int setsWonChallenger = 0;
         int setsWonDefender = 0;
@@ -669,13 +624,18 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         }
         catch
         {
-            return RedirectToPage(new { competitionId = challenge.CompetitionId, message = "Ungültiges Ergebnisformat (z.B. 6:4 6:2).", isError = true });
+            return RedirectToPage(new
+            {
+                competitionId = challenge.CompetitionId, message = "Ungültiges Ergebnisformat (z.B. 6:4 6:2).",
+                isError = true
+            });
         }
 
         if (setsWonChallenger == setsWonDefender)
-        {
-            return RedirectToPage(new { competitionId = challenge.CompetitionId, message = "Unentschieden ist nicht erlaubt.", isError = true });
-        }
+            return RedirectToPage(new
+            {
+                competitionId = challenge.CompetitionId, message = "Unentschieden ist nicht erlaubt.", isError = true
+            });
 
         int winnerTeamId = setsWonChallenger > setsWonDefender ? challenge.ChallengerTeamId : challenge.DefenderTeamId;
 
@@ -686,17 +646,15 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
     {
         int targetId = challengeId ?? matchId ?? 0;
         if (!User.IsInRole("Admin"))
-        {
             return RedirectToPage(new { message = "Zugriff verweigert.", isError = true });
-        }
 
         var challenge = await db.PyramidChallenges.FirstOrDefaultAsync(c => c.Id == targetId);
         if (challenge == null || challenge.Status != 0)
-        {
             return RedirectToPage(new { message = "Forderung nicht gefunden.", isError = true });
-        }
 
-        int winnerTeamId = walkoverTeamId == challenge.ChallengerTeamId ? challenge.DefenderTeamId : challenge.ChallengerTeamId;
+        int winnerTeamId = walkoverTeamId == challenge.ChallengerTeamId
+            ? challenge.DefenderTeamId
+            : challenge.ChallengerTeamId;
         return await OnPostSubmitResultAsync(challenge.CompetitionId, targetId, winnerTeamId, "w.o.");
     }
 
@@ -705,23 +663,19 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         int targetId = challengeId ?? matchId ?? 0;
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
-        {
             return RedirectToPage(new { message = "Bitte melde dich an.", isError = true });
-        }
 
         var challenge = await db.PyramidChallenges.FirstOrDefaultAsync(c => c.Id == targetId);
         if (challenge == null || challenge.Status != 0)
-        {
             return RedirectToPage(new { message = "Forderung nicht gefunden.", isError = true });
-        }
 
-        bool isChallenger = await db.TeamPlayer.AnyAsync(tp => tp.TeamId == challenge.ChallengerTeamId && tp.PlayerId == CurrentPlayer.Id);
-        bool isDefender = await db.TeamPlayer.AnyAsync(tp => tp.TeamId == challenge.DefenderTeamId && tp.PlayerId == CurrentPlayer.Id);
+        bool isChallenger = await db.TeamPlayer.AnyAsync(tp =>
+            tp.TeamId == challenge.ChallengerTeamId && tp.PlayerId == CurrentPlayer.Id);
+        bool isDefender = await db.TeamPlayer.AnyAsync(tp =>
+            tp.TeamId == challenge.DefenderTeamId && tp.PlayerId == CurrentPlayer.Id);
 
         if (!isChallenger && !isDefender)
-        {
             return RedirectToPage(new { message = "Zugriff verweigert.", isError = true });
-        }
 
         int winnerTeamId = isChallenger ? challenge.DefenderTeamId : challenge.ChallengerTeamId;
         return await OnPostSubmitResultAsync(challenge.CompetitionId, targetId, winnerTeamId, "w.o.");
@@ -731,20 +685,15 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
-        {
             return RedirectToPage(new { competitionId, message = "Bitte melde dich an.", isError = true });
-        }
 
         var comp = await db.Competitions.FirstOrDefaultAsync(c => c.Id == competitionId);
         if (comp == null)
-        {
             return RedirectToPage(new { message = "Wettbewerb nicht gefunden.", isError = true });
-        }
 
         if (DateTime.Now > comp.RegistrationUntil)
-        {
-            return RedirectToPage(new { competitionId, message = "Die Anmeldefrist für diese Pyramide ist abgelaufen.", isError = true });
-        }
+            return RedirectToPage(new
+                { competitionId, message = "Die Anmeldefrist für diese Pyramide ist abgelaufen.", isError = true });
 
         var existingReg = await db.TournamentRegistrations
             .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.PlayerId == CurrentPlayer.Id);
@@ -758,7 +707,8 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
             }
             else
             {
-                return RedirectToPage(new { competitionId, message = "Du bist bereits für diese Pyramide angemeldet.", isError = true });
+                return RedirectToPage(new
+                    { competitionId, message = "Du bist bereits für diese Pyramide angemeldet.", isError = true });
             }
         }
         else
@@ -780,12 +730,11 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
-        {
             return RedirectToPage(new { competitionId, message = "Bitte melde dich an.", isError = true });
-        }
 
         var reg = await db.TournamentRegistrations
-            .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.PlayerId == CurrentPlayer.Id && !r.HasWithdrawn);
+            .FirstOrDefaultAsync(r =>
+                r.CompetitionId == competitionId && r.PlayerId == CurrentPlayer.Id && !r.HasWithdrawn);
 
         if (reg != null)
         {
@@ -799,15 +748,11 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
     public async Task<IActionResult> OnPostSaveNewDateAsync(int competitionId, string newDate, string newTime)
     {
         if (!User.IsInRole("Admin"))
-        {
             return RedirectToPage(new { competitionId, message = "Zugriff verweigert.", isError = true });
-        }
 
         var comp = await db.Competitions.FirstOrDefaultAsync(c => c.Id == competitionId);
         if (comp == null)
-        {
             return RedirectToPage(new { message = "Wettbewerb nicht gefunden.", isError = true });
-        }
 
         try
         {
@@ -823,9 +768,9 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         }
     }
 
-    public async Task<IActionResult> OnPostGeneratePairsAsync(int? competitionId, int? ChampionshipId)
+    public async Task<IActionResult> OnPostGeneratePairsAsync(int? competitionId, int? championshipId)
     {
-        int targetCompId = competitionId ?? ChampionshipId ?? SelectedCompetition?.Id ?? 0;
+        int targetCompId = competitionId ?? championshipId ?? SelectedCompetition?.Id ?? 0;
         if (!User.IsInRole("Admin")) return Forbid();
 
         var comp = await db.Competitions.FirstOrDefaultAsync(c => c.Id == targetCompId);
@@ -844,14 +789,15 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
             .ToListAsync();
 
         var registeredPlayers = poolPlayers.Concat(existingTeamPlayers)
-            .Where(p => p != null)
             .DistinctBy(p => p.Id)
             .ToList();
 
         if (registeredPlayers.Count < 2)
-        {
-            return RedirectToPage(new { competitionId = targetCompId, message = "Es werden mindestens 2 angemeldete Spieler benötigt, um Paare zu generieren.", isError = true });
-        }
+            return RedirectToPage(new
+            {
+                competitionId = targetCompId,
+                message = "Es werden mindestens 2 angemeldete Spieler benötigt, um Paare zu generieren.", isError = true
+            });
 
         // 2. Remove existing ranks and teams safely
         var existingRanks = await db.PyramidRanks
@@ -868,6 +814,7 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         {
             db.TeamPlayer.RemoveRange(t.TeamPlayers);
         }
+
         db.Teams.RemoveRange(existingTeams);
         await db.SaveChangesAsync();
 
@@ -903,25 +850,32 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
 
         await db.SaveChangesAsync();
         string note = shuffled.Count % 2 != 0 ? " (1 Spieler blieb übrig)" : "";
-        return RedirectToPage(new { competitionId = targetCompId, message = $"Doppel-Paare wurden zufällig ausgelost und eingereiht!{note}" });
+        return RedirectToPage(new
+        {
+            competitionId = targetCompId, message = $"Doppel-Paare wurden zufällig ausgelost und eingereiht!{note}"
+        });
     }
 
-    public async Task<IActionResult> OnPostSavePairsAsync(List<PlayerCompetitionPairs> pairs, int? competitionId, int? ChampionshipId)
+    public async Task<IActionResult> OnPostSavePairsAsync(List<PlayerCompetitionPairs> pairs, int? competitionId,
+        int? championshipId)
     {
         if (!User.IsInRole("Admin")) return Forbid();
-        int targetCompId = competitionId ?? ChampionshipId ?? SelectedCompetition?.Id ?? 0;
+        int targetCompId = competitionId ?? championshipId ?? SelectedCompetition?.Id ?? 0;
 
         var assignedPlayerIds = new HashSet<int>();
 
-        foreach (var pair in pairs)
+        foreach (var pair in pairs.Where(pair => pair.SinglePlayerId.HasValue || pair.DoublePlayerId.HasValue))
         {
-            if (!pair.SinglePlayerId.HasValue && !pair.DoublePlayerId.HasValue) continue;
-
-            if (pair.SinglePlayerId.HasValue && pair.DoublePlayerId.HasValue && pair.SinglePlayerId.Value == pair.DoublePlayerId.Value)
+            if (pair.SinglePlayerId.HasValue && pair.DoublePlayerId.HasValue &&
+                pair.SinglePlayerId.Value == pair.DoublePlayerId.Value)
             {
                 var player = await db.Players.FindAsync(pair.SinglePlayerId.Value);
                 string name = player != null ? $"{player.Firstname} {player.Lastname}" : "Ein Spieler";
-                return RedirectToPage(new { competitionId = targetCompId, message = $"Fehler: {name} kann nicht mit sich selbst ein Paar bilden.", isError = true });
+                return RedirectToPage(new
+                {
+                    competitionId = targetCompId,
+                    message = $"Fehler: {name} kann nicht mit sich selbst ein Paar bilden.", isError = true
+                });
             }
 
             if (pair.SinglePlayerId.HasValue)
@@ -930,8 +884,13 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
                 {
                     var player = await db.Players.FindAsync(pair.SinglePlayerId.Value);
                     string name = player != null ? $"{player.Firstname} {player.Lastname}" : "Ein Spieler";
-                    return RedirectToPage(new { competitionId = targetCompId, message = $"Fehler: {name} ist doppelt zugewiesen.", isError = true });
+                    return RedirectToPage(new
+                    {
+                        competitionId = targetCompId, message = $"Fehler: {name} ist doppelt zugewiesen.",
+                        isError = true
+                    });
                 }
+
                 assignedPlayerIds.Add(pair.SinglePlayerId.Value);
             }
 
@@ -941,8 +900,13 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
                 {
                     var player = await db.Players.FindAsync(pair.DoublePlayerId.Value);
                     string name = player != null ? $"{player.Firstname} {player.Lastname}" : "Ein Spieler";
-                    return RedirectToPage(new { competitionId = targetCompId, message = $"Fehler: {name} ist doppelt zugewiesen.", isError = true });
+                    return RedirectToPage(new
+                    {
+                        competitionId = targetCompId, message = $"Fehler: {name} ist doppelt zugewiesen.",
+                        isError = true
+                    });
                 }
+
                 assignedPlayerIds.Add(pair.DoublePlayerId.Value);
             }
         }
@@ -974,7 +938,8 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
                         new() { PlayerId = p2 }
                     };
 
-                    var rank = await db.PyramidRanks.FirstOrDefaultAsync(r => r.TeamId == team.Id && r.CompetitionId == targetCompId);
+                    var rank = await db.PyramidRanks.FirstOrDefaultAsync(r =>
+                        r.TeamId == team.Id && r.CompetitionId == targetCompId);
                     if (rank == null)
                     {
                         maxRank++;
@@ -1013,7 +978,10 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         }
 
         await db.SaveChangesAsync();
-        return RedirectToPage(new { competitionId = targetCompId, message = "Doppel-Paare wurden gespeichert und in der Pyramide eingereiht!" });
+        return RedirectToPage(new
+        {
+            competitionId = targetCompId, message = "Doppel-Paare wurden gespeichert und in der Pyramide eingereiht!"
+        });
     }
 
     public async Task<IActionResult> OnPostDeleteTeamAsync(int teamId)
@@ -1054,10 +1022,7 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
 
     public async Task<IActionResult> OnPostAdminRegisterPlayerAsync(int competitionId, int playerId)
     {
-        if (!User.IsInRole("Admin"))
-        {
-            return RedirectToPage(new { competitionId, message = "Zugriff verweigert.", isError = true });
-        }
+        if (!User.IsInRole("Admin")) return Forbid();
 
         var comp = await db.Competitions.FirstOrDefaultAsync(c => c.Id == competitionId);
         if (comp == null)
@@ -1067,20 +1032,21 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
 
         var player = await db.Players.FirstOrDefaultAsync(p => p.Id == playerId);
         if (player == null)
-        {
             return RedirectToPage(new { competitionId, message = "Spieler nicht gefunden.", isError = true });
-        }
 
         if (comp.IsSingle)
         {
             var existingRank = await db.PyramidRanks
                 .Include(r => r.Team).ThenInclude(t => t.TeamPlayers)
-                .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.Team.TeamPlayers.Any(tp => tp.PlayerId == playerId));
+                .FirstOrDefaultAsync(r =>
+                    r.CompetitionId == competitionId && r.Team.TeamPlayers.Any(tp => tp.PlayerId == playerId));
 
             if (existingRank != null)
-            {
-                return RedirectToPage(new { competitionId, message = $"{player.Firstname} {player.Lastname} ist bereits in dieser Pyramide.", isError = true });
-            }
+                return RedirectToPage(new
+                {
+                    competitionId, message = $"{player.Firstname} {player.Lastname} ist bereits in dieser Pyramide.",
+                    isError = true
+                });
 
             var newTeam = new Team
             {
@@ -1104,56 +1070,59 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
             });
             await db.SaveChangesAsync();
 
-            return RedirectToPage(new { competitionId, message = $"{player.Firstname} {player.Lastname} wurde der Einzel-Pyramide hinzugefügt!" });
-        }
-        else
-        {
-            var existingReg = await db.TournamentRegistrations
-                .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.PlayerId == playerId);
-
-            if (existingReg != null)
+            return RedirectToPage(new
             {
-                if (existingReg.HasWithdrawn)
-                {
-                    existingReg.HasWithdrawn = false;
-                    existingReg.RegisteredAt = DateTime.UtcNow;
-                }
-                else
-                {
-                    return RedirectToPage(new { competitionId, message = $"{player.Firstname} {player.Lastname} ist bereits angemeldet.", isError = true });
-                }
+                competitionId, message = $"{player.Firstname} {player.Lastname} wurde der Einzel-Pyramide hinzugefügt!"
+            });
+        }
+
+        var existingReg = await db.TournamentRegistrations
+            .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.PlayerId == playerId);
+
+        if (existingReg != null)
+        {
+            if (existingReg.HasWithdrawn)
+            {
+                existingReg.HasWithdrawn = false;
+                existingReg.RegisteredAt = DateTime.UtcNow;
             }
             else
             {
-                db.TournamentRegistrations.Add(new TournamentRegistration
+                return RedirectToPage(new
                 {
-                    CompetitionId = competitionId,
-                    PlayerId = playerId,
-                    RegisteredAt = DateTime.UtcNow,
-                    HasWithdrawn = false
+                    competitionId, message = $"{player.Firstname} {player.Lastname} ist bereits angemeldet.",
+                    isError = true
                 });
             }
-
-            await db.SaveChangesAsync();
-            return RedirectToPage(new { competitionId, message = $"{player.Firstname} {player.Lastname} wurde dem Anmelde-Pool hinzugefügt!" });
         }
+        else
+        {
+            db.TournamentRegistrations.Add(new TournamentRegistration
+            {
+                CompetitionId = competitionId,
+                PlayerId = playerId,
+                RegisteredAt = DateTime.UtcNow,
+                HasWithdrawn = false
+            });
+        }
+
+        await db.SaveChangesAsync();
+        return RedirectToPage(new
+        {
+            competitionId, message = $"{player.Firstname} {player.Lastname} wurde dem Anmelde-Pool hinzugefügt!"
+        });
     }
 
     public async Task<IActionResult> OnPostAdminRemoveRegistrationAsync(int competitionId, int playerId)
     {
-        if (!User.IsInRole("Admin"))
-        {
-            return RedirectToPage(new { competitionId, message = "Zugriff verweigert.", isError = true });
-        }
+        if (!User.IsInRole("Admin")) return Forbid();
 
         var reg = await db.TournamentRegistrations
             .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.PlayerId == playerId && !r.HasWithdrawn);
 
-        if (reg != null)
-        {
-            reg.HasWithdrawn = true;
-            await db.SaveChangesAsync();
-        }
+        if (reg == null) return RedirectToPage(new { competitionId, message = "Spieler aus dem Pool entfernt." });
+        reg.HasWithdrawn = true;
+        await db.SaveChangesAsync();
 
         return RedirectToPage(new { competitionId, message = "Spieler aus dem Pool entfernt." });
     }
