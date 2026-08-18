@@ -1,6 +1,6 @@
 @model TennisBruck.Pages.MatchCardViewModel
 
-<div class="match-scorecard" @(string.IsNullOrEmpty(Model.DataGroup) ? "" : $"data-group=\"{Model.DataGroup}\"")>
+<div class="match-scorecard" data-group="@Model.DataGroup">
     <div class="match-main-info">
         <div class="match-players-stacked">
             <div class="match-player-row @(Model.IsTeam1Winner ? "winner" : (Model.IsTeam2Winner ? "loser" : (Model.IsWalkover && Model.WalkoverTeamId == Model.Team1Id ? "walkover-loser" : "")))">

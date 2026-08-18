@@ -379,40 +379,84 @@ public class Championship(
         if (!User.IsInRole("Admin")) return Forbid();
         int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
 
-        // Delete old matches
-        db.Matches
-            .Where(m => m.Group.Competition.Id == selectedCompetitionId)
-            .ExecuteDelete();
+        // Load existing group matches for the competition
+        var existingMatches = db.Matches
+            .Include(m => m.Group)
+            .Include(m => m.Team1)
+            .Include(m => m.Team2)
+            .Include(m => m.Sets)
+            .Where(m => m.Group != null && m.Group.CompetitionId == selectedCompetitionId)
+            .ToList();
 
-        // load groups with teams
+        // Load groups with teams
         var groups = db.Groups
-            .Where(g => g.Competition.Id == selectedCompetitionId)
+            .Where(g => g.CompetitionId == selectedCompetitionId)
             .Include(g => g.GroupTeams)
             .ThenInclude(gt => gt.Team)
             .ToList();
 
-        // create matches (Round robin)
+        var matchesToKeep = new HashSet<int>();
+        var matchesToAdd = new List<Match>();
+
+        // Create/match round robin pairs
         foreach (var group in groups)
         {
-            var teams = group.GroupTeams.Select(gt => gt.Team).ToList();
+            var teams = group.GroupTeams
+                .Where(gt => gt.Team != null)
+                .Select(gt => gt.Team)
+                .ToList();
 
             for (int i = 0; i < teams.Count; i++)
             {
                 for (int j = i + 1; j < teams.Count; j++)
                 {
-                    db.Matches.Add(new Match
+                    var teamA = teams[i];
+                    var teamB = teams[j];
+
+                    var existingMatch = existingMatches.FirstOrDefault(m =>
+                        m.Group != null &&
+                        m.Group.Id == group.Id &&
+                        !matchesToKeep.Contains(m.Id) &&
+                        m.Team1 != null && m.Team2 != null &&
+                        ((m.Team1.Id == teamA.Id && m.Team2.Id == teamB.Id) ||
+                         (m.Team1.Id == teamB.Id && m.Team2.Id == teamA.Id))
+                    );
+
+                    if (existingMatch != null)
                     {
-                        Group = group,
-                        Team1 = teams[i],
-                        Team2 = teams[j]
-                    });
+                        matchesToKeep.Add(existingMatch.Id);
+                    }
+                    else
+                    {
+                        matchesToAdd.Add(new Match
+                        {
+                            Group = group,
+                            Team1 = teamA,
+                            Team2 = teamB
+                        });
+                    }
                 }
             }
         }
 
+        var matchesToRemove = existingMatches
+            .Where(m => !matchesToKeep.Contains(m.Id))
+            .ToList();
+
+        foreach (var match in matchesToRemove)
+        {
+            if (match.Sets != null && match.Sets.Any())
+            {
+                db.Sets.RemoveRange(match.Sets);
+            }
+        }
+
+        db.Matches.RemoveRange(matchesToRemove);
+        db.Matches.AddRange(matchesToAdd);
+
         db.SaveChanges();
 
-        return RedirectToPage(new { Message = "Spiele wurden erstellt" });
+        return RedirectToPage(new { Message = "Spiele wurden aktualisiert" });
     }
 
     public IActionResult OnPostIncreaseGroupSize(int groupId)

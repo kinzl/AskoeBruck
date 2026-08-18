@@ -288,7 +288,8 @@
 
             <section class="modern-card mb-24">
                 @{
-                    var filterGroups = Model.AllMatches
+                    var validMatches = Model.AllMatches.Where(m => m.Team1 != null && m.Team2 != null).ToList();
+                    var filterGroups = validMatches
                         .Select(m => m.Group != null ? m.Group.GroupName : ((m as KnockoutMatch)?.PhaseName ?? "K.O Phase"))
                         .Distinct()
                         .OrderBy(g => g)
@@ -302,10 +303,10 @@
                         <div class="match-filter-select-wrapper">
                             <select id="matchGroupFilterSelect" class="pill-btn pill-select"
                                     onchange="filterAllMatches(this.value, null)">
-                                <option value="all">Alle Gruppen & K.O. Phasen (@Model.AllMatches.Count)</option>
+                                <option value="all">Alle Gruppen & K.O. Phasen (@validMatches.Count)</option>
                                 @foreach (var grp in filterGroups)
                                 {
-                                    var grpCount = Model.AllMatches.Count(m => (m.Group != null ? m.Group.GroupName : ((m as KnockoutMatch)?.PhaseName ?? "K.O Phase")) == grp);
+                                    var grpCount = validMatches.Count(m => (m.Group != null ? m.Group.GroupName : ((m as KnockoutMatch)?.PhaseName ?? "K.O Phase")) == grp);
                                     <option value="@grp">@grp (@grpCount)</option>
                                 }
                             </select>
@@ -318,11 +319,11 @@
                     <div class="match-filter-pills">
                         <button type="button" class="match-filter-btn active" data-filter="all"
                                 onclick="filterAllMatches('all', this)">
-                            Alle (@Model.AllMatches.Count)
+                            Alle (@validMatches.Count)
                         </button>
                         @foreach (var grp in filterGroups)
                         {
-                            var grpCount = Model.AllMatches.Count(m => (m.Group != null ? m.Group.GroupName : ((m as KnockoutMatch)?.PhaseName ?? "K.O Phase")) == grp);
+                            var grpCount = validMatches.Count(m => (m.Group != null ? m.Group.GroupName : ((m as KnockoutMatch)?.PhaseName ?? "K.O Phase")) == grp);
                             <button type="button" class="match-filter-btn" data-filter="@grp"
                                     onclick="filterAllMatches('@grp', this)">
                                 @grp (@grpCount)
