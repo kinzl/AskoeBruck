@@ -60,10 +60,6 @@
                                     <th class="col-team">Teilnehmer</th>
                                     <th class="col-pkt text-center" title="Punkte (Siege)">Pkt</th>
                                     <th class="col-games text-center" title="Games (Gewonnen:Verloren)">Games</th>
-                                    @if (User.IsInRole("Admin"))
-                                    {
-                                        <th class="col-action text-center"></th>
-                                    }
                                 </tr>
                             </thead>
                             <tbody>
@@ -108,19 +104,6 @@
                                         <td class="col-games text-center text-muted">
                                             @(tableEntry != null ? $"{tableEntry.GamesWon}:{tableEntry.GamesLost}" : "0:0")
                                         </td>
-                                        @if (User.IsInRole("Admin"))
-                                        {
-                                            <td class="col-action text-center">
-                                                @if (groupTeam != null)
-                                                {
-                                                    <form method="post" class="m-0">
-                                                        <input type="hidden" name="groupId" value="@group.Id"/>
-                                                        <input type="hidden" name="teamId" value="@groupTeam.Team.Id"/>
-                                                        <button class="btn-delete-icon" asp-page-handler="RemoveTeamFromGroup">❌</button>
-                                                    </form>
-                                                }
-                                            </td>
-                                        }
                                     </tr>
                                 }
                             </tbody>

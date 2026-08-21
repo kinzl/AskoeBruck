@@ -119,59 +119,47 @@
     {
         var registrationOpen = Model.SelectedCompetition.RegistrationUntil >= CityTime.GetViennaTimeZone();
 
-        <section class="modern-card">
-            <div class="competition-info-flex">
-                <div class="competition-info-header-content">
+        <section class="modern-card comp-header-card">
+            <div class="comp-header-row">
+                <div class="comp-title-area">
                     <h2 class="competition-title">@Model.SelectedCompetition.Name</h2>
-                    <p class="registration-text">
-                        Anmeldeschluss: <strong class="text-dark">@Model.SelectedCompetition.RegistrationUntil.ToString("dd.MM.yyyy HH:mm")</strong>
-                    </p>
-                    <div class="competition-status-row" style="margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        @if (registrationOpen)
-                        {
-                            <span class="badge-open">Anmeldung offen</span>
-                        }
-                        else
-                        {
-                            <span class="badge-closed">Anmeldung geschlossen</span>
-                        }
-                        <span class="badge-count">Spieler: @Model.RegisteredCompetitionPlayers.Count</span>
-                    </div>
+                    <span class="badge-count">Spieler: @Model.RegisteredCompetitionPlayers.Count</span>
                 </div>
 
-                <div class="competition-info-actions">
-                    @if (registrationOpen)
+                <div class="comp-meta-area">
+                    <span class="registration-text" style="margin: 0;">
+                        Anmeldeschluss: <strong class="text-dark">@Model.SelectedCompetition.RegistrationUntil.ToString("dd.MM.yyyy HH:mm")</strong>
+                    </span>
+                    @if (User.IsInRole("Admin"))
                     {
-                        <form method="post" class="competition-action-form" style="margin: 0;">
-                            <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
-                            <button class="btn-action btn-large-shadow @(Model.IsRegistered ? "btn-danger" : "btn-accent")"
-                                    asp-page-handler="@(Model.IsRegistered ? "Unregister" : "Register")">
-                                @(Model.IsRegistered ? "❌ Wieder abmelden" : "🎾 Jetzt Teilnehmen")
-                            </button>
-                        </form>
+                        <button type="button" class="btn-pencil-edit" title="Anmeldefrist bearbeiten" onclick="openDateModal()">✏️</button>
                     }
-                    else if (Model.IsRegistered)
+                </div>
+
+                <div class="comp-actions-area">
+                    @if (Model.IsRegistered)
                     {
-                        <form method="post" class="m-0">
+                        <form method="post" class="comp-action-form">
                             <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
-                            <button class="btn-action btn-danger" asp-page-handler="SelfWithdraw"
+                            <button class="btn-action btn-sm btn-danger" asp-page-handler="SelfWithdraw"
                                     onclick="return confirm('Möchtest du das Turnier wirklich komplett abbrechen? ALLE deine noch offenen Matches werden als Sieg (w.o.) für deine Gegner gewertet. Das kann nicht rückgängig gemacht werden!');">
                                 Turnier abbrechen (w.o.)
                             </button>
+                            @if (registrationOpen)
+                            {
+                                <button class="btn-action btn-sm btn-outline-muted" asp-page-handler="Unregister">
+                                    ❌ Wieder abmelden
+                                </button>
+                            }
                         </form>
                     }
-
-                    @if (User.IsInRole("Admin"))
+                    else if (registrationOpen)
                     {
-                        <form method="post" class="admin-time-form">
-                            <span class="text-sm text-muted" style="font-size: 0.8rem; font-weight: 600;">Admin:</span>
-                            <input type="date" name="newDate"
-                                   value="@Model.SelectedCompetition.RegistrationUntil.ToString("yyyy-MM-dd")"
-                                   class="input-auto" required/>
-                            <input type="time" name="newTime"
-                                   value="@Model.SelectedCompetition.RegistrationUntil.ToString("HH:mm")"
-                                   class="input-auto" required/>
-                            <button asp-page-handler="SaveNewDate" class="btn-action btn-sm">Anmeldefrist aktualisieren</button>
+                        <form method="post" class="comp-action-form">
+                            <input type="hidden" name="selectedCompetition" value="@Model.SelectedCompetition.Id"/>
+                            <button class="btn-action btn-sm btn-accent" asp-page-handler="Register">
+                                🎾 Jetzt Teilnehmen
+                            </button>
                         </form>
                     }
                 </div>
@@ -402,12 +390,54 @@
         </div>
     }
 
+    @if (User.IsInRole("Admin") && Model.SelectedCompetition != null)
+    {
+        <div id="editDeadlineModal" class="modal-overlay" onclick="if(event.target === this) closeDateModal();">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>✏️ Anmeldefrist bearbeiten</h3>
+                    <button type="button" class="modal-close" onclick="closeDateModal()">✕</button>
+                </div>
+                <form method="post" asp-page-handler="SaveNewDate">
+                    <div class="modal-body">
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="modalNewDate" style="font-weight: 600; font-size: 0.9rem;">Datum:</label>
+                            <input type="date" id="modalNewDate" name="newDate"
+                                   value="@Model.SelectedCompetition.RegistrationUntil.ToString("yyyy-MM-dd")"
+                                   required/>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="modalNewTime" style="font-weight: 600; font-size: 0.9rem;">Uhrzeit:</label>
+                            <input type="time" id="modalNewTime" name="newTime"
+                                   value="@Model.SelectedCompetition.RegistrationUntil.ToString("HH:mm")"
+                                   required/>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-action btn-outline-muted" onclick="closeDateModal()">Abbrechen</button>
+                        <button type="submit" class="btn-action btn-accent">Speichern</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+
     <partial name="_AdminStrip" model='(Model.SelectedCompetition?.Id, "Neuer Bewerb Name")' />
 
 </main>
 
 <script>
     window.existingTournamentPhases = @Html.Raw(Json.Serialize(Model.Matches.Select(m => m.PhaseName ?? "A-Bewerb").Distinct().ToList()));
+
+    function openDateModal() {
+        const modal = document.getElementById('editDeadlineModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeDateModal() {
+        const modal = document.getElementById('editDeadlineModal');
+        if (modal) modal.style.display = 'none';
+    }
 
     function filterAllMatches(groupName, btn) {
         // Sync active state of filter pills

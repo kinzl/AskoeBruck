@@ -185,9 +185,11 @@ public class Championship(
     private void DeleteCompetitionDependencies(int competitionId, bool deleteCompetitionSelf = false)
     {
         var groupIds = db.Groups.Where(g => g.CompetitionId == competitionId).Select(g => g.Id).ToList();
+        var knockoutMatchIds = db.KnockoutMatch.Where(k => k.CompetitionId == competitionId).Select(k => k.Id).ToList();
 
-        db.Sets.Where(s => groupIds.Contains(s.Match.Group.Id) || (s.Match as KnockoutMatch).CompetitionId == competitionId).ExecuteDelete();
-        db.Matches.Where(m => groupIds.Contains(m.Group.Id) || (m as KnockoutMatch).CompetitionId == competitionId).ExecuteDelete();
+        db.Sets.Where(s => (s.Match.Group != null && groupIds.Contains(s.Match.Group.Id)) || knockoutMatchIds.Contains(s.Match.Id)).ExecuteDelete();
+        db.KnockoutMatch.Where(k => k.CompetitionId == competitionId).ExecuteDelete();
+        db.Matches.Where(m => m.Group != null && groupIds.Contains(m.Group.Id)).ExecuteDelete();
         db.GroupTeams.Where(gt => groupIds.Contains(gt.GroupId)).ExecuteDelete();
         db.Groups.Where(g => g.CompetitionId == competitionId).ExecuteDelete();
         db.TeamPlayer.Where(tp => tp.Team.CompetitionId == competitionId).ExecuteDelete();
@@ -734,9 +736,11 @@ public class Championship(
         // Default value checks
         if (string.IsNullOrWhiteSpace(PhaseName)) PhaseName = "A-Bewerb";
 
-        TempData["ActivePhase"] = PhaseName.Trim();
+        string phaseName = PhaseName.Trim();
+        HttpContext.Session.SetString("ActivePhase", phaseName);
+        TempData["ActivePhase"] = phaseName;
 
-        UpdateBracket(SelectedSize, PhaseName.Trim());
+        UpdateBracket(SelectedSize, phaseName);
         return RedirectToPage();
     }
 
@@ -753,6 +757,16 @@ public class Championship(
 
         if (string.IsNullOrWhiteSpace(phaseToDelete)) return RedirectToPage();
 
+        var matchIds = db.KnockoutMatch
+            .Where(k => k.CompetitionId == selectedCompetitionId && k.PhaseName == phaseToDelete)
+            .Select(k => k.Id)
+            .ToList();
+
+        if (matchIds.Any())
+        {
+            db.Sets.Where(s => matchIds.Contains(s.Match.Id)).ExecuteDelete();
+        }
+
         db.KnockoutMatch.Where(k => k.CompetitionId == selectedCompetitionId && k.PhaseName == phaseToDelete)
             .ExecuteDelete();
         db.SaveChanges();
@@ -765,7 +779,20 @@ public class Championship(
 
     private void UpdateBracket(int size, string phaseName)
     {
-        db.KnockoutMatch.Where(k => k.CompetitionId == SelectedCompetition!.Id && k.PhaseName == phaseName)
+        int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
+        if (selectedCompetitionId == 0) return;
+
+        var matchIds = db.KnockoutMatch
+            .Where(k => k.CompetitionId == selectedCompetitionId && k.PhaseName == phaseName)
+            .Select(k => k.Id)
+            .ToList();
+
+        if (matchIds.Any())
+        {
+            db.Sets.Where(s => matchIds.Contains(s.Match.Id)).ExecuteDelete();
+        }
+
+        db.KnockoutMatch.Where(k => k.CompetitionId == selectedCompetitionId && k.PhaseName == phaseName)
             .ExecuteDelete();
         db.SaveChanges();
         int closest = _knownBrackets.First(k => k >= size);
@@ -787,7 +814,7 @@ public class Championship(
 
             db.KnockoutMatch.Add(new KnockoutMatch()
             {
-                CompetitionId = SelectedCompetition!.Id,
+                CompetitionId = selectedCompetitionId,
                 PhaseName = phaseName,
                 BracketNo = matchId++,
                 RoundNo = round,
@@ -968,7 +995,7 @@ public class Championship(
                 var team = db.Teams
                     .Include(t => t.TeamPlayers)
                     .FirstOrDefault(t => t.Id == pair.TeamId.Value
-                                        && t.CompetitionId == SelectedCompetition!.Id);
+                                        && t.CompetitionId == selectedCompetitionId);
 
                 if (team == null) continue;
 
@@ -984,7 +1011,7 @@ public class Championship(
                 // Neues Doppel-Team erstellen
                 var team = new Team
                 {
-                    CompetitionId = SelectedCompetition!.Id,
+                    CompetitionId = selectedCompetitionId,
                     TeamPlayers = new List<TeamPlayer>
                     {
                         new() { PlayerId = player1Id },
