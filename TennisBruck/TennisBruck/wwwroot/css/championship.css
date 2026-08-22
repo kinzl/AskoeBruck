@@ -210,6 +210,12 @@ body {
     width: max-content;
 }
 
+.badge-comp {
+    background: #1e293b;
+    color: #f8fafc;
+    font-weight: 600;
+}
+
 .participant-badge {
     background: var(--nav-bg);
     color: white;
@@ -1643,19 +1649,47 @@ select:focus {
         justify-content: center;
     }
 
-    /* Group header actions stay side-by-side */
+    /* Group header actions stay side-by-side in a pretty single line */
     .group-header-actions {
+        display: flex;
         flex-direction: row;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
+        gap: 6px;
         width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2px;
     }
 
-    .group-header-actions form,
-    .group-header-actions .btn-action {
+    .group-header-actions form {
+        margin: 0;
+        flex-shrink: 0;
+    }
+
+    .group-header-actions .btn-action,
+    .group-header-actions .btn-generate-sm {
         width: auto;
-        text-align: left;
-        justify-content: flex-start;
+        font-size: 0.78rem;
+        padding: 5px 8px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .group-draw-inline {
+        flex-shrink: 0;
+        gap: 4px;
+    }
+
+    .group-draw-inline .toolbar-label {
+        font-size: 0.78rem;
+    }
+
+    .group-draw-inline .toolbar-input-sm {
+        width: 38px;
+        padding: 3px 2px;
+        font-size: 0.8rem;
     }
 
     /* Bracket */

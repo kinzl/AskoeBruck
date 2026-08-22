@@ -148,7 +148,14 @@ public class Championship(
                     .Cast<Match>()
                     .ToListAsync();
 
-                AllMatches = groupMatches.Concat(knockoutMatches).ToList();
+                AllMatches = groupMatches
+                    .OrderBy(m => m.Group?.GroupName ?? "")
+                    .ThenBy(m => m.Id)
+                    .Concat(knockoutMatches
+                        .OrderBy(km => (km as KnockoutMatch)?.PhaseName ?? "")
+                        .ThenBy(km => (km as KnockoutMatch)?.RoundNo)
+                        .ThenBy(km => (km as KnockoutMatch)?.BracketNo))
+                    .ToList();
 
                 foreach (var group in Groups)
                 {
@@ -1278,19 +1285,29 @@ public class Championship(
         if (!teamIds.Any()) return RedirectToPage(new { Message = "Spieler ist in keinen Teams dieses Bewerbs." });
 
         var unplayedMatches = await db.Matches
+            .Include(x => x.Sets)
             .Include(x => x.Winner)
             .Include(x => x.Team1)
             .Include(x => x.Team2)
-            .Where(m => teamIds.Contains(m.Team1.Id) || teamIds.Contains(m.Team2.Id))
+            .Where(m => (m.Team1 != null && teamIds.Contains(m.Team1.Id)) || (m.Team2 != null && teamIds.Contains(m.Team2.Id)))
             .ToListAsync();
 
         foreach (var match in unplayedMatches)
         {
-            match.IsWalkover = true;
-            bool team1Withdrew = teamIds.Contains(match.Team1.Id);
+            // Do not overwrite matches that have already been played or decided
+            if (match.IsWalkover || match.WinnerTeamId != null || match.Winner != null || (match.Sets != null && match.Sets.Any()))
+            {
+                continue;
+            }
 
-            match.WalkoverTeamId = team1Withdrew ? match.Team1.Id : match.Team2.Id;
-            match.WinnerTeamId = team1Withdrew ? match.Team2.Id : match.Team1.Id;
+            match.IsWalkover = true;
+            bool team1Withdrew = match.Team1 != null && teamIds.Contains(match.Team1.Id);
+
+            match.WalkoverTeamId = team1Withdrew ? match.Team1?.Id : match.Team2?.Id;
+            match.Winner = team1Withdrew ? match.Team2 : match.Team1;
+            match.WinnerTeamId = team1Withdrew ? match.Team2?.Id : match.Team1?.Id;
+
+            AdvanceWinnerInBracket(match);
         }
 
         var registration = await db.TournamentRegistrations

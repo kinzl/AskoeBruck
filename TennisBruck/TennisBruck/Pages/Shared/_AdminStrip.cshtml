@@ -3,7 +3,7 @@
 @if (User.IsInRole("Admin"))
 {
     <section class="admin-strip">
-        <h3 class="admin-strip-title">⚠️ Admin Bereich</h3>
+        <h3 class="admin-strip-title">Admin Bereich</h3>
         <div class="admin-strip-flex">
             <form method="post" asp-page-handler="CreateCompetition" class="admin-create-form">
                 <input type="text" name="competitionName" placeholder="@Model.Placeholder" required class="form-input flex-1"/>

@@ -20,7 +20,7 @@
 {
     <section class="modern-card card-accent-border">
         <div class="card-header">
-            <h2>🎾 Deine nächsten Matches</h2>
+            <h2>Deine nächsten Matches</h2>
         </div>
 
         @foreach (var match in Model.PersonalMatches)
@@ -39,6 +39,11 @@
                 team1Score = string.Join(" ", match.Sets.Select(s => s.Player1GamesWon));
                 team2Score = string.Join(" ", match.Sets.Select(s => s.Player2GamesWon));
             }
+
+            string competitionName = match.Group?.Competition?.Name
+                ?? (match as KnockoutMatch)?.Competition?.Name
+                ?? Model.Competitions.FirstOrDefault(c => c.Id == (match as KnockoutMatch)?.CompetitionId)?.Name
+                ?? "";
 
             string groupCategory = match.Group != null ? match.Group.GroupName : ((match as KnockoutMatch)?.PhaseName ?? "K.O Phase");
 
@@ -62,6 +67,10 @@
                     </div>
 
                     <div class="match-meta-container">
+                        @if (!string.IsNullOrEmpty(competitionName))
+                        {
+                            <span class="badge-phase badge-comp">@competitionName</span>
+                        }
                         <span class="badge-phase">
                             @groupCategory
                         </span>
