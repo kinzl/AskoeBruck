@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using TennisBruck.Dto;
 using Group = TennisDb.Group;
 using Match = TennisDb.Match;
 
@@ -63,18 +62,19 @@ public class Championship(
             .ToList();
 
         PersonalMatches = (await db.Matches
-            .AsNoTracking()
-            .AsSplitQuery()
-            .Include(m => m.Group.Competition)
-            .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
-            .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
-            .Include(m => m.Sets)
-            .Where(m => m.Team1.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id) ||
-                        m.Team2.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id))
-            .ToListAsync())
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Include(m => m.Group.Competition)
+                .Include(m => m.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                .Include(m => m.Team2).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
+                .Include(m => m.Sets)
+                .Where(m => m.Team1.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id) ||
+                            m.Team2.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id))
+                .ToListAsync())
             .Where(m =>
                 (m.Group != null && m.Group.Competition.RegistrationUntil.Year == thisYear) ||
-                (m is KnockoutMatch km && thisYearCompIds.Contains(km.CompetitionId) && m.Team1 != null && m.Team2 != null) ||
+                (m is KnockoutMatch km && thisYearCompIds.Contains(km.CompetitionId) && m.Team1 != null &&
+                 m.Team2 != null) ||
                 (m.Sets != null && m.Sets.Any()) ||
                 m.IsWalkover)
             .ToList();
@@ -95,13 +95,17 @@ public class Championship(
                     .ToListAsync();
 
                 RegisteredTeams = (await db.Teams
-                    .AsNoTracking()
-                    .AsSplitQuery()
-                    .Include(x => x.TeamPlayers).ThenInclude(x => x.Player)
-                    .Where(x => x.Competition.Id == selectedCompetitionId)
-                    .ToListAsync())
-                    .OrderBy(t => t.TeamPlayers.OrderBy(tp => tp.Player?.Lastname).Select(tp => tp.Player?.Lastname).FirstOrDefault() ?? "")
-                    .ThenBy(t => t.TeamPlayers.OrderBy(tp => tp.Player?.Lastname).Select(tp => tp.Player?.Firstname).FirstOrDefault() ?? "")
+                        .AsNoTracking()
+                        .AsSplitQuery()
+                        .Include(x => x.TeamPlayers).ThenInclude(x => x.Player)
+                        .Where(x => x.Competition.Id == selectedCompetitionId)
+                        .ToListAsync())
+                    .OrderBy(t =>
+                        t.TeamPlayers.OrderBy(tp => tp.Player?.Lastname).Select(tp => tp.Player?.Lastname)
+                            .FirstOrDefault() ?? "")
+                    .ThenBy(t =>
+                        t.TeamPlayers.OrderBy(tp => tp.Player?.Lastname).Select(tp => tp.Player?.Firstname)
+                            .FirstOrDefault() ?? "")
                     .ToList();
 
                 RegisteredCompetitionPlayers = await db.TournamentRegistrations
@@ -127,11 +131,11 @@ public class Championship(
                     .AsSplitQuery()
                     .Where(g => g.Competition.Id == selectedCompetitionId)
                     .Include(g => g.GroupTeams)
-                        .ThenInclude(gt => gt.Team)
-                        .ThenInclude(t => t.TeamPlayers)
-                        .ThenInclude(tp => tp.Player)
+                    .ThenInclude(gt => gt.Team)
+                    .ThenInclude(t => t.TeamPlayers)
+                    .ThenInclude(tp => tp.Player)
                     .Include(g => g.Competition)
-                        .ThenInclude(c => c.Teams)
+                    .ThenInclude(c => c.Teams)
                     .ToListAsync();
 
                 var groupMatches = await db.Matches
@@ -201,7 +205,9 @@ public class Championship(
         var groupIds = db.Groups.Where(g => g.CompetitionId == competitionId).Select(g => g.Id).ToList();
         var knockoutMatchIds = db.KnockoutMatch.Where(k => k.CompetitionId == competitionId).Select(k => k.Id).ToList();
 
-        db.Sets.Where(s => (s.Match.Group != null && groupIds.Contains(s.Match.Group.Id)) || knockoutMatchIds.Contains(s.Match.Id)).ExecuteDelete();
+        db.Sets.Where(s =>
+                (s.Match.Group != null && groupIds.Contains(s.Match.Group.Id)) || knockoutMatchIds.Contains(s.Match.Id))
+            .ExecuteDelete();
         db.KnockoutMatch.Where(k => k.CompetitionId == competitionId).ExecuteDelete();
         db.Matches.Where(m => m.Group != null && groupIds.Contains(m.Group.Id)).ExecuteDelete();
         db.GroupTeams.Where(gt => groupIds.Contains(gt.GroupId)).ExecuteDelete();
@@ -254,6 +260,7 @@ public class Championship(
             {
                 return RedirectToPage(new { Message = "Es können nur PDF-Dateien hochgeladen werden (.pdf)." });
             }
+
             if (pdfFile.Length > 15 * 1024 * 1024)
             {
                 return RedirectToPage(new { Message = "Die PDF-Datei ist zu groß (maximal 15 MB erlaubt)." });
@@ -266,8 +273,10 @@ public class Championship(
             var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
             if (!allowedExtensions.Contains(ext))
             {
-                return RedirectToPage(new { Message = "Ungültiges Bildformat. Erlaubt sind JPG, PNG, WEBP, GIF, SVG." });
+                return RedirectToPage(new
+                    { Message = "Ungültiges Bildformat. Erlaubt sind JPG, PNG, WEBP, GIF, SVG." });
             }
+
             if (imageFile.Length > 15 * 1024 * 1024)
             {
                 return RedirectToPage(new { Message = "Das Bild ist zu groß (maximal 15 MB erlaubt)." });
@@ -698,6 +707,7 @@ public class Championship(
             {
                 db.Sets.RemoveRange(match.Sets);
             }
+
             match.Sets = new List<Set>();
 
             var sets = score.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -950,6 +960,7 @@ public class Championship(
                             AdvanceWinnerInBracket(match);
                         }
                     }
+
                     continue;
                 }
 
@@ -966,6 +977,7 @@ public class Championship(
                         db.SaveChanges();
                         AdvanceWinnerInBracket(match);
                     }
+
                     continue;
                 }
 
@@ -999,7 +1011,7 @@ public class Championship(
         // 1. Validate for duplicates and same-player configurations
         var assignedPlayerIds = new HashSet<int>();
         var submittedTeamIds = pairs.Where(p => p.TeamId.HasValue).Select(p => p.TeamId!.Value).ToList();
-        
+
         // Add players of other teams that are not in the submitted list to assignedPlayerIds
         var otherTeams = db.Teams
             .Include(t => t.TeamPlayers)
@@ -1020,7 +1032,8 @@ public class Championship(
                 continue;
 
             // Check if player A is the same as player B
-            if (pair.SinglePlayerId.HasValue && pair.DoublePlayerId.HasValue && pair.SinglePlayerId.Value == pair.DoublePlayerId.Value)
+            if (pair.SinglePlayerId.HasValue && pair.DoublePlayerId.HasValue &&
+                pair.SinglePlayerId.Value == pair.DoublePlayerId.Value)
             {
                 var player = db.Players.Find(pair.SinglePlayerId.Value);
                 string name = player != null ? $"{player.Firstname} {player.Lastname}" : "Ein Spieler";
@@ -1034,8 +1047,10 @@ public class Championship(
                 {
                     var player = db.Players.Find(pair.SinglePlayerId.Value);
                     string name = player != null ? $"{player.Firstname} {player.Lastname}" : "Ein Spieler";
-                    return RedirectToPage(new { Message = $"Fehler: {name} ist bereits einem anderen Team zugeteilt." });
+                    return RedirectToPage(new
+                        { Message = $"Fehler: {name} ist bereits einem anderen Team zugeteilt." });
                 }
+
                 assignedPlayerIds.Add(pair.SinglePlayerId.Value);
             }
 
@@ -1046,8 +1061,10 @@ public class Championship(
                 {
                     var player = db.Players.Find(pair.DoublePlayerId.Value);
                     string name = player != null ? $"{player.Firstname} {player.Lastname}" : "Ein Spieler";
-                    return RedirectToPage(new { Message = $"Fehler: {name} ist bereits einem anderen Team zugeteilt." });
+                    return RedirectToPage(new
+                        { Message = $"Fehler: {name} ist bereits einem anderen Team zugeteilt." });
                 }
+
                 assignedPlayerIds.Add(pair.DoublePlayerId.Value);
             }
         }
@@ -1067,7 +1084,7 @@ public class Championship(
                 var team = db.Teams
                     .Include(t => t.TeamPlayers)
                     .FirstOrDefault(t => t.Id == pair.TeamId.Value
-                                        && t.CompetitionId == selectedCompetitionId);
+                                         && t.CompetitionId == selectedCompetitionId);
 
                 if (team == null) continue;
 
@@ -1301,7 +1318,8 @@ public class Championship(
         {
             foreach (var p in players)
             {
-                if (p.IdentityUser?.Email != null && (p.NotificationSettings == null || p.NotificationSettings.EmailOnOpponentAssigned))
+                if (p.IdentityUser?.Email != null &&
+                    (p.NotificationSettings == null || p.NotificationSettings.EmailOnOpponentAssigned))
                 {
                     var subject = "🎾 Dein Gegner im K.O.-Raster steht fest!";
                     var body = $"Hallo {p.Firstname},<br><br>" +
@@ -1354,13 +1372,15 @@ public class Championship(
             .Include(x => x.Winner)
             .Include(x => x.Team1)
             .Include(x => x.Team2)
-            .Where(m => (m.Team1 != null && teamIds.Contains(m.Team1.Id)) || (m.Team2 != null && teamIds.Contains(m.Team2.Id)))
+            .Where(m => (m.Team1 != null && teamIds.Contains(m.Team1.Id)) ||
+                        (m.Team2 != null && teamIds.Contains(m.Team2.Id)))
             .ToListAsync();
 
         foreach (var match in unplayedMatches)
         {
             // Do not overwrite matches that have already been played or decided
-            if (match.IsWalkover || match.WinnerTeamId != null || match.Winner != null || (match.Sets != null && match.Sets.Any()))
+            if (match.IsWalkover || match.WinnerTeamId != null || match.Winner != null ||
+                (match.Sets != null && match.Sets.Any()))
             {
                 continue;
             }

@@ -685,3 +685,46 @@ body {
 .clickable-res:hover {
     filter: brightness(0.95);
 }
+
+/* --- DECOUPLED STYLES --- */
+.btn-admin-reserve {
+    padding: 9px 20px !important;
+}
+
+.time-label {
+    font-weight: 600;
+}
+
+.weather-info {
+    font-size: 0.85rem;
+    margin-top: 4px;
+    font-weight: normal;
+    opacity: 0.8;
+    min-height: 18px;
+}
+
+.reserved-time {
+    font-size: 0.65rem;
+    opacity: 0.8;
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+.edit-indicator {
+    font-size: 0.6rem;
+    opacity: 0.75;
+    margin-top: 3px;
+}
+
+.slot-muted-dash {
+    opacity: 0.5;
+}
+
+.btn-modal-submit-custom {
+    padding: 8px 18px !important;
+    margin: 0 !important;
+}
+
+.hidden-element {
+    display: none !important;
+}

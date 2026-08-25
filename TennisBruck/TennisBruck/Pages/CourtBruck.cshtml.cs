@@ -8,8 +8,6 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
     public List<Reservation> Reservations { get; set; } = [];
     public List<Player> AllPlayers { get; set; } = [];
     public Player? CurrentPlayer { get; private set; }
-    [BindProperty] public int CourtNumber { get; set; }
-    [BindProperty] public DateTime StartTime { get; set; }
     [BindProperty] public int ReservationId { get; set; }
     [BindProperty] public string? Message { get; set; }
     [BindProperty] public bool IsError { get; set; }
@@ -58,17 +56,17 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
                 var startRes = courtReservations[i];
                 int rowSpan = 1;
                 int j = i + 1;
-                
+
                 while (j < courtReservations.Count)
                 {
                     var currentRes = courtReservations[j];
                     var prevRes = courtReservations[j - 1];
-                    
+
                     bool isContiguous = currentRes.StartTime == prevRes.EndTime;
                     bool isSamePlayer = currentRes.Player?.Id == startRes.Player?.Id;
                     bool isSamePartner = currentRes.PartnerId == startRes.PartnerId;
                     bool isSameEvent = currentRes.EventName == startRes.EventName;
-                    
+
                     if (isContiguous && isSamePlayer && isSamePartner && isSameEvent)
                     {
                         rowSpan++;
@@ -79,14 +77,14 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
                         break;
                     }
                 }
-                
+
                 BlockInfo[(court, startRes.StartTime)] = new ReservationBlock
                 {
                     Reservation = startRes,
                     RowSpan = rowSpan,
                     IsStart = true
                 };
-                
+
                 for (int k = i + 1; k < j; k++)
                 {
                     BlockInfo[(court, courtReservations[k].StartTime)] = new ReservationBlock
@@ -96,7 +94,7 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
                         IsStart = false
                     };
                 }
-                
+
                 i = j;
             }
         }
@@ -109,7 +107,8 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         return Reservations.FirstOrDefault(r => r.CourtNumber == courtNumber && r.StartTime == startTime);
     }
 
-    public IActionResult OnPostCreateReservation(int courtNumber, string startTimeStr, string? endTimeStr, int? partnerId, string? eventName, string currentDateStr)
+    public IActionResult OnPostCreateReservation(int courtNumber, string startTimeStr, string? endTimeStr,
+        int? partnerId, string? eventName, string currentDateStr)
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
@@ -136,12 +135,17 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
         if (startDateTime < CityTime.GetViennaTimeZone())
         {
-            return RedirectToPage(new { date = currentDateStr, message = "Reservierungen in der Vergangenheit sind nicht erlaubt.", isError = true });
+            return RedirectToPage(new
+            {
+                date = currentDateStr, message = "Reservierungen in der Vergangenheit sind nicht erlaubt.",
+                isError = true
+            });
         }
 
         if (endDateTime <= startDateTime)
         {
-            return RedirectToPage(new { date = currentDateStr, message = "Die Endzeit muss nach der Startzeit liegen.", isError = true });
+            return RedirectToPage(new
+                { date = currentDateStr, message = "Die Endzeit muss nach der Startzeit liegen.", isError = true });
         }
 
         var hasConflict = db.Reservations.Any(r =>
@@ -151,7 +155,11 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
         if (hasConflict)
         {
-            return RedirectToPage(new { date = currentDateStr, message = "Dieser Zeitraum ist bereits teilweise oder vollständig reserviert.", isError = true });
+            return RedirectToPage(new
+            {
+                date = currentDateStr, message = "Dieser Zeitraum ist bereits teilweise oder vollständig reserviert.",
+                isError = true
+            });
         }
 
         Player? partner = null;
@@ -185,7 +193,8 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         return OnPostCreateReservation(courtNumber, startTimeStr, endTimeStr, null, eventName, currentDateStr);
     }
 
-    public IActionResult OnPostUpdateReservation(int reservationId, int courtNumber, string startTimeStr, string endTimeStr, int? partnerId, string? eventName, string currentDateStr)
+    public IActionResult OnPostUpdateReservation(int reservationId, int courtNumber, string startTimeStr,
+        string endTimeStr, int? partnerId, string? eventName, string currentDateStr)
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
@@ -199,7 +208,8 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
         if (targetRes == null)
         {
-            return RedirectToPage(new { date = currentDateStr, message = "Reservierung nicht gefunden.", isError = true });
+            return RedirectToPage(new
+                { date = currentDateStr, message = "Reservierung nicht gefunden.", isError = true });
         }
 
         if (!User.IsInRole("Admin") && targetRes.Player?.Id != CurrentPlayer.Id)
@@ -227,7 +237,8 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
         if (endDateTime <= startDateTime)
         {
-            return RedirectToPage(new { date = currentDateStr, message = "Die Endzeit muss nach der Startzeit liegen.", isError = true });
+            return RedirectToPage(new
+                { date = currentDateStr, message = "Die Endzeit muss nach der Startzeit liegen.", isError = true });
         }
 
         var hasConflict = db.Reservations.Any(r =>
@@ -238,7 +249,11 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
 
         if (hasConflict)
         {
-            return RedirectToPage(new { date = currentDateStr, message = "Der geänderte Zeitraum überschneidet sich mit einer anderen Reservierung.", isError = true });
+            return RedirectToPage(new
+            {
+                date = currentDateStr,
+                message = "Der geänderte Zeitraum überschneidet sich mit einer anderen Reservierung.", isError = true
+            });
         }
 
         db.Reservations.RemoveRange(existingBlock);
@@ -273,18 +288,25 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
         {
-            return RedirectToPage(new { date = CurrentDate.ToString("yyyy-MM-dd"), message = "Bitte melde dich an.", isError = true });
+            return RedirectToPage(new
+                { date = CurrentDate.ToString("yyyy-MM-dd"), message = "Bitte melde dich an.", isError = true });
         }
 
         var reservation = db.Reservations.Include(r => r.Player).FirstOrDefault(x => x.Id == ReservationId);
         if (reservation == null)
         {
-            return RedirectToPage(new { date = CurrentDate.ToString("yyyy-MM-dd"), message = "Reservierung nicht gefunden.", isError = true });
+            return RedirectToPage(new
+            {
+                date = CurrentDate.ToString("yyyy-MM-dd"), message = "Reservierung nicht gefunden.", isError = true
+            });
         }
 
         if (!User.IsInRole("Admin") && reservation.Player?.Id != CurrentPlayer.Id)
         {
-            return RedirectToPage(new { date = reservation.StartTime.ToString("yyyy-MM-dd"), message = "Zugriff verweigert.", isError = true });
+            return RedirectToPage(new
+            {
+                date = reservation.StartTime.ToString("yyyy-MM-dd"), message = "Zugriff verweigert.", isError = true
+            });
         }
 
         var allDayRes = db.Reservations
@@ -299,7 +321,11 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         db.Reservations.RemoveRange(blockToDelete);
         db.SaveChanges();
 
-        return RedirectToPage(new { date = reservation.StartTime.ToString("yyyy-MM-dd"), message = "Die Reservierung(en) wurde(n) erfolgreich gelöscht." });
+        return RedirectToPage(new
+        {
+            date = reservation.StartTime.ToString("yyyy-MM-dd"),
+            message = "Die Reservierung(en) wurde(n) erfolgreich gelöscht."
+        });
     }
 
     public async Task<IActionResult> OnPostDeleteSelectedReservationsAsync(List<int> selectedReservationIds)
@@ -312,7 +338,7 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
                 { date = CurrentDate.ToString("yyyy-MM-dd"), message = "Zugriff verweigert.", isError = true });
         }
 
-        if (selectedReservationIds == null || !selectedReservationIds.Any())
+        if (!selectedReservationIds.Any())
         {
             return RedirectToPage(new
                 { date = CurrentDate.ToString("yyyy-MM-dd"), message = "Keine Reservierungen ausgewählt." });
@@ -345,21 +371,24 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         await db.SaveChangesAsync();
 
         return RedirectToPage(new
-            { date = CurrentDate.ToString("yyyy-MM-dd"), message = "Die ausgewählten Reservierungen wurden erfolgreich gelöscht." });
+        {
+            date = CurrentDate.ToString("yyyy-MM-dd"),
+            message = "Die ausgewählten Reservierungen wurden erfolgreich gelöscht."
+        });
     }
 
     private static List<Reservation> GetContiguousBlock(Reservation reservation, List<Reservation> allDayRes)
     {
         var block = new List<Reservation> { reservation };
 
-        for (var t = reservation.StartTime.AddMinutes(-30); ; t = t.AddMinutes(-30))
+        for (var t = reservation.StartTime.AddMinutes(-30);; t = t.AddMinutes(-30))
         {
             var prev = allDayRes.FirstOrDefault(r => r.StartTime == t);
             if (prev == null) break;
             block.Add(prev);
         }
 
-        for (var t = reservation.StartTime.AddMinutes(30); ; t = t.AddMinutes(30))
+        for (var t = reservation.StartTime.AddMinutes(30);; t = t.AddMinutes(30))
         {
             var next = allDayRes.FirstOrDefault(r => r.StartTime == t);
             if (next == null) break;

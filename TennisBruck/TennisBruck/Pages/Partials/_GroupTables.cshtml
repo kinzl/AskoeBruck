@@ -15,7 +15,7 @@
                     </form>
 
                     <form method="post" class="m-0">
-                        <input type="hidden" name="competitionId" value="@Model.SelectedCompetition.Id"/>
+                        <input type="hidden" name="competitionId" value="@Model.SelectedCompetition!.Id"/>
                         <div class="group-draw-inline">
                             <label for="targetGroupSize" class="toolbar-label">Größe:</label>
                             <input type="number" id="targetGroupSize" name="TargetGroupSize"

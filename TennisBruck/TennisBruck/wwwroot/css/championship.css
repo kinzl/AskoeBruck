@@ -2377,4 +2377,97 @@ select:focus {
     }
 }
 
+/* --- DECOUPLED COMPONENT & UTILITY STYLES --- */
+.registration-text-reset {
+    margin: 0;
+}
+
+.collapsible-infobox {
+    display: none;
+}
+
+.no-matches-filtered-msg {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    color: var(--color-gray);
+}
+
+.overview-card-subtitle {
+    margin: 2px 0 0 0;
+    font-size: 0.88rem;
+}
+
+.info-text-empty-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--nav-bg);
+    margin-bottom: 6px;
+}
+
+.info-text-empty-desc {
+    margin: 0;
+}
+
+.info-text-empty-action {
+    margin-top: 15px;
+}
+
+.btn-pdf-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.modal-form-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-group-custom {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-label-custom {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.form-hint-custom {
+    font-size: 0.75rem;
+}
+
+.modal-media-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-pdf-info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-pdf-filename {
+    color: var(--nav-bg);
+}
+
+.delete-media-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    cursor: pointer;
+    color: #dc2626;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+
+
 

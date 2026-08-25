@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/tournaments.css" asp-append-version="true">
     <link rel="stylesheet" href="~/css/pyramid.css" asp-append-version="true">
+    <script src="~/js/pyramid.js" asp-append-version="true"></script>
     <partial name="_PwaHeaders"/>
 </head>
 <body>
@@ -404,13 +405,13 @@
                 .ThenBy(p => p.Firstname)
                 .ToList();
 
-            <partial name="Partials/_DoublePairsConfig" model='new TennisBruck.Pages.Partials.DoublePairsConfigViewModel
+            <partial name="Partials/_DoublePairsConfig" model='new Partials.DoublePairsConfigViewModel
             {
                 CompetitionId = Model.SelectedCompetition.Id,
                 RegistrationUntil = Model.SelectedCompetition.RegistrationUntil,
                 IsAdmin = User.IsInRole("Admin"),
                 RegisteredPlayers = pairablePlayers,
-                RegisteredTeams = Model.RegisteredTeams ?? new List<TennisDb.Team>()
+                RegisteredTeams = Model.RegisteredTeams
             }'/>
         }
 
@@ -506,32 +507,6 @@
 
 </main>
 
-<script>
-    function openResultModal(challengeId, challengerName, challengerId, defenderName, defenderId) {
-        document.getElementById('modalChallengeId').value = challengeId;
-
-        var select = document.getElementById('modalWinnerSelect');
-        select.innerHTML = '';
-
-        var opt1 = document.createElement('option');
-        opt1.value = challengerId;
-        opt1.textContent = challengerName + ' (Forderer - übernimmt Rang bei Sieg)';
-
-        var opt2 = document.createElement('option');
-        opt2.value = defenderId;
-        opt2.textContent = defenderName + ' (Geforderter - verteidigt Rang)';
-
-        select.appendChild(opt1);
-        select.appendChild(opt2);
-
-        document.getElementById('resultModal').style.display = 'flex';
-    }
-
-    function closeResultModal() {
-        document.getElementById('resultModal').style.display = 'none';
-    }
-</script>
-
-<partial name="_PwaScripts"/>
+<script src="~/js/pwa.js" asp-append-version="true"></script>
 </body>
 </html>

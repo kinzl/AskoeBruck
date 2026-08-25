@@ -591,3 +591,8 @@ input:checked + .slider:before {
     border-color: var(--nav-bg);
     box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
 }
+
+.hidden-element {
+    display: none !important;
+}
+

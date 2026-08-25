@@ -1,5 +1,3 @@
-using Match = TennisDb.Match;
-
 namespace TennisBruck.Pages;
 
 public class GroupTableEntry

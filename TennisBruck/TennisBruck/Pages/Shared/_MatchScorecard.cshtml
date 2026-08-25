@@ -3,14 +3,14 @@
 <div class="match-scorecard" data-group="@Model.DataGroup">
     <div class="match-main-info">
         <div class="match-players-stacked">
-            <div class="match-player-row @(Model.IsTeam1Winner ? "winner" : (Model.IsTeam2Winner ? "loser" : (Model.IsWalkover && Model.WalkoverTeamId == Model.Team1Id ? "walkover-loser" : "")))">
+            <div class="match-player-row @(Model.IsTeam1Winner ? "winner" : Model.IsTeam2Winner ? "loser" : Model.IsWalkover && Model.WalkoverTeamId == Model.Team1Id ? "walkover-loser" : "")">
                 <span class="player-name" title="@Model.Team1Name">@Model.Team1Name</span>
                 @if (!string.IsNullOrEmpty(Model.Team1Score))
                 {
                     <span class="match-player-score-inline">@Model.Team1Score</span>
                 }
             </div>
-            <div class="match-player-row @(Model.IsTeam2Winner ? "winner" : (Model.IsTeam1Winner ? "loser" : (Model.IsWalkover && Model.WalkoverTeamId == Model.Team2Id ? "walkover-loser" : "")))">
+            <div class="match-player-row @(Model.IsTeam2Winner ? "winner" : Model.IsTeam1Winner ? "loser" : Model.IsWalkover && Model.WalkoverTeamId == Model.Team2Id ? "walkover-loser" : "")">
                 <span class="player-name" title="@Model.Team2Name">@Model.Team2Name</span>
                 @if (!string.IsNullOrEmpty(Model.Team2Score))
                 {
@@ -27,7 +27,7 @@
 
             @if (Model.CanDelete)
             {
-                <form method="post" class="inline-form-zero" style="display:inline-block;" asp-page-handler="@Model.DeleteHandler">
+                <form method="post" class="inline-form-zero" asp-page-handler="@Model.DeleteHandler">
                     <input type="hidden" name="matchId" value="@Model.MatchId"/>
                     <input type="hidden" name="challengeId" value="@Model.MatchId"/>
                     <button type="submit" class="btn-action btn-danger btn-xs"

@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    const dateInput = document.querySelector('input[name="date"]');
+    const currentViewDate = window.currentViewDate || (dateInput ? dateInput.value : '');
     if (!currentViewDate) return;
 
     const latitude = 48.25;

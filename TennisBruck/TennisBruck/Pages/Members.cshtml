@@ -14,8 +14,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/members.css" asp-append-version="true">
-
-    <script src="/js/toggleVisibility.js"></script>
+    <script src="~/js/members.js" asp-append-version="true"></script>
 </head>
 <body>
 
@@ -188,7 +187,7 @@
 @* ── EDIT MODAL (admin only) ──────────────────────────────────────────────── *@
 @if (User.IsInRole("Admin"))
 {
-    <div id="editModal" class="modal-overlay" style="display:none;" onclick="closeEditModalOnBackdrop(event)">
+    <div id="editModal" class="modal-overlay hidden-element">
         <div class="modal-box">
             <div class="modal-header">
                 <h3 class="modal-title">✏️ Mitglied bearbeiten</h3>
@@ -209,7 +208,7 @@
                     <div class="form-group">
                         <label for="editEmail">E-Mail <span id="editEmailHint" class="optional-hint"></span></label>
                         <input id="editEmail" type="email" name="editEmail" class="form-input" placeholder="z. B. max@example.com"/>
-                        <p id="editOfflineNote" class="offline-note" style="display:none;">
+                        <p id="editOfflineNote" class="offline-note hidden-element">
                             💡 Eine E-Mail hinzufügen erstellt automatisch einen Login-Account.
                         </p>
                     </div>
@@ -227,121 +226,6 @@
         </div>
     </div>
 }
-
-<script>
-    let currentSortCol = -1;
-    let currentSortDir = "asc";
-
-    function filterMembers() {
-        const input = document.getElementById("memberSearch");
-        const filter = input.value.toLowerCase().trim();
-        const table = document.querySelector(".members-table");
-        const trs = table.querySelectorAll("tbody tr");
-
-        trs.forEach(tr => {
-            const firstnameTd = tr.querySelector("td:nth-child(1)");
-            const lastnameTd = tr.querySelector("td:nth-child(2)");
-            if (firstnameTd && lastnameTd) {
-                const firstnameText = firstnameTd.getAttribute("data-val") || "";
-                const lastnameText = lastnameTd.getAttribute("data-val") || "";
-                const combined = (firstnameText + " " + lastnameText).toLowerCase();
-                if (combined.includes(filter)) {
-                    tr.style.display = "";
-                } else {
-                    tr.style.display = "none";
-                }
-            }
-        });
-    }
-
-    function sortTable(colIndex) {
-        const table = document.querySelector(".members-table");
-        const tbody = table.querySelector("tbody");
-        const rows = Array.from(tbody.querySelectorAll("tr"));
-        
-        if (currentSortCol === colIndex) {
-            currentSortDir = currentSortDir === "asc" ? "desc" : "asc";
-        } else {
-            currentSortCol = colIndex;
-            currentSortDir = "asc";
-        }
-        
-        rows.sort((a, b) => {
-            const cellA = a.querySelector(`td:nth-child(${colIndex + 1})`).getAttribute("data-val").toLowerCase();
-            const cellB = b.querySelector(`td:nth-child(${colIndex + 1})`).getAttribute("data-val").toLowerCase();
-            
-            return currentSortDir === "asc" 
-                ? cellA.localeCompare(cellB, 'de', { sensitivity: 'base' })
-                : cellB.localeCompare(cellA, 'de', { sensitivity: 'base' });
-        });
-        
-        tbody.innerHTML = "";
-        rows.forEach(row => tbody.appendChild(row));
-        
-        const firstnameIcon = document.getElementById("th-firstname").querySelector(".sort-icon");
-        const lastnameIcon = document.getElementById("th-lastname").querySelector(".sort-icon");
-        
-        if (colIndex === 0) {
-            firstnameIcon.textContent = currentSortDir === "asc" ? "▲" : "▼";
-            lastnameIcon.textContent = "↕";
-        } else if (colIndex === 1) {
-            lastnameIcon.textContent = currentSortDir === "asc" ? "▲" : "▼";
-            firstnameIcon.textContent = "↕";
-        }
-    }
-
-    function openEditModal(id, firstname, lastname, itn, email, isOffline, hasNuLiga) {
-        document.getElementById('editPlayerId').value = id;
-        document.getElementById('editFirstname').value = firstname;
-        document.getElementById('editLastname').value = lastname;
-        document.getElementById('editEmail').value = email;
-
-        // Email field: always visible, but hint text changes for offline players
-        const emailHint = document.getElementById('editEmailHint');
-        const offlineNote = document.getElementById('editOfflineNote');
-        if (isOffline) {
-            emailHint.textContent = '(optional — wird Login-Account erstellen)';
-            offlineNote.style.display = 'block';
-        } else {
-            emailHint.textContent = '(optional)';
-            offlineNote.style.display = 'none';
-        }
-
-        // ITN field: disabled when ÖTV/NuLiga URL exists (auto-synced)
-        const itnInput = document.getElementById('editItn');
-        const itnHint = document.getElementById('editItnHint');
-        if (hasNuLiga) {
-            itnInput.value = itn;
-            itnInput.disabled = true;
-            itnInput.title = 'Wird automatisch vom ÖTV synchronisiert';
-            itnHint.textContent = '(automatisch vom ÖTV — nicht editierbar)';
-        } else {
-            itnInput.value = itn;
-            itnInput.disabled = false;
-            itnInput.title = '';
-            itnHint.textContent = '(optional)';
-        }
-
-        document.getElementById('editModal').style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeEditModal() {
-        document.getElementById('editModal').style.display = 'none';
-        document.body.style.overflow = '';
-    }
-
-    function closeEditModalOnBackdrop(event) {
-        if (event.target === document.getElementById('editModal')) {
-            closeEditModal();
-        }
-    }
-
-    // Close on Escape key
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closeEditModal();
-    });
-</script>
 
 </body>
 </html>

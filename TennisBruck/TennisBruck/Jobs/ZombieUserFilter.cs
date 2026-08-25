@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace TennisBruck.Pages.Filter;
 
-public class ZombieUserFilter(CurrentPlayerService currentPlayerService, SignInManager<IdentityUser> signInManager)
+public abstract class ZombieUserFilter(CurrentPlayerService currentPlayerService, SignInManager<IdentityUser> signInManager)
     : IAsyncPageFilter
 {
     public async Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context)

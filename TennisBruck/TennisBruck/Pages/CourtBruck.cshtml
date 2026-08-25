@@ -14,6 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/courtBruck.css" asp-append-version="true">
     <script src="~/js/courtBruckWeather.js" asp-append-version="true"></script>
+    <script src="~/js/courtBruck.js" asp-append-version="true"></script>
 </head>
 <body>
 
@@ -83,7 +84,7 @@
                         <input type="time" name="endTimeStr" required class="form-input">
                     </div>
 
-                    <button type="submit" class="btn-action btn-accent" style="padding: 9px 20px;">Reservieren</button>
+                    <button type="submit" class="btn-action btn-accent btn-admin-reserve">Reservieren</button>
                 </form>
             </div>
         }
@@ -102,9 +103,8 @@
                 {
                     <tr>
                         <td class="time-col">
-                            <div style="font-weight: 600;">@timeSlot.Time.ToString("HH:mm")</div>
-                            <div class="weather-info" data-time="@timeSlot.Time.ToString("yyyy-MM-dd'T'HH:00")"
-                                 style="font-size: 0.85rem; margin-top: 4px; font-weight: normal; opacity: 0.8; min-height: 18px;"></div>
+                            <div class="time-label">@timeSlot.Time.ToString("HH:mm")</div>
+                            <div class="weather-info" data-time="@timeSlot.Time.ToString("yyyy-MM-dd'T'HH:00")"></div>
                         </td>
 
                         @for (int court = 1; court <= 3; court++)
@@ -128,21 +128,25 @@
                                         string tdClass = isMyReservation ? "slot-my-reservation" : (isEvent ? "slot-event" : "slot-reserved");
                                         var blockEndTimeStr = reservation.StartTime.AddMinutes(30 * block.RowSpan).ToString("HH:mm");
 
-                                        <td class="@tdClass @(isEditable ? "clickable-res" : "")" rowspan="@block.RowSpan"
+                                        <td class="@tdClass @(isEditable ? "clickable-res" : "")"
+                                            rowspan="@block.RowSpan"
                                             @if (isEditable)
                                             {
-                                                <text>onclick="openEditModal(@reservation.Id, @court, '@reservation.StartTime.ToString("HH:mm")', '@blockEndTimeStr', @(reservation.PartnerId ?? 0), '@(reservation.EventName?.Replace("'", "\\'") ?? "")')"</text>
+                                            <text>onclick="openEditModal(@reservation.Id, @court, '@reservation.StartTime.ToString("HH:mm")', '@blockEndTimeStr', @(reservation.PartnerId ?? 0), '@(reservation.EventName?.Replace("'", "\\'") ?? "")')"
+                                            </text>
                                             }
                                             title="@(isEditable ? "Klicken zum Bearbeiten" : reservation.DisplayName)">
                                             <div class="reserved-name">
                                                 @reservation.DisplayName
                                             </div>
-                                            <div class="reserved-time" style="font-size: 0.65rem; opacity: 0.8; margin-top: 2px; font-weight: 500;">
+                                            <div class="reserved-time">
                                                 @reservation.StartTime.ToString("HH:mm") - @blockEndTimeStr
                                             </div>
                                             @if (isEditable)
                                             {
-                                                <div style="font-size: 0.6rem; opacity: 0.75; margin-top: 3px;">✏️ Bearbeiten</div>
+                                                <div class="edit-indicator">✏️
+                                                    Bearbeiten
+                                                </div>
                                             }
                                         </td>
                                     }
@@ -165,7 +169,7 @@
                                         }
                                         else
                                         {
-                                            <span class="text-muted" style="opacity: 0.5;">-</span>
+                                            <span class="text-muted slot-muted-dash">-</span>
                                         }
                                     }
                                 </td>
@@ -181,7 +185,7 @@
 </main>
 
 <!-- RESERVATION MODAL (CREATE / EDIT) -->
-<div id="reservationModal" class="modal-overlay" style="display: none;">
+<div id="reservationModal" class="modal-overlay hidden-element">
     <div class="modal-card">
         <div class="modal-header">
             <h3 id="modalTitle">Platz reservieren</h3>
@@ -189,8 +193,8 @@
         </div>
 
         <form id="modalForm" method="post">
-            <input type="hidden" name="currentDateStr" value="@Model.CurrentDate.ToString("yyyy-MM-dd")" />
-            <input type="hidden" id="modalReservationId" name="reservationId" value="0" />
+            <input type="hidden" name="currentDateStr" value="@Model.CurrentDate.ToString("yyyy-MM-dd")"/>
+            <input type="hidden" id="modalReservationId" name="reservationId" value="0"/>
 
             <div class="modal-body">
                 <div class="modal-field">
@@ -205,12 +209,13 @@
                 <div class="modal-row">
                     <div class="modal-field">
                         <label class="form-label">Von (Uhrzeit)</label>
-                        <input type="time" name="startTimeStr" id="modalStartTime" required class="form-input" onchange="onStartTimeChanged()" />
+                        <input type="time" name="startTimeStr" id="modalStartTime" required class="form-input"
+                               onchange="onStartTimeChanged()"/>
                     </div>
 
                     <div class="modal-field">
                         <label class="form-label">Bis (Uhrzeit)</label>
-                        <input type="time" name="endTimeStr" id="modalEndTime" required class="form-input" />
+                        <input type="time" name="endTimeStr" id="modalEndTime" required class="form-input"/>
                     </div>
                 </div>
 
@@ -229,93 +234,30 @@
                 {
                     <div class="modal-field">
                         <label class="form-label">Event Name (optional)</label>
-                        <input type="text" name="eventName" id="modalEventName" placeholder="z.B. Meisterschaft" class="form-input" />
+                        <input type="text" name="eventName" id="modalEventName" placeholder="z.B. Meisterschaft"
+                               class="form-input"/>
                     </div>
                 }
             </div>
 
             <div class="modal-footer">
-                <button type="button" id="btnModalDelete" class="btn-modal-delete" style="display: none;" onclick="deleteCurrentReservation()">Löschen</button>
+                <button type="button" id="btnModalDelete" class="btn-modal-delete hidden-element"
+                        onclick="deleteCurrentReservation()">Löschen
+                </button>
                 <div class="modal-footer-right">
                     <button type="button" class="btn-modal-cancel" onclick="closeReservationModal()">Abbrechen</button>
-                    <button type="submit" id="btnModalSubmit" class="btn-action btn-accent" style="padding: 8px 18px; margin: 0;">Reservieren</button>
+                    <button type="submit" id="btnModalSubmit" class="btn-action btn-accent btn-modal-submit-custom">Reservieren
+                    </button>
                 </div>
             </div>
         </form>
 
         <!-- Hidden delete form for post handler -->
-        <form id="deleteForm" method="post" asp-page-handler="DeleteReservation" style="display: none;">
-            <input type="hidden" id="deleteReservationId" name="ReservationId" value="0" />
+        <form id="deleteForm" method="post" asp-page-handler="DeleteReservation" class="hidden-element">
+            <input type="hidden" id="deleteReservationId" name="ReservationId" value="0"/>
         </form>
     </div>
 </div>
 
-<script>
-    const currentViewDate = '@Model.CurrentDate.ToString("yyyy-MM-dd")';
-
-    function openBookingModal(court, startTime, endTime) {
-        document.getElementById('modalTitle').innerText = 'Platz ' + court + ' reservieren';
-        document.getElementById('modalForm').action = '?handler=CreateReservation';
-        document.getElementById('modalReservationId').value = '0';
-        document.getElementById('modalCourtNumber').value = court;
-        document.getElementById('modalStartTime').value = startTime;
-        document.getElementById('modalEndTime').value = endTime;
-        document.getElementById('modalPartnerId').value = '';
-        const eventNameInput = document.getElementById('modalEventName');
-        if (eventNameInput) eventNameInput.value = '';
-
-        document.getElementById('btnModalDelete').style.display = 'none';
-        document.getElementById('btnModalSubmit').innerText = 'Reservieren';
-
-        document.getElementById('reservationModal').style.display = 'flex';
-    }
-
-    function openEditModal(reservationId, court, startTime, endTime, partnerId, eventName) {
-        document.getElementById('modalTitle').innerText = 'Reservierung bearbeiten';
-        document.getElementById('modalForm').action = '?handler=UpdateReservation';
-        document.getElementById('modalReservationId').value = reservationId;
-        document.getElementById('modalCourtNumber').value = court;
-        document.getElementById('modalStartTime').value = startTime;
-        document.getElementById('modalEndTime').value = endTime;
-        document.getElementById('modalPartnerId').value = partnerId > 0 ? partnerId : '';
-        const eventNameInput = document.getElementById('modalEventName');
-        if (eventNameInput) eventNameInput.value = eventName || '';
-
-        document.getElementById('btnModalDelete').style.display = 'inline-block';
-        document.getElementById('deleteReservationId').value = reservationId;
-        document.getElementById('btnModalSubmit').innerText = 'Speichern';
-
-        document.getElementById('reservationModal').style.display = 'flex';
-    }
-
-    function closeReservationModal() {
-        document.getElementById('reservationModal').style.display = 'none';
-    }
-
-    function onStartTimeChanged() {
-        const startTimeVal = document.getElementById('modalStartTime').value;
-        if (!startTimeVal) return;
-
-        const parts = startTimeVal.split(':').map(Number);
-        let endHours = parts[0] + 2;
-        if (endHours > 22) endHours = 22;
-
-        const pad = n => n.toString().padStart(2, '0');
-        document.getElementById('modalEndTime').value = `${pad(endHours)}:${pad(parts[1])}`;
-    }
-
-    function deleteCurrentReservation() {
-        if (confirm('Möchtest du diese Reservierung wirklich stornieren/löschen?')) {
-            document.getElementById('deleteForm').submit();
-        }
-    }
-
-    window.addEventListener('click', function(event) {
-        const modal = document.getElementById('reservationModal');
-        if (event.target === modal) {
-            closeReservationModal();
-        }
-    });
-</script>
 </body>
 </html>

@@ -103,9 +103,12 @@
                                          draggable="true"
                                          data-player-id="@playerEntry.Player.Id"
                                          data-court-id="@court.Id">
-                                        <div class="avatar-micro">@(!string.IsNullOrEmpty(playerEntry.Player.Firstname) ? playerEntry.Player.Firstname.Substring(0, 1) : "")</div>
-                                        <span class="player-name-micro desktop-name">@playerEntry.Player.ToString()</span>
-                                        <span class="player-name-micro mobile-name">@playerEntry.Player.Firstname @(string.IsNullOrEmpty(playerEntry.Player.Lastname) ? "" : playerEntry.Player.Lastname[0].ToString() + ".")</span>
+                                        <div
+                                            class="avatar-micro">@(!string.IsNullOrEmpty(playerEntry.Player.Firstname) ? playerEntry.Player.Firstname.Substring(0, 1) : "")</div>
+                                        <span
+                                            class="player-name-micro desktop-name">@playerEntry.Player.ToString()</span>
+                                        <span
+                                            class="player-name-micro mobile-name">@playerEntry.Player.Firstname @(string.IsNullOrEmpty(playerEntry.Player.Lastname) ? "" : playerEntry.Player.Lastname[0].ToString() + ".")</span>
                                     </div>
 
                                 </div>
@@ -119,7 +122,8 @@
 
         <section class="modern-card card-highlight-left">
             <h2 class="section-title compact">🔄 Ersatzbank (Abo-Besitzer)</h2>
-            <p class="section-description">Spieler mit einem aktiven Abo, die derzeit keinem Spieltag zugeteilt sind. Ziehe sie auf den Spielplan, um jemanden zu ersetzen.</p>
+            <p class="section-description">Spieler mit einem aktiven Abo, die derzeit keinem Spieltag zugeteilt sind.
+                Ziehe sie auf den Spielplan, um jemanden zu ersetzen.</p>
 
             <div class="substitute-bench">
                 @if (Model.RegisteredPlayers.Any())
@@ -181,12 +185,9 @@
                             <input type="hidden" name="HallPlanId" value="@Model.HallPlanId"/>
                             <select name="playerId" class="custom-select" required>
                                 <option value="">Spieler wählen...</option>
-                                @if (Model.NotRegisteredPlayers != null)
+                                @foreach (var player in Model.NotRegisteredPlayers)
                                 {
-                                    @foreach (var player in Model.NotRegisteredPlayers)
-                                    {
-                                        <option value="@player.Id">@player</option>
-                                    }
+                                    <option value="@player.Id">@player</option>
                                 }
                             </select>
                             <button class="btn-action">Hinzufügen</button>
@@ -221,7 +222,7 @@
                     @if (Model.SelectedHallPlanEntity != null)
                     {
                         <form method="post" asp-page-handler="DeleteSelectedHallplan" class="form-row mt-10">
-                            <button type="submit" class="btn-action btn-danger btn-auto" 
+                            <button type="submit" class="btn-action btn-danger btn-auto"
                                     onclick="return confirm('Möchtest du diesen Hallenplan wirklich komplett löschen? Sämtliche Einträge gehen dabei verloren!');">
                                 Diesen Hallenplan löschen
                             </button>

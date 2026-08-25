@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Mvc.RazorPages;
-
 namespace TennisBruck.Pages;
 
-public class AGB : PageModel
+public class Agb : PageModel
 {
     public void OnGet()
     {

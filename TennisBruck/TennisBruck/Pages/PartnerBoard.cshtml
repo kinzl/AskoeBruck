@@ -10,7 +10,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <link rel="stylesheet" href="css/partnerboard.css"/>
+    <link rel="stylesheet" href="~/css/partnerboard.css" asp-append-version="true"/>
     <title>Spielpartner-Suche</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -84,30 +84,6 @@
                     </a>
                 </div>
             </form>
-            <script>
-                (function () {
-                    const dateFrom = document.getElementById('filterDateFrom');
-                    const dateTo   = document.getElementById('filterDateTo');
-                    const timeFrom = document.getElementById('filterTimeFrom');
-                    const timeTo   = document.getElementById('filterTimeTo');
-
-                    // Keep "Datum bis" min in sync with "Datum von"
-                    dateFrom.addEventListener('change', () => {
-                        dateTo.min = dateFrom.value || '@DateTime.Today.ToString("yyyy-MM-dd")';
-                        if (dateTo.value && dateTo.value < dateFrom.value) dateTo.value = dateFrom.value;
-                    });
-
-                    // Keep "Zeit bis" min in sync with "Zeit von"
-                    timeFrom.addEventListener('change', () => {
-                        timeTo.min = timeFrom.value;
-                        if (timeTo.value && timeTo.value <= timeFrom.value) timeTo.value = '';
-                    });
-
-                    // Set initial min on dateTo if dateFrom already has a value
-                    if (dateFrom.value) dateTo.min = dateFrom.value;
-                    if (timeFrom.value) timeTo.min = timeFrom.value;
-                })();
-            </script>
         </div>
     }
 
@@ -310,7 +286,7 @@
                                         <span
                                             class="badge bg-success-subtle text-success border border-success-subtle me-2">Angemeldet</span>
                                     }
-                                    <strong class="text-dark">@(slot.Player.ToString() ?? "Unbekannt")</strong>
+                                    <strong class="text-dark">@slot.Player.ToString()</strong>
                                 </div>
                                 <small class="text-muted d-block mb-1">
                                     <i class="bi bi-clock me-1"></i> @slot.Date.ToString("dd.MM.yyyy") | @slot.StartTime.ToString(@"hh\:mm") - @slot.EndTime.ToString(@"hh\:mm") Uhr
@@ -371,7 +347,7 @@
 
 <div class="modal fade" id="createSlotModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow" style="background-color: #ffffff; position: relative; z-index: 1060;">
+        <div class="modal-content border-0 shadow create-slot-modal-content">
             <div class="modal-header border-bottom-0 pb-0">
                 <h5 class="modal-title fw-bold text-navy">Wann hast du Zeit?</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -465,18 +441,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    function openEditModal(id, date, startTime, endTime, neededPlayers, message) {
-        document.getElementById('editSlotId').value = id;
-        document.getElementById('editDate').value = date;
-        document.getElementById('editStartTime').value = startTime;
-        document.getElementById('editEndTime').value = endTime;
-        document.getElementById('editNeededPlayers').value = neededPlayers;
-        document.getElementById('editMessage').value = message;
-
-        var editModal = new bootstrap.Modal(document.getElementById('editSlotModal'));
-        editModal.show();
-    }
-</script>
+<script src="~/js/partnerboard.js" asp-append-version="true"></script>
 </body>
 </html>
