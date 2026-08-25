@@ -647,19 +647,37 @@ public class Championship(
             if (match.Team1 == null || match.Team2 == null)
                 return RedirectToPage(new
                     { Message = "Das Match kann nicht gewertet werden, da noch kein Gegner feststeht." });
-            var sets = score.Split(" ");
+            if (string.IsNullOrWhiteSpace(score))
+                return RedirectToPage(new { Message = "Bitte einen Spielstand eingeben" });
+
+            if (match.Sets != null && match.Sets.Any())
+            {
+                db.Sets.RemoveRange(match.Sets);
+            }
+            match.Sets = new List<Set>();
+
+            var sets = score.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
             for (var i = 0; i < sets.Length; i++)
             {
-                var games = sets[i].Split(":");
-                if (int.Parse(games[0]) < int.Parse(games[1]))
+                var games = sets[i].Split(new[] { ':', '-' }, StringSplitOptions.RemoveEmptyEntries);
+                if (games.Length != 2)
+                    return RedirectToPage(new { Message = "Ungültiges Satzformat (z.B. 6:4 4:6 10:12)" });
+
+                int p1 = int.Parse(games[0].Trim());
+                int p2 = int.Parse(games[1].Trim());
+
+                if (p1 < p2)
                     setsWonPlayer2++;
-                else
+                else if (p1 > p2)
                     setsWonPlayer1++;
-                match.Sets?.Add(new Set
+                else
+                    return RedirectToPage(new { Message = "Unentschieden in einem Satz ist nicht erlaubt" });
+
+                match.Sets.Add(new Set
                 {
                     SetNumber = i + 1,
-                    Player1GamesWon = int.Parse(games[0]),
-                    Player2GamesWon = int.Parse(games[1]),
+                    Player1GamesWon = p1,
+                    Player2GamesWon = p2,
                 });
             }
 
@@ -674,7 +692,7 @@ public class Championship(
         catch (Exception)
         {
             return RedirectToPage(new
-                { Message = "Fehler beim Speichern des Spiels (Falsche eingabe des Spielstandes?)" });
+                { Message = "Fehler beim Speichern des Spiels (Falsche Eingabe des Spielstandes?)" });
         }
 
         return RedirectToPage(new
@@ -1367,7 +1385,7 @@ public class Championship(
                     int setsWonHere = 0;
                     int setsLostHere = 0;
 
-                    foreach (var set in match.Sets)
+                    foreach (var set in match.Sets.OrderBy(s => s.SetNumber))
                     {
                         int myGames = isTeam1 ? set.Player1GamesWon : set.Player2GamesWon;
                         int oppGames = isTeam1 ? set.Player2GamesWon : set.Player1GamesWon;

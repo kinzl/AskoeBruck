@@ -14,6 +14,7 @@ public class Match
 
     public string SetToString()
     {
-        return Sets.Aggregate("", (current, set) => current + $"{set.Player1GamesWon}-{set.Player2GamesWon} ");
+        if (Sets == null || Sets.Count == 0) return "";
+        return Sets.OrderBy(s => s.SetNumber).Aggregate("", (current, set) => current + $"{set.Player1GamesWon}-{set.Player2GamesWon} ").TrimEnd();
     }
 }

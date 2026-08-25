@@ -36,8 +36,8 @@
             }
             else if (match.Sets != null && match.Sets.Any())
             {
-                team1Score = string.Join(" ", match.Sets.Select(s => s.Player1GamesWon));
-                team2Score = string.Join(" ", match.Sets.Select(s => s.Player2GamesWon));
+                team1Score = string.Join(" ", match.Sets.OrderBy(s => s.SetNumber).Select(s => s.Player1GamesWon));
+                team2Score = string.Join(" ", match.Sets.OrderBy(s => s.SetNumber).Select(s => s.Player2GamesWon));
             }
 
             string competitionName = match.Group?.Competition?.Name
