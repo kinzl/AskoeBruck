@@ -61,6 +61,10 @@
         <div class="competition-pills">
             @if (currentCompetitions.Count < 4)
             {
+                <button type="submit" name="selectedCompetitionId" value="0"
+                        class="pill-btn @(Model.SelectedCompetition == null ? "active" : "")">
+                    Aktuelle Turniere
+                </button>
                 @foreach (var competition in currentCompetitions)
                 {
                     var isActive = Model.SelectedCompetition?.Id == competition.Id;
@@ -73,9 +77,9 @@
             else
             {
                 var isCurrentActive = currentCompetitions.Any(c => c.Id == Model.SelectedCompetition?.Id);
-                <select name="selectedCompetitionId" class="pill-btn pill-select @(isCurrentActive ? "active" : "")"
+                <select name="selectedCompetitionId" class="pill-btn pill-select @(isCurrentActive ? "active" : (Model.SelectedCompetition == null ? "active" : ""))"
                         onchange="this.form.submit()">
-                    <option value="" disabled selected="@(!isCurrentActive)">Aktuelle Turniere</option>
+                    <option value="0" selected="@(Model.SelectedCompetition == null)">Aktuelle Turniere</option>
                     @foreach (var competition in currentCompetitions)
                     {
                         var isActive = Model.SelectedCompetition?.Id == competition.Id;
@@ -90,7 +94,7 @@
             {
                 <select name="selectedCompetitionId" class="pill-btn pill-select @(isOldActive ? "active" : "")"
                         onchange="this.form.submit()">
-                    <option value="" disabled selected="@(!isOldActive)">Vergangene Turniere</option>
+                    <option value="0" selected="@(!isOldActive)">Vergangene Turniere</option>
                     @foreach (var competition in oldCompetitions)
                     {
                         var isActive = Model.SelectedCompetition?.Id == competition.Id;
@@ -383,10 +387,190 @@
     }
     else
     {
-        <div class="empty-state">
-            <div class="empty-state-icon">🎾</div>
-            <h2>Wähle oben einen Bewerb aus</h2>
-            <p>Um die Gruppen, das Raster und deine Spiele zu sehen.</p>
+        <div class="overview-container">
+            <section class="modern-card card-accent-border mb-24">
+                <div class="card-header">
+                    <div class="overview-card-title-group">
+                        <span class="overview-trophy-icon">🏆</span>
+                        <div>
+                            <h2>Vereinsmeisterschaft — Information & Regeln</h2>
+                            <p class="text-muted" style="margin: 2px 0 0 0; font-size: 0.88rem;">Allgemeine Informationen, Spielmodus und Turnierordnung</p>
+                        </div>
+                    </div>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <button type="button" class="btn-action btn-outline-nav btn-sm" onclick="openInfoModal()">
+                            ✏️ Text / PDF bearbeiten
+                        </button>
+                    }
+                </div>
+
+                <div class="overview-body">
+                    @if (!string.IsNullOrWhiteSpace(Model.ChampionshipInfo?.Text))
+                    {
+                        <div class="championship-info-text">
+                            @foreach (var paragraph in Model.ChampionshipInfo.Text.Split(new[] { "\r\n\r\n", "\n\n" }, StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                <p>@Html.Raw(Html.Encode(paragraph).Replace("\n", "<br />").Replace("\r", ""))</p>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="info-text-empty">
+                            <p style="font-size: 1.05rem; font-weight: 700; color: var(--nav-bg); margin-bottom: 6px;">🎾 Willkommen zur Vereinsmeisterschaft!</p>
+                            <p class="text-muted" style="margin: 0;">Hier findest du alle wichtigen Informationen, Termine und Regeln zum heurigen Turnier. Wähle oben einen Bewerb aus, um Teilnehmer, Gruppen und Spielpläne einzusehen.</p>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <div style="margin-top: 15px;">
+                                    <button type="button" class="btn-action btn-accent btn-sm" onclick="openInfoModal()">
+                                        ➕ Jetzt Informationen oder PDF-Regelwerk hinzufügen
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.ChampionshipInfo?.ImageFileName))
+                    {
+                        <div class="championship-image-container">
+                            <a href="@Model.ChampionshipInfo.ImageFileName" target="_blank" title="Bild in voller Größe öffnen">
+                                <img src="@Model.ChampionshipInfo.ImageFileName" alt="@(Model.ChampionshipInfo.ImageOriginalName ?? "Turnierbild")" class="championship-uploaded-img" />
+                            </a>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.ChampionshipInfo?.PdfFileName))
+                    {
+                        <div class="pdf-document-card">
+                            <div class="pdf-icon-wrapper">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                            </div>
+                            <div class="pdf-info">
+                                <div class="pdf-title">@(Model.ChampionshipInfo.PdfOriginalName ?? "Turnierregeln.pdf")</div>
+                                <div class="pdf-subtitle">Offizielles Regelwerk / Turnierausschreibung (PDF)</div>
+                            </div>
+                            <div class="pdf-actions">
+                                <a href="@Model.ChampionshipInfo.PdfFileName" target="_blank" class="btn-action btn-accent btn-sm" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                                    <span>👁️ PDF ansehen</span>
+                                </a>
+                                <a href="@Model.ChampionshipInfo.PdfFileName" download="@(Model.ChampionshipInfo.PdfOriginalName ?? "Turnierregeln.pdf")" class="btn-action btn-outline-nav btn-sm" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                                    <span>⬇️ Herunterladen</span>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+
+            @{
+                var currentYearCompetitions = Model.Competitions.Where(c => c.RegistrationUntil.Year >= CityTime.GetViennaTimeZone().Year).ToList();
+            }
+            @if (currentYearCompetitions.Any())
+            {
+                <section class="modern-card mb-24">
+                    <div class="card-header">
+                        <h2>Aktuelle Bewerbe (@CityTime.GetViennaTimeZone().Year)</h2>
+                        <span class="badge-count">@currentYearCompetitions.Count @(currentYearCompetitions.Count == 1 ? "Bewerb" : "Bewerbe")</span>
+                    </div>
+                    <div class="overview-competitions-grid">
+                        @foreach (var comp in currentYearCompetitions)
+                        {
+                            bool isClosed = comp.RegistrationUntil < CityTime.GetViennaTimeZone();
+                            <form method="post" asp-page-handler="CompetitionChanged" class="overview-comp-card-form">
+                                <input type="hidden" name="selectedCompetitionId" value="@comp.Id" />
+                                <button type="submit" class="overview-comp-card">
+                                    <div class="overview-comp-card-header">
+                                        <span class="overview-comp-name">@comp.Name</span>
+                                        <span class="badge-phase">@(comp.IsSingle ? "Einzel" : "Doppel")</span>
+                                    </div>
+                                    <div class="overview-comp-card-footer">
+                                        <span class="comp-status @(isClosed ? "status-closed" : "status-open")">
+                                            @(isClosed ? "🔒 Anmeldung beendet" : $"⏳ Bis {comp.RegistrationUntil:dd.MM.yyyy}")
+                                        </span>
+                                        <span class="comp-arrow">Zum Bewerb →</span>
+                                    </div>
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+    }
+
+    @if (User.IsInRole("Admin"))
+    {
+        <div id="editInfoModal" class="modal-overlay" onclick="if(event.target === this) closeInfoModal();">
+            <div class="modal-card modal-card-lg">
+                <div class="modal-header">
+                    <h3>✏️ Turnier-Informationen, Regeln & Medien bearbeiten</h3>
+                    <button type="button" class="modal-close" onclick="closeInfoModal()">✕</button>
+                </div>
+                <form method="post" asp-page-handler="SaveChampionshipInfo" enctype="multipart/form-data">
+                    <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="infoText" style="font-weight: 600; font-size: 0.9rem;">Informationstext & Regeln:</label>
+                            <textarea id="infoText" name="infoText" rows="7" class="form-control-custom"
+                                      placeholder="Erkläre hier die Turnierregeln, Spielzeiten, Gruppenmodus, Tiebreak-Regeln, etc...">@Model.ChampionshipInfo?.Text</textarea>
+                            <span class="text-muted" style="font-size: 0.75rem;">Absätze und Zeilenumbrüche werden automatisch formatiert.</span>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="imageFile" style="font-weight: 600; font-size: 0.9rem;">Bild hochladen (z.B. Turnierplakat / Infografik / Foto):</label>
+                            <input type="file" id="imageFile" name="imageFile" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.svg" class="form-control-custom" />
+                            <span class="text-muted" style="font-size: 0.75rem;">Erlaubt: JPG, PNG, WEBP, GIF, SVG (max. 15 MB)</span>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.ChampionshipInfo?.ImageFileName))
+                        {
+                            <div class="modal-existing-media">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <img src="@Model.ChampionshipInfo.ImageFileName" alt="Vorschau" class="modal-media-thumb" />
+                                    <div>
+                                        <div>🖼️ <strong>@(Model.ChampionshipInfo.ImageOriginalName ?? "Bild")</strong></div>
+                                        <span class="text-muted" style="font-size: 0.75rem;">Aktuell hinterlegtes Bild</span>
+                                    </div>
+                                </div>
+                                <label class="delete-media-label" style="display: flex; align-items: center; gap: 6px; margin-top: 8px; cursor: pointer; color: #dc2626; font-size: 0.85rem; font-weight: 600;">
+                                    <input type="checkbox" name="deleteImage" value="true" />
+                                    <span>Aktuelles Bild löschen / entfernen</span>
+                                </label>
+                            </div>
+                        }
+
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label for="pdfFile" style="font-weight: 600; font-size: 0.9rem;">PDF-Dokument hochladen (Regeln / Ausschreibung):</label>
+                            <input type="file" id="pdfFile" name="pdfFile" accept=".pdf,application/pdf" class="form-control-custom" />
+                            <span class="text-muted" style="font-size: 0.75rem;">Erlaubt: .pdf (max. 15 MB)</span>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.ChampionshipInfo?.PdfFileName))
+                        {
+                            <div class="modal-existing-media">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span>📄 Aktuelles PDF:</span>
+                                    <strong style="color: var(--nav-bg);">@(Model.ChampionshipInfo.PdfOriginalName ?? "Turnierregeln.pdf")</strong>
+                                </div>
+                                <label class="delete-media-label" style="display: flex; align-items: center; gap: 6px; margin-top: 8px; cursor: pointer; color: #dc2626; font-size: 0.85rem; font-weight: 600;">
+                                    <input type="checkbox" name="deletePdf" value="true" />
+                                    <span>Aktuelles PDF löschen / entfernen</span>
+                                </label>
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-action btn-outline-muted" onclick="closeInfoModal()">Abbrechen</button>
+                        <button type="submit" class="btn-action btn-accent">💾 Speichern</button>
+                    </div>
+                </form>
+            </div>
         </div>
     }
 
@@ -428,6 +612,16 @@
 
 <script>
     window.existingTournamentPhases = @Html.Raw(Json.Serialize(Model.Matches.Select(m => m.PhaseName ?? "A-Bewerb").Distinct().ToList()));
+
+    function openInfoModal() {
+        const modal = document.getElementById('editInfoModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeInfoModal() {
+        const modal = document.getElementById('editInfoModal');
+        if (modal) modal.style.display = 'none';
+    }
 
     function openDateModal() {
         const modal = document.getElementById('editDeadlineModal');

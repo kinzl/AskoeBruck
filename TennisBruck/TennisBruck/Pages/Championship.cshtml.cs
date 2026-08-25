@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using TennisBruck.Dto;
 using Group = TennisDb.Group;
 using Match = TennisDb.Match;
 
@@ -11,7 +12,8 @@ public class Championship(
     CurrentPlayerService currentPlayerService,
     TennisContext db,
     UserManager<IdentityUser> userManager,
-    IEmailSender emailSender)
+    IEmailSender emailSender,
+    ChampionshipInfoService championshipInfoService)
     : PageModel
 {
     public bool IsRegistered { get; set; }
@@ -35,6 +37,7 @@ public class Championship(
     public string? Message { get; set; }
     public required List<Player> UnregisteredPlayers { get; set; }
     public Dictionary<int, List<GroupTableEntry>> GroupTables { get; set; } = new();
+    public ChampionshipInfo ChampionshipInfo { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync(string? message)
     {
@@ -46,6 +49,7 @@ public class Championship(
         int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
         CurrentPlayer = currentPlayerService.GetCurrentUser()!;
         Message = message;
+        ChampionshipInfo = await championshipInfoService.GetInfoAsync();
 
         Competitions = await db.Competitions
             .AsNoTracking()
@@ -232,6 +236,46 @@ public class Championship(
     {
         HttpContext.Session.SetString("selectedCompetitionId", selectedCompetitionId.ToString());
         return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostSaveChampionshipInfoAsync(
+        string? infoText,
+        IFormFile? pdfFile,
+        bool deletePdf = false,
+        IFormFile? imageFile = null,
+        bool deleteImage = false)
+    {
+        if (!User.IsInRole("Admin")) return Forbid();
+
+        if (pdfFile != null && pdfFile.Length > 0)
+        {
+            var ext = Path.GetExtension(pdfFile.FileName).ToLowerInvariant();
+            if (ext != ".pdf")
+            {
+                return RedirectToPage(new { Message = "Es können nur PDF-Dateien hochgeladen werden (.pdf)." });
+            }
+            if (pdfFile.Length > 15 * 1024 * 1024)
+            {
+                return RedirectToPage(new { Message = "Die PDF-Datei ist zu groß (maximal 15 MB erlaubt)." });
+            }
+        }
+
+        if (imageFile != null && imageFile.Length > 0)
+        {
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif", ".svg" };
+            var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(ext))
+            {
+                return RedirectToPage(new { Message = "Ungültiges Bildformat. Erlaubt sind JPG, PNG, WEBP, GIF, SVG." });
+            }
+            if (imageFile.Length > 15 * 1024 * 1024)
+            {
+                return RedirectToPage(new { Message = "Das Bild ist zu groß (maximal 15 MB erlaubt)." });
+            }
+        }
+
+        await championshipInfoService.SaveInfoAsync(infoText, pdfFile, deletePdf, imageFile, deleteImage);
+        return RedirectToPage(new { Message = "Informationen, Regeln und Medien wurden erfolgreich gespeichert." });
     }
 
     #endregion

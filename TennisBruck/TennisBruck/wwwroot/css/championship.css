@@ -2097,4 +2097,284 @@ select:focus {
     }
 }
 
+/* ==========================================
+   CHAMPIONSHIP OVERVIEW & RULES SECTION
+   ========================================== */
+.overview-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.overview-card-title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.overview-trophy-icon {
+    font-size: 2.2rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.championship-info-text {
+    font-size: 0.98rem;
+    line-height: 1.75;
+    color: #334155;
+    background: #f8fafc;
+    padding: 18px 22px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.championship-info-text p {
+    margin: 0 0 14px 0;
+}
+
+.championship-info-text p:last-child {
+    margin-bottom: 0;
+}
+
+.info-text-empty {
+    padding: 24px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
+    text-align: center;
+}
+
+/* --- PDF DOCUMENT CARD --- */
+.pdf-document-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-left: 4px solid #ef4444;
+    border-radius: 12px;
+    margin-top: 18px;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.08);
+}
+
+.pdf-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.pdf-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.pdf-title {
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pdf-subtitle {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.pdf-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* --- OVERVIEW TOURNAMENT QUICK CARDS --- */
+.overview-competitions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 6px;
+}
+
+.overview-comp-card-form {
+    margin: 0;
+}
+
+.overview-comp-card {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 18px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 96px;
+    box-sizing: border-box;
+}
+
+.overview-comp-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-color);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.overview-comp-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.overview-comp-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--nav-bg);
+}
+
+.overview-comp-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    font-size: 0.82rem;
+}
+
+.comp-status {
+    font-weight: 600;
+}
+
+.status-open {
+    color: #16a34a;
+}
+
+.status-closed {
+    color: #dc2626;
+}
+
+.comp-arrow {
+    color: var(--accent-color);
+    font-weight: 700;
+    transition: transform 0.2s;
+}
+
+.overview-comp-card:hover .comp-arrow {
+    transform: translateX(4px);
+}
+
+/* --- IMAGE DISPLAY --- */
+.championship-image-container {
+    margin-top: 18px;
+    text-align: center;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.championship-uploaded-img {
+    max-width: 100%;
+    max-height: 520px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    cursor: pointer;
+    transition: transform 0.25s ease;
+}
+
+.championship-uploaded-img:hover {
+    transform: scale(1.01);
+}
+
+/* --- MODAL FORM CONTROLS --- */
+.modal-card-lg {
+    max-width: 580px !important;
+}
+
+.form-control-custom {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.92rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #ffffff;
+}
+
+.form-control-custom:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.15);
+}
+
+.modal-existing-media {
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.modal-media-thumb {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+}
+
+@media (max-width: 768px) {
+    .overview-card-title-group {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .overview-trophy-icon {
+        font-size: 1.8rem;
+    }
+
+    .pdf-document-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .pdf-actions {
+        width: 100%;
+        gap: 8px;
+    }
+
+    .pdf-actions .btn-action {
+        flex: 1;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .overview-competitions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .championship-uploaded-img {
+        max-height: 360px;
+    }
+}
+
 
