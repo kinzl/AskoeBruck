@@ -37,8 +37,8 @@ body {
 /* --- HEADER --- */
 .app-header {
     background-color: var(--nav-bg);
-    height: 230px;
-    padding: 25px 20px 0 20px;
+    min-height: 170px;
+    padding: 25px 20px 55px 20px;
     box-sizing: border-box;
     text-align: center;
 }
@@ -80,16 +80,16 @@ body {
 }
 
 .alert-box {
-    padding: 15px;
-    margin: 20px auto 0 auto;
+    padding: 14px 18px;
+    margin: 18px auto 0 auto;
     max-width: 600px;
     border-radius: var(--border-radius-sm);
     font-weight: 500;
     text-align: left;
-    box-shadow: var(--shadow-soft);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .alert-success {
@@ -111,11 +111,17 @@ body {
 /* --- MAIN & CARDS --- */
 .main-container {
     max-width: 1100px;
-    margin: -40px auto 40px auto;
+    margin: -35px auto 40px auto;
     padding: 0 20px;
     display: flex;
     flex-direction: column;
     gap: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.main-container.has-message {
+    margin-top: 18px;
 }
 
 .modern-card {
@@ -459,13 +465,17 @@ body {
     }
 
     .app-header {
-        height: 200px;
-        padding: 20px 15px 0 15px;
+        min-height: 140px;
+        padding: 20px 15px 45px 15px;
     }
 
     .main-container {
         padding: 0 10px;
-        margin-top: -30px;
+        margin-top: -25px;
+    }
+
+    .main-container.has-message {
+        margin-top: 14px;
     }
 
     .modern-card {

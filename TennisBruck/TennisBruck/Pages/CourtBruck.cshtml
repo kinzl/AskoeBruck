@@ -37,7 +37,7 @@
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 </header>
 
-<main class="main-container">
+<main class="main-container @(!string.IsNullOrEmpty(Model.Message) ? "has-message" : "")">
     <section class="modern-card">
         <div class="date-nav-wrapper">
             <a href="?date=@Model.CurrentDate.AddDays(-1).ToString("yyyy-MM-dd")" class="btn-date">◀</a>
