@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.OpenApi.Models;
 using Resend;
 using TennisContext = TennisDb.TennisContext;
-using TennisBruck.Pages.Filter;
 using Quartz;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using TennisBruck.Jobs;
 
 
 string swaggerVersion = "v1";

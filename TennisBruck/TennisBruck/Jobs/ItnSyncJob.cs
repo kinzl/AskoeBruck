@@ -1,6 +1,6 @@
 using Quartz;
 
-namespace TennisBruck.Services;
+namespace TennisBruck.Jobs;
 
 public class ItnSyncJob(IServiceProvider serviceProvider, ILogger<ItnSyncJob> logger) : IJob
 {

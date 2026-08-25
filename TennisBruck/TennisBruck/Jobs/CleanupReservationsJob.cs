@@ -1,6 +1,6 @@
 using Quartz;
 
-namespace TennisBruck.Services;
+namespace TennisBruck.Jobs;
 
 public class CleanupReservationsJob(IServiceProvider serviceProvider, ILogger<CleanupReservationsJob> logger) : IJob
 {
