@@ -90,12 +90,15 @@ public class Championship(
                     .Where(x => x.CompetitionId == selectedCompetitionId)
                     .ToListAsync();
 
-                RegisteredTeams = await db.Teams
+                RegisteredTeams = (await db.Teams
                     .AsNoTracking()
                     .AsSplitQuery()
                     .Include(x => x.TeamPlayers).ThenInclude(x => x.Player)
                     .Where(x => x.Competition.Id == selectedCompetitionId)
-                    .ToListAsync();
+                    .ToListAsync())
+                    .OrderBy(t => t.TeamPlayers.OrderBy(tp => tp.Player?.Lastname).Select(tp => tp.Player?.Lastname).FirstOrDefault() ?? "")
+                    .ThenBy(t => t.TeamPlayers.OrderBy(tp => tp.Player?.Lastname).Select(tp => tp.Player?.Firstname).FirstOrDefault() ?? "")
+                    .ToList();
 
                 RegisteredCompetitionPlayers = await db.TournamentRegistrations
                     .AsNoTracking()
