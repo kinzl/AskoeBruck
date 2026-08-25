@@ -9,6 +9,7 @@ using TennisBruck.Pages.Filter;
 using Quartz;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 
 
 string swaggerVersion = "v1";
@@ -138,6 +139,13 @@ builder.Services.AddSession(options =>
 // builder.Services.AddHttpLogging();
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 // Den Google-Login registrieren
 builder.Services.AddAuthentication()
     .AddGoogle(googleOptions =>
@@ -152,6 +160,7 @@ var app = builder.Build();
 
 #region -------------------------------------------- Middleware pipeline
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 if (app.Environment.IsDevelopment())
 {

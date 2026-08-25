@@ -17,7 +17,9 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TennisDb;
 
 namespace TennisBruck.Areas.Identity.Pages.Account
 {
@@ -130,27 +132,83 @@ namespace TennisBruck.Areas.Identity.Pages.Account
             {
                 return RedirectToPage("./Lockout");
             }
-            else
+
+            // 1-Click Login: Automatically register or link account using the verified Google email
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            if (!string.IsNullOrEmpty(email))
             {
-                // If the user does not have an account, then ask the user to create an account.
-                ReturnUrl = returnUrl;
-                ProviderDisplayName = info.ProviderDisplayName;
-                if (info.Principal.HasClaim(c => c.Type == ClaimTypes.Email))
+                var user = await _userManager.FindByEmailAsync(email);
+                if (user == null)
                 {
-                    Input = new InputModel
+                    user = CreateUser();
+                    await _userStore.SetUserNameAsync(user, email, CancellationToken.None);
+                    await _emailStore.SetEmailAsync(user, email, CancellationToken.None);
+                    user.EmailConfirmed = true;
+
+                    var createResult = await _userManager.CreateAsync(user);
+                    if (!createResult.Succeeded)
                     {
-                        Email = info.Principal.FindFirstValue(ClaimTypes.Email)
-                    };
+                        foreach (var error in createResult.Errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error.Description);
+                        }
+                        ReturnUrl = returnUrl;
+                        ProviderDisplayName = info.ProviderDisplayName;
+                        Input = new InputModel { Email = email };
+                        return Page();
+                    }
                 }
 
-                return Page();
+                var logins = await _userManager.GetLoginsAsync(user);
+                if (!logins.Any(l => l.LoginProvider == info.LoginProvider && l.ProviderKey == info.ProviderKey))
+                {
+                    await _userManager.AddLoginAsync(user, info);
+                }
+
+                var player = await _db.Players.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.IdentityUserId == user.Id);
+                if (player == null)
+                {
+                    var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName);
+                    var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname);
+
+                    if (string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName))
+                    {
+                        var fullName = info.Principal.FindFirstValue(ClaimTypes.Name) ?? email.Split('@')[0];
+                        var parts = fullName.Trim().Split(' ', 2);
+                        firstName = parts[0];
+                        lastName = parts.Length > 1 ? parts[1] : "";
+                    }
+
+                    if (string.IsNullOrWhiteSpace(firstName)) firstName = "Google";
+                    if (string.IsNullOrWhiteSpace(lastName)) lastName = "User";
+
+                    player = new Player
+                    {
+                        IdentityUserId = user.Id,
+                        Firstname = firstName,
+                        Lastname = lastName,
+                        IsActive = true
+                    };
+
+                    _db.Players.Add(player);
+                    await _db.SaveChangesAsync();
+                }
+
+                _logger.LogInformation("User automatically registered / signed in using {Name} provider.", info.LoginProvider);
+                await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
+                return LocalRedirect(returnUrl);
             }
+
+            // Fallback if external provider did not supply an email claim
+            ReturnUrl = returnUrl;
+            ProviderDisplayName = info.ProviderDisplayName;
+            Input = new InputModel { Email = email ?? "" };
+            return Page();
         }
 
         public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
         {
             returnUrl = returnUrl ?? Url.Content("~/");
-            // Get the information about the user from the external login provider
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
@@ -160,62 +218,65 @@ namespace TennisBruck.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                var user = CreateUser();
-
-                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-                await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-
-                user.EmailConfirmed = true;
-                
-                var result = await _userManager.CreateAsync(user);
-                if (result.Succeeded)
+                var user = await _userManager.FindByEmailAsync(Input.Email);
+                if (user == null)
                 {
-                    result = await _userManager.AddLoginAsync(user, info);
-                    if (result.Succeeded)
+                    user = CreateUser();
+                    await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+                    await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+                    user.EmailConfirmed = true;
+
+                    var createResult = await _userManager.CreateAsync(user);
+                    if (!createResult.Succeeded)
                     {
-                        _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
-
-                        //Add User to db
-                        var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "Google";
-                        var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "User";
-
-                        var newPlayer = new Player
+                        foreach (var error in createResult.Errors)
                         {
-                            IdentityUserId = user.Id,
-                            Firstname = firstName,
-                            Lastname = lastName
-                        };
-
-                        _db.Players.Add(newPlayer);
-                        await _db.SaveChangesAsync();
-
-                        var userId = await _userManager.GetUserIdAsync(user);
-                        // var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                        // code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                        // var callbackUrl = Url.Page(
-                        //     "/Account/ConfirmEmail",
-                        //     pageHandler: null,
-                        //     values: new { area = "Identity", userId = userId, code = code },
-                        //     protocol: Request.Scheme);
-                        //
-                        // await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        //     $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-
-                        // If account confirmation is required, we need to show the link if we don't have a real email sender
-                        // if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                        // {
-                        //     return RedirectToPage("./RegisterConfirmation", new { Email = Input.Email });
-                        // }
-
-                        await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
-                        return LocalRedirect(returnUrl);
+                            ModelState.AddModelError(string.Empty, error.Description);
+                        }
+                        ProviderDisplayName = info.ProviderDisplayName;
+                        ReturnUrl = returnUrl;
+                        return Page();
                     }
                 }
 
-                foreach (var error in result.Errors)
+                var logins = await _userManager.GetLoginsAsync(user);
+                if (!logins.Any(l => l.LoginProvider == info.LoginProvider && l.ProviderKey == info.ProviderKey))
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    await _userManager.AddLoginAsync(user, info);
                 }
+
+                var player = await _db.Players.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.IdentityUserId == user.Id);
+                if (player == null)
+                {
+                    var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName);
+                    var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname);
+
+                    if (string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName))
+                    {
+                        var fullName = info.Principal.FindFirstValue(ClaimTypes.Name) ?? Input.Email.Split('@')[0];
+                        var parts = fullName.Trim().Split(' ', 2);
+                        firstName = parts[0];
+                        lastName = parts.Length > 1 ? parts[1] : "";
+                    }
+
+                    if (string.IsNullOrWhiteSpace(firstName)) firstName = "Google";
+                    if (string.IsNullOrWhiteSpace(lastName)) lastName = "User";
+
+                    player = new Player
+                    {
+                        IdentityUserId = user.Id,
+                        Firstname = firstName,
+                        Lastname = lastName,
+                        IsActive = true
+                    };
+
+                    _db.Players.Add(player);
+                    await _db.SaveChangesAsync();
+                }
+
+                _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+                await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
+                return LocalRedirect(returnUrl);
             }
 
             ProviderDisplayName = info.ProviderDisplayName;
