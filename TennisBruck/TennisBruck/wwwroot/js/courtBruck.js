@@ -24,10 +24,17 @@ function openBookingModal(court, startTime, endTime) {
     if (modalPartnerId) modalPartnerId.value = '';
     if (eventNameInput) eventNameInput.value = '';
 
-    if (btnModalDelete) btnModalDelete.style.display = 'none';
+    if (btnModalDelete) {
+        btnModalDelete.classList.add('hidden-element');
+        btnModalDelete.style.display = 'none';
+    }
     if (btnModalSubmit) btnModalSubmit.innerText = 'Reservieren';
 
-    if (reservationModal) reservationModal.style.display = 'flex';
+    if (reservationModal) {
+        reservationModal.classList.remove('hidden-element');
+        reservationModal.classList.add('active');
+        reservationModal.style.display = 'flex';
+    }
 }
 
 function openEditModal(reservationId, court, startTime, endTime, partnerId, eventName) {
@@ -53,16 +60,27 @@ function openEditModal(reservationId, court, startTime, endTime, partnerId, even
     if (modalPartnerId) modalPartnerId.value = partnerId > 0 ? partnerId : '';
     if (eventNameInput) eventNameInput.value = eventName || '';
 
-    if (btnModalDelete) btnModalDelete.style.display = 'inline-block';
+    if (btnModalDelete) {
+        btnModalDelete.classList.remove('hidden-element');
+        btnModalDelete.style.display = 'inline-block';
+    }
     if (deleteReservationId) deleteReservationId.value = reservationId;
     if (btnModalSubmit) btnModalSubmit.innerText = 'Speichern';
 
-    if (reservationModal) reservationModal.style.display = 'flex';
+    if (reservationModal) {
+        reservationModal.classList.remove('hidden-element');
+        reservationModal.classList.add('active');
+        reservationModal.style.display = 'flex';
+    }
 }
 
 function closeReservationModal() {
     const reservationModal = document.getElementById('reservationModal');
-    if (reservationModal) reservationModal.style.display = 'none';
+    if (reservationModal) {
+        reservationModal.classList.add('hidden-element');
+        reservationModal.classList.remove('active');
+        reservationModal.style.display = 'none';
+    }
 }
 
 function onStartTimeChanged() {
