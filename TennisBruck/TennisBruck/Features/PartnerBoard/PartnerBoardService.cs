@@ -18,7 +18,7 @@ public class PartnerBoardOverview
     public TimeSpan? FilterTimeTo { get; set; }
 }
 
-public class PartnerBoardService(TennisContext db, IEmailSender emailSender)
+public class PartnerBoardService(TennisContext db, IEmailSender emailSender, WebPushNotificationService? pushService = null)
 {
     public async Task<PartnerBoardOverview> GetOverviewAsync(
         int currentPlayerId,
@@ -184,6 +184,11 @@ public class PartnerBoardService(TennisContext db, IEmailSender emailSender)
                 await emailSender.SendEmailAsync(slot.Player.IdentityUser.Email, emailSubject, emailBody);
                 creatorAlreadyNotified = true;
             }
+
+            if (pushService != null && slot.Player != null)
+            {
+                _ = pushService.SendNotificationAsync(slot.Player.Id, "🎾 Neuer Mitspieler in der Börse!", $"{joiningPlayer.Firstname} {joiningPlayer.Lastname} spielt am {slot.Date:dd.MM.yyyy} mit.", "/PartnerBoard");
+            }
         }
 
         if (slot.IsMatched)
@@ -210,6 +215,11 @@ public class PartnerBoardService(TennisContext db, IEmailSender emailSender)
                                $"Viel Spaß beim Spielen!<br>Dein TennisBruck-Team";
 
                     _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
+                }
+
+                if (pushService != null)
+                {
+                    _ = pushService.SendNotificationAsync(p.Id, "🎾 Börsen-Spiel fixiert!", $"Dein Spiel am {slot.Date:dd.MM.yyyy} ist komplett besetzt!", "/PartnerBoard");
                 }
             }
         }

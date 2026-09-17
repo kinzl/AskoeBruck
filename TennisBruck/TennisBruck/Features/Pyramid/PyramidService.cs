@@ -5,7 +5,7 @@ using TennisDb;
 
 namespace TennisBruck.Features.Pyramid;
 
-public class PyramidService(TennisContext db, IEmailSender emailSender)
+public class PyramidService(TennisContext db, IEmailSender emailSender, WebPushNotificationService? pushService = null)
 {
     public List<PyramidLevel> BuildPyramidLevels(
         List<PyramidRank> ranks,
@@ -138,6 +138,11 @@ public class PyramidService(TennisContext db, IEmailSender emailSender)
                                $"Viel Erfolg!<br>Dein TennisBruck-Team";
 
                     _ = emailSender.SendEmailAsync(defenderPlayer.IdentityUser.Email, subject, body);
+                }
+
+                if (pushService != null)
+                {
+                    _ = pushService.SendNotificationAsync(defenderPlayer.Id, $"🎾 Forderung in '{compName}'!", $"{challengerNames} hat dich herausgefordert.", "/Pyramid");
                 }
             }
         }

@@ -180,6 +180,41 @@
             </form>
         </section>
 
+        <section class="modern-card">
+            <div class="card-header-flex">
+                <div class="icon-box" style="background:#e0e7ff;color:#4f46e5;">🔔</div>
+                <h2>Push-Benachrichtigungen (PWA & Desktop)</h2>
+            </div>
+
+            <p class="form-help-text" style="display:block;margin-bottom:15px;line-height:1.4;">
+                Erhalte direkte Benachrichtigungen auf dein Smartphone oder deinen PC (z.B. bei neuen Pyramiden-Forderungen, PartnerBoard-Matches oder Vereinsmeisterschafts-Gegnern).
+            </p>
+
+            <div id="push-status-container" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:var(--border-radius-sm, 8px);margin-bottom:18px;">
+                <span style="font-weight:600;font-size:0.95rem;">Status auf diesem Gerät:</span>
+                <span id="push-status-badge" style="font-size:0.85rem;font-weight:700;padding:4px 10px;border-radius:12px;background:#e2e8f0;color:#64748b;">
+                    Wird geprüft...
+                </span>
+            </div>
+
+            <div id="push-alert" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:15px;font-size:0.9rem;"></div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button type="button" id="btn-enable-push" class="btn-action btn-accent" style="flex:1;min-width:180px;">
+                    🔔 Auf diesem Gerät aktivieren
+                </button>
+                <button type="button" id="btn-test-push" class="btn-action" style="background:#0f172a;color:white;flex:1;min-width:180px;display:none;">
+                    🎾 Test-Push senden
+                </button>
+                <button type="button" id="btn-disable-push" class="btn-action" style="background:#fee2e2;color:#ef4444;border:1px solid #fecaca;display:none;">
+                    Deaktivieren
+                </button>
+            </div>
+            <small class="form-help-text mt-15" style="display:block;color:#94a3b8;">
+                Hinweis für iPhone/iPad: Öffne die Website im Safari und wähle "Zum Home-Bildschirm", um Push-Mitteilungen wie eine App zu empfangen.
+            </small>
+        </section>
+
         <section class="modern-card" style="border-left: 4px solid var(--danger-color, #ef4444);">
             <div class="card-header-flex">
                 <div class="icon-box" style="background:#fee2e2;color:#ef4444;">⚠️</div>
@@ -203,5 +238,108 @@
     </div>
 </main>
 
+<script src="~/js/pushNotifications.js" asp-append-version="true"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const badge = document.getElementById('push-status-badge');
+        const btnEnable = document.getElementById('btn-enable-push');
+        const btnTest = document.getElementById('btn-test-push');
+        const btnDisable = document.getElementById('btn-disable-push');
+        const alertBox = document.getElementById('push-alert');
+
+        function showAlert(msg, isSuccess) {
+            alertBox.style.display = 'block';
+            alertBox.style.background = isSuccess ? '#ecfdf5' : '#fef2f2';
+            alertBox.style.color = isSuccess ? '#065f46' : '#991b1b';
+            alertBox.style.border = isSuccess ? '1px solid #a7f3d0' : '1px solid #fecaca';
+            alertBox.innerText = msg;
+        }
+
+        async function updateStatus() {
+            if (!window.TennisPush || !window.TennisPush.isSupported()) {
+                badge.innerText = 'Nicht unterstützt';
+                badge.style.background = '#fee2e2';
+                badge.style.color = '#ef4444';
+                btnEnable.disabled = true;
+                return;
+            }
+
+            if (Notification.permission === 'denied') {
+                badge.innerText = 'Im Browser blockiert';
+                badge.style.background = '#fee2e2';
+                badge.style.color = '#ef4444';
+                btnEnable.style.display = 'none';
+                btnTest.style.display = 'none';
+                btnDisable.style.display = 'none';
+                return;
+            }
+
+            try {
+                const sub = await window.TennisPush.getSubscription();
+                if (sub) {
+                    badge.innerText = 'Aktiviert ✓';
+                    badge.style.background = '#dcfce7';
+                    badge.style.color = '#15803d';
+                    btnEnable.style.display = 'none';
+                    btnTest.style.display = 'inline-block';
+                    btnDisable.style.display = 'inline-block';
+                } else {
+                    badge.innerText = 'Nicht aktiv';
+                    badge.style.background = '#f1f5f9';
+                    badge.style.color = '#64748b';
+                    btnEnable.style.display = 'inline-block';
+                    btnTest.style.display = 'none';
+                    btnDisable.style.display = 'none';
+                }
+            } catch (e) {
+                console.error('Push status error:', e);
+            }
+        }
+
+        btnEnable.addEventListener('click', async () => {
+            btnEnable.disabled = true;
+            btnEnable.innerText = 'Wird aktiviert...';
+            try {
+                await window.TennisPush.subscribe();
+                showAlert('Push-Benachrichtigungen wurden erfolgreich auf diesem Gerät aktiviert!', true);
+                await updateStatus();
+            } catch (err) {
+                showAlert(err.message || 'Fehler beim Aktivieren von Push-Benachrichtigungen.', false);
+                btnEnable.disabled = false;
+                btnEnable.innerText = '🔔 Auf diesem Gerät aktivieren';
+            }
+        });
+
+        btnDisable.addEventListener('click', async () => {
+            try {
+                await window.TennisPush.unsubscribe();
+                showAlert('Push-Benachrichtigungen wurden auf diesem Gerät deaktiviert.', true);
+                await updateStatus();
+            } catch (err) {
+                showAlert('Fehler beim Deaktivieren.', false);
+            }
+        });
+
+        btnTest.addEventListener('click', async () => {
+            btnTest.disabled = true;
+            btnTest.innerText = 'Wird gesendet...';
+            try {
+                const ok = await window.TennisPush.sendTestNotification();
+                if (ok) {
+                    showAlert('Test-Benachrichtigung wurde versendet! Prüfe dein Benachrichtigungscenter.', true);
+                } else {
+                    showAlert('Konnte keine Benachrichtigung zustellen (kein aktives Gerät gefunden).', false);
+                }
+            } catch (err) {
+                showAlert(err.message, false);
+            } finally {
+                btnTest.disabled = false;
+                btnTest.innerText = '🎾 Test-Push senden';
+            }
+        });
+
+        await updateStatus();
+    });
+</script>
 </body>
 </html>
