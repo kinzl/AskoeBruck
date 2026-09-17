@@ -12,7 +12,10 @@ public class Championship(
     TennisContext db,
     UserManager<IdentityUser> userManager,
     IEmailSender emailSender,
-    ChampionshipInfoService championshipInfoService)
+    ChampionshipInfoService championshipInfoService,
+    TournamentBracketEngine bracketEngine,
+    GroupStageEngine groupStageEngine,
+    ChampionshipService championshipService)
     : PageModel
 {
     public bool IsRegistered { get; set; }
@@ -202,24 +205,7 @@ public class Championship(
 
     private void DeleteCompetitionDependencies(int competitionId, bool deleteCompetitionSelf = false)
     {
-        var groupIds = db.Groups.Where(g => g.CompetitionId == competitionId).Select(g => g.Id).ToList();
-        var knockoutMatchIds = db.KnockoutMatch.Where(k => k.CompetitionId == competitionId).Select(k => k.Id).ToList();
-
-        db.Sets.Where(s =>
-                (s.Match.Group != null && groupIds.Contains(s.Match.Group.Id)) || knockoutMatchIds.Contains(s.Match.Id))
-            .ExecuteDelete();
-        db.KnockoutMatch.Where(k => k.CompetitionId == competitionId).ExecuteDelete();
-        db.Matches.Where(m => m.Group != null && groupIds.Contains(m.Group.Id)).ExecuteDelete();
-        db.GroupTeams.Where(gt => groupIds.Contains(gt.GroupId)).ExecuteDelete();
-        db.Groups.Where(g => g.CompetitionId == competitionId).ExecuteDelete();
-        db.TeamPlayer.Where(tp => tp.Team.CompetitionId == competitionId).ExecuteDelete();
-        db.Teams.Where(t => t.CompetitionId == competitionId).ExecuteDelete();
-
-        if (deleteCompetitionSelf)
-        {
-            db.TournamentRegistrations.Where(r => r.CompetitionId == competitionId).ExecuteDelete();
-            db.Competitions.Where(c => c.Id == competitionId).ExecuteDelete();
-        }
+        championshipService.DeleteCompetitionDependencies(competitionId, deleteCompetitionSelf);
     }
 
     public IActionResult OnPostCreateCompetition(string competitionName, bool? isSingle)
@@ -378,7 +364,8 @@ public class Championship(
 
             // Unlink from knockout matches
             var knockoutMatches = db.KnockoutMatch.Where(m =>
-                (m.Team1 != null && m.Team1.Id == teamId) || (m.Team2 != null && m.Team2.Id == teamId)).ToList();
+                    (m.Team1 != null && m.Team1.Id == teamId) || (m.Team2 != null && m.Team2.Id == teamId))
+                .Include(match => match.Team1).Include(match => match.Team2).ToList();
             foreach (var km in knockoutMatches)
             {
                 if (km.Team1?.Id == teamId) km.Team1 = null;
@@ -862,60 +849,7 @@ public class Championship(
     private void UpdateBracket(int size, string phaseName)
     {
         int selectedCompetitionId = int.Parse(HttpContext.Session.GetString("selectedCompetitionId") ?? "0");
-        if (selectedCompetitionId == 0) return;
-
-        var matchIds = db.KnockoutMatch
-            .Where(k => k.CompetitionId == selectedCompetitionId && k.PhaseName == phaseName)
-            .Select(k => k.Id)
-            .ToList();
-
-        if (matchIds.Any())
-        {
-            db.Sets.Where(s => matchIds.Contains(s.Match.Id)).ExecuteDelete();
-        }
-
-        db.KnockoutMatch.Where(k => k.CompetitionId == selectedCompetitionId && k.PhaseName == phaseName)
-            .ExecuteDelete();
-        db.SaveChanges();
-        int closest = _knownBrackets.First(k => k >= size);
-        int byes = closest - size;
-        if (byes > 0) size = closest;
-
-        int round = 1;
-        double baseT = (double)size / 2;
-        double baseC = (double)size / 2;
-        int matchId = 1;
-        int nextInc = size / 2;
-
-        for (int i = 1; i <= (size - 1); i++)
-        {
-            double baseR = i / baseT;
-            bool isBye = byes > 0 && (i % 2 != 0 || byes >= (baseT - i));
-
-            if (isBye) byes--;
-
-            db.KnockoutMatch.Add(new KnockoutMatch()
-            {
-                CompetitionId = selectedCompetitionId,
-                PhaseName = phaseName,
-                BracketNo = matchId++,
-                RoundNo = round,
-                IsBye = isBye,
-                NextGame = nextInc + i > size - 1 ? null : nextInc + i
-            });
-
-            if (i % 2 != 0) nextInc--;
-
-            while (baseR >= 1)
-            {
-                round++;
-                baseC /= 2;
-                baseT += baseC;
-                baseR = i / baseT;
-            }
-        }
-
-        db.SaveChanges();
+        bracketEngine.CreateOrUpdateBracket(db, selectedCompetitionId, size, phaseName);
     }
 
     public IActionResult OnPostApplyUserInputs()
@@ -1230,28 +1164,7 @@ public class Championship(
 
         foreach (var team in teams)
         {
-            // Remove matches involving this team
-            var matches = await db.Matches.Where(m => m.Team1.Id == team.Id || m.Team2.Id == team.Id).ToListAsync();
-            db.Matches.RemoveRange(matches);
-
-            // Unlink from knockout matches
-            var knockoutMatches = await db.KnockoutMatch.Where(m =>
-                (m.Team1 != null && m.Team1.Id == team.Id) || (m.Team2 != null && m.Team2.Id == team.Id)).ToListAsync();
-            foreach (var km in knockoutMatches)
-            {
-                if (km.Team1?.Id == team.Id) km.Team1 = null;
-                if (km.Team2?.Id == team.Id) km.Team2 = null;
-            }
-
-            // Remove from groups
-            var groupTeams = await db.GroupTeams.Where(gt => gt.TeamId == team.Id).ToListAsync();
-            db.GroupTeams.RemoveRange(groupTeams);
-
-            // Remove TeamPlayer records
-            db.TeamPlayer.RemoveRange(team.TeamPlayers);
-
-            // Delete the team itself
-            db.Teams.Remove(team);
+            await championshipService.DeleteTeamAsync(team.Id);
         }
 
         await db.SaveChangesAsync();
@@ -1264,221 +1177,29 @@ public class Championship(
     /// </summary>
     private void AdvanceWinnerInBracket(Match match)
     {
-        if (match is not KnockoutMatch km || km.NextGame == null || match.Winner == null)
-            return;
-
-        var nextMatch = db.KnockoutMatch
-            .Include(m => m.Team1)
-            .Include(m => m.Team2)
-            .FirstOrDefault(m => m.BracketNo == km.NextGame
-                                 && m.CompetitionId == km.CompetitionId
-                                 && m.PhaseName == km.PhaseName);
-
-        if (nextMatch == null) return;
-
-        if (nextMatch.Team1 == null)
-            nextMatch.Team1 = match.Winner;
-        else if (nextMatch.Team2 == null)
-            nextMatch.Team2 = match.Winner;
-        // Both slots already filled (manual assignment) — don't overwrite
-
-        db.SaveChanges();
-        NotifyOpponentsIfAssigned(nextMatch);
+        bracketEngine.AdvanceWinnerInBracket(db, match, emailSender);
     }
 
     private void NotifyOpponentsIfAssigned(KnockoutMatch nextMatch)
     {
-        if (nextMatch.Team1 == null || nextMatch.Team2 == null) return;
-
-        var team1 = db.Teams
-            .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.NotificationSettings)
-            .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.IdentityUser)
-            .FirstOrDefault(t => t.Id == nextMatch.Team1.Id);
-
-        var team2 = db.Teams
-            .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.NotificationSettings)
-            .Include(t => t.TeamPlayers).ThenInclude(tp => tp.Player).ThenInclude(p => p.IdentityUser)
-            .FirstOrDefault(t => t.Id == nextMatch.Team2.Id);
-
-        if (team1 == null || team2 == null) return;
-
-        var team1Players = team1.TeamPlayers.Select(tp => tp.Player).ToList();
-        var team2Players = team2.TeamPlayers.Select(tp => tp.Player).ToList();
-
-        var team1Names = string.Join(" / ", team1Players.Select(p => $"{p.Firstname} {p.Lastname}"));
-        var team2Names = string.Join(" / ", team2Players.Select(p => $"{p.Firstname} {p.Lastname}"));
-
-        var notifications = new[]
-        {
-            (players: team1Players, myNames: team1Names, oppNames: team2Names),
-            (players: team2Players, myNames: team2Names, oppNames: team1Names)
-        };
-
-        foreach (var (players, myNames, oppNames) in notifications)
-        {
-            foreach (var p in players)
-            {
-                if (p.IdentityUser?.Email != null &&
-                    (p.NotificationSettings == null || p.NotificationSettings.EmailOnOpponentAssigned))
-                {
-                    var subject = "🎾 Dein Gegner im K.O.-Raster steht fest!";
-                    var body = $"Hallo {p.Firstname},<br><br>" +
-                               $"dein nächster Gegner im K.O.-Raster steht fest! Du ({myNames}) spielst gegen <strong>{oppNames}</strong>.<br><br>" +
-                               $"Viel Erfolg beim Match!<br>Dein TennisBruck-Team";
-                    _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
-                }
-            }
-        }
+        bracketEngine.NotifyOpponentsIfAssigned(db, nextMatch, emailSender);
     }
 
-    /// <summary>
-    /// Removes an auto-placed winner from the next round match when undoing a knockout result.
-    /// Only clears the slot if the next match has not yet been played.
-    /// </summary>
     private void UndoWinnerAdvancement(KnockoutMatch km, Team previousWinner)
     {
-        if (km.NextGame == null) return;
-
-        var nextMatch = db.KnockoutMatch
-            .Include(m => m.Team1)
-            .Include(m => m.Team2)
-            .FirstOrDefault(m => m.BracketNo == km.NextGame
-                                 && m.CompetitionId == km.CompetitionId
-                                 && m.PhaseName == km.PhaseName);
-
-        if (nextMatch == null) return;
-
-        if (nextMatch.Team1?.Id == previousWinner.Id)
-            nextMatch.Team1 = null;
-        else if (nextMatch.Team2?.Id == previousWinner.Id)
-            nextMatch.Team2 = null;
-
-        db.SaveChanges();
+        bracketEngine.UndoWinnerAdvancement(db, km, previousWinner);
     }
 
     private async Task<IActionResult> WithDrawPlayer(int playerId, int competitionId)
     {
-        var userTeams = await db.Teams
-            .Include(t => t.TeamPlayers)
-            .Where(t => t.CompetitionId == competitionId && t.TeamPlayers.Any(p => p.PlayerId == playerId))
-            .ToListAsync();
-
-        var teamIds = userTeams.Select(t => t.Id).ToList();
-
-        if (!teamIds.Any()) return RedirectToPage(new { Message = "Spieler ist in keinen Teams dieses Bewerbs." });
-
-        var unplayedMatches = await db.Matches
-            .Include(x => x.Sets)
-            .Include(x => x.Winner)
-            .Include(x => x.Team1)
-            .Include(x => x.Team2)
-            .Where(m => (m.Team1 != null && teamIds.Contains(m.Team1.Id)) ||
-                        (m.Team2 != null && teamIds.Contains(m.Team2.Id)))
-            .ToListAsync();
-
-        foreach (var match in unplayedMatches)
-        {
-            // Do not overwrite matches that have already been played or decided
-            if (match.IsWalkover || match.WinnerTeamId != null || match.Winner != null ||
-                (match.Sets != null && match.Sets.Any()))
-            {
-                continue;
-            }
-
-            match.IsWalkover = true;
-            bool team1Withdrew = match.Team1 != null && teamIds.Contains(match.Team1.Id);
-
-            match.WalkoverTeamId = team1Withdrew ? match.Team1?.Id : match.Team2?.Id;
-            match.Winner = team1Withdrew ? match.Team2 : match.Team1;
-            match.WinnerTeamId = team1Withdrew ? match.Team2?.Id : match.Team1?.Id;
-
-            AdvanceWinnerInBracket(match);
-        }
-
-        var registration = await db.TournamentRegistrations
-            .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.PlayerId == playerId);
-        if (registration != null) registration.HasWithdrawn = true;
-
-        await db.SaveChangesAsync();
-        return RedirectToPage(new
-        {
-            Message =
-                "Spieler wurde abgemeldet. Alle seine offenen Spiele wurden automatisch als w.o. für die Gegner gewertet."
-        });
+        var (success, message) = await championshipService.WithdrawPlayerAsync(playerId, competitionId);
+        return RedirectToPage(new { Message = message });
     }
 
     private List<GroupTableEntry> CalculateGroupTable(IEnumerable<GroupTeam> groupTeams,
         IEnumerable<Match> groupMatches)
     {
-        var table = new List<GroupTableEntry>();
-
-        foreach (var groupTeam in groupTeams)
-        {
-            var entry = new GroupTableEntry { GroupTeam = groupTeam };
-
-            var teamMatches = groupMatches.Where(m =>
-                (m.Team1 != null && m.Team1.Id == groupTeam.TeamId) ||
-                (m.Team2 != null && m.Team2.Id == groupTeam.TeamId)).ToList();
-
-            var validMatches = teamMatches.Where(m => m.Team1 != null && m.Team2 != null).ToList();
-            entry.MatchesPlayed = validMatches.Count;
-
-            foreach (var match in validMatches)
-            {
-                int team1Id = match.Team1!.Id;
-                bool isTeam1 = team1Id == groupTeam.TeamId;
-
-                if (match.IsWalkover)
-                {
-                    bool isWinner = match.WalkoverTeamId != groupTeam.TeamId;
-
-                    if (isWinner)
-                    {
-                        entry.Points++;
-                        entry.SetsWon += 2;
-                        entry.GamesWon += 12;
-                    }
-                    else
-                    {
-                        entry.SetsLost += 2;
-                        entry.GamesLost += 12;
-                    }
-                }
-                else if (match.Sets != null && match.Sets.Any())
-                {
-                    int setsWonHere = 0;
-                    int setsLostHere = 0;
-
-                    foreach (var set in match.Sets.OrderBy(s => s.SetNumber))
-                    {
-                        int myGames = isTeam1 ? set.Player1GamesWon : set.Player2GamesWon;
-                        int oppGames = isTeam1 ? set.Player2GamesWon : set.Player1GamesWon;
-
-                        entry.GamesWon += myGames;
-                        entry.GamesLost += oppGames;
-
-                        if (myGames > oppGames) setsWonHere++;
-                        else if (oppGames > myGames) setsLostHere++;
-                    }
-
-                    entry.SetsWon += setsWonHere;
-                    entry.SetsLost += setsLostHere;
-
-                    if (setsWonHere > setsLostHere)
-                    {
-                        entry.Points++;
-                    }
-                }
-            }
-
-            table.Add(entry);
-        }
-
-        return table
-            .OrderByDescending(e => e.Points)
-            .ThenByDescending(e => e.SetDifference)
-            .ThenByDescending(e => e.GameDifference)
-            .ToList();
+        return groupStageEngine.CalculateGroupTable(groupTeams, groupMatches);
     }
 
     public async Task<IActionResult> OnPostGenerateGroupsAsync(int competitionId, int targetGroupSize)
@@ -1486,96 +1207,8 @@ public class Championship(
         if (!User.IsInRole("Admin")) return Forbid();
         if (targetGroupSize < 2) targetGroupSize = 2;
 
-        var competition = await db.Competitions.FindAsync(competitionId);
-        if (competition == null) return NotFound();
-
-        // For single competitions, ensure all registered players have a Team record
-        if (competition.IsSingle)
-        {
-            var registeredPlayerIds = await db.TournamentRegistrations
-                .Where(r => r.CompetitionId == competitionId)
-                .Select(r => r.PlayerId)
-                .ToListAsync();
-
-            var existingTeamPlayerIds = await db.Teams
-                .Where(t => t.CompetitionId == competitionId)
-                .SelectMany(t => t.TeamPlayers.Select(tp => tp.PlayerId))
-                .ToListAsync();
-
-            var missingPlayerIds = registeredPlayerIds.Except(existingTeamPlayerIds).ToList();
-            if (missingPlayerIds.Any())
-            {
-                foreach (var pId in missingPlayerIds)
-                {
-                    db.Teams.Add(new Team
-                    {
-                        CompetitionId = competitionId,
-                        TeamPlayers = new List<TeamPlayer> { new() { PlayerId = pId } }
-                    });
-                }
-
-                await db.SaveChangesAsync();
-            }
-        }
-
-        var shuffledPlayers = await db.Teams
-            .Where(x => x.CompetitionId == competitionId)
-            .ToListAsync();
-
-        if (!shuffledPlayers.Any())
-        {
-            return RedirectToPage(new
-            {
-                Message =
-                    "Fehler: Keine Teams/Spieler für diesen Bewerb vorhanden. Generiere zuerst Teams oder füge Spieler hinzu."
-            });
-        }
-
-        var oldGroups = await db.Groups
-            .Include(g => g.GroupTeams)
-            .Include(g => g.Matches)
-            .Where(g => g.CompetitionId == competitionId)
-            .ToListAsync();
-
-        db.Matches.RemoveRange(oldGroups.SelectMany(x => x.Matches).ToList());
-        db.GroupTeams.RemoveRange(oldGroups.SelectMany(gt => gt.GroupTeams).ToList());
-        db.Groups.RemoveRange(oldGroups);
-
-        await db.SaveChangesAsync();
-
-        // Calculate numberOfGroups based on the actual number of teams (shuffledPlayers.Count) rather than individual players count
-        int numberOfGroups = (int)Math.Ceiling((double)shuffledPlayers.Count / targetGroupSize);
-
-        var newGroups = new List<Group>();
-        for (int i = 0; i < numberOfGroups; i++)
-        {
-            newGroups.Add(new Group
-            {
-                CompetitionId = competitionId,
-                GroupName = $"Gruppe {(char)('A' + i)}",
-                MaxAmount = targetGroupSize,
-                GroupTeams = []
-            });
-        }
-
-        var random = new Random();
-        shuffledPlayers = shuffledPlayers.OrderBy(_ => random.Next()).ToList();
-
-        for (int i = 0; i < shuffledPlayers.Count; i++)
-        {
-            int groupIndex = i % numberOfGroups;
-
-            db.GroupTeams.Add(new GroupTeam
-            {
-                Group = newGroups[groupIndex],
-                TeamId = shuffledPlayers[i].Id
-            });
-        }
-
-        db.Groups.AddRange(newGroups);
-        await db.SaveChangesAsync();
-
-        return RedirectToPage(new { Message = "Gruppen wurden erstellt" });
+        var (success, message) = await groupStageEngine.GenerateGroupsAsync(db, competitionId, targetGroupSize);
+        return RedirectToPage(new { Message = message });
     }
 
     public async Task<IActionResult> OnPostGeneratePairsAsync(int championshipId)
@@ -1587,7 +1220,7 @@ public class Championship(
 
         if (players.Count < 2) return RedirectToPage(new { id = championshipId });
 
-        DeleteCompetitionDependencies(championshipId);
+        championshipService.DeleteCompetitionDependencies(championshipId);
 
         var rng = new Random();
         var shuffledPlayers = players.OrderBy(_ => rng.Next()).ToList();

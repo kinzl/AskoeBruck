@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pag
 
 namespace TennisBruck.Pages;
 
-public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerService, IEmailSender emailSender)
+public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerService, IEmailSender emailSender, PyramidService pyramidService)
     : PageModel
 {
     public List<Competition> PyramidCompetitions { get; set; } = [];
@@ -109,52 +109,8 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
                 .ToList();
         }
 
-        // Build Pyramid Levels (Level 1 has 1 rank, Level 2 has 2 ranks, Level 3 has 3 ranks, etc.)
-        int rankIndex = 0;
-        int levelNum = 1;
-
-        while (rankIndex < ranks.Count)
-        {
-            var level = new PyramidLevel { LevelNumber = levelNum };
-            int levelSize = levelNum;
-
-            for (int i = 0; i < levelSize && rankIndex < ranks.Count; i++)
-            {
-                var currentRank = ranks[rankIndex];
-                var activeChallenge = ActiveChallenges.FirstOrDefault(c =>
-                    c.ChallengerTeamId == currentRank.TeamId || c.DefenderTeamId == currentRank.TeamId);
-
-                bool isMyTeam = MyTeam != null && currentRank.TeamId == MyTeam.Id;
-
-                // Challenge Rule: My team can challenge someone up to 3 ranks above, provided neither team is in an active challenge
-                bool canBeChallenged = false;
-                if (MyRank != null && !isMyTeam && MyRank.Rank > currentRank.Rank)
-                {
-                    bool IAmInChallenge = ActiveChallenges.Any(c =>
-                        c.ChallengerTeamId == MyTeam!.Id || c.DefenderTeamId == MyTeam!.Id);
-                    bool TargetIsInChallenge = activeChallenge != null;
-                    int rankDifference = MyRank.Rank - currentRank.Rank;
-
-                    if (!IAmInChallenge && !TargetIsInChallenge && rankDifference <= 3)
-                    {
-                        canBeChallenged = true;
-                    }
-                }
-
-                level.Nodes.Add(new PyramidPositionNode
-                {
-                    PyramidRank = currentRank,
-                    ActiveChallenge = activeChallenge,
-                    IsMyTeam = isMyTeam,
-                    CanBeChallengedByCurrentUser = canBeChallenged
-                });
-
-                rankIndex++;
-            }
-
-            PyramidLevels.Add(level);
-            levelNum++;
-        }
+        // Build Pyramid Levels via PyramidService
+        PyramidLevels = pyramidService.BuildPyramidLevels(ranks, ActiveChallenges, MyRank, MyTeam);
 
         return Page();
     }
@@ -378,96 +334,8 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         if (CurrentPlayer == null)
             return RedirectToPage(new { competitionId, message = "Bitte melde dich an.", isError = true });
 
-        var comp = await db.Competitions.FirstOrDefaultAsync(c => c.Id == competitionId);
-
-        var myRank = await db.PyramidRanks
-            .Include(r => r.Team)
-            .ThenInclude(t => t.TeamPlayers)
-            .ThenInclude(tp => tp.Player)
-            .FirstOrDefaultAsync(r =>
-                r.CompetitionId == competitionId && r.Team.TeamPlayers.Any(tp => tp.PlayerId == CurrentPlayer.Id));
-
-        if (myRank == null)
-            return RedirectToPage(new
-                { competitionId, message = "Du nimmst nicht an dieser Pyramide teil.", isError = true });
-
-        var defenderRank = await db.PyramidRanks
-            .Include(r => r.Team)
-            .ThenInclude(t => t.TeamPlayers)
-            .ThenInclude(tp => tp.Player)
-            .ThenInclude(p => p.IdentityUser)
-            .Include(r => r.Team)
-            .ThenInclude(t => t.TeamPlayers)
-            .ThenInclude(tp => tp.Player)
-            .ThenInclude(p => p.NotificationSettings)
-            .FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.TeamId == defenderTeamId);
-
-        if (defenderRank == null)
-            return RedirectToPage(new { competitionId, message = "Gefordertes Team nicht gefunden.", isError = true });
-
-        if (myRank.Rank <= defenderRank.Rank)
-            return RedirectToPage(new
-            {
-                competitionId, message = "Du kannst nur Teams herausfordern, die im Rang über dir stehen.",
-                isError = true
-            });
-
-        if (myRank.Rank - defenderRank.Rank > 3)
-            return RedirectToPage(new
-            {
-                competitionId, message = "Du kannst nur Teams bis zu 3 Ränge über dir herausfordern.", isError = true
-            });
-
-        // Check existing open challenge for either team
-        bool activeChallengeExists = await db.PyramidChallenges.AnyAsync(c =>
-            c.CompetitionId == competitionId && c.Status == 0 &&
-            (c.ChallengerTeamId == myRank.TeamId || c.DefenderTeamId == myRank.TeamId ||
-             c.ChallengerTeamId == defenderTeamId || c.DefenderTeamId == defenderTeamId));
-
-        if (activeChallengeExists)
-            return RedirectToPage(new
-            {
-                competitionId, message = "Mindestens eines der Teams befindet sich bereits in einer aktiven Forderung.",
-                isError = true
-            });
-
-        var challenge = new PyramidChallenge
-        {
-            CompetitionId = competitionId,
-            ChallengerTeamId = myRank.TeamId,
-            DefenderTeamId = defenderTeamId,
-            ChallengeDate = DateTime.UtcNow,
-            Status = 0
-        };
-
-        db.PyramidChallenges.Add(challenge);
-        await db.SaveChangesAsync();
-
-        // Send email notification if enabled in defender's notification settings
-        if (comp == null)
-            return RedirectToPage(new { competitionId, message = "Forderung erfolgreich ausgesprochen!" });
-
-        var challengerNames = string.Join(" & ",
-            myRank.Team.TeamPlayers.Select(tp => $"{tp.Player.Firstname} {tp.Player.Lastname}"));
-        var compName = comp.Name;
-
-        foreach (var tp in defenderRank.Team.TeamPlayers)
-        {
-            var defenderPlayer = tp.Player;
-            if (defenderPlayer.IdentityUser?.Email != null &&
-                (defenderPlayer.NotificationSettings.EmailOnPyramidChallenge))
-            {
-                var subject = $"🎾 Neue Forderung in der Pyramide '{compName}'!";
-                var body = $"Hallo {defenderPlayer.Firstname},<br><br>" +
-                           $"Du wurdest in der Pyramide <strong>{compName}</strong> von <strong>{challengerNames}</strong> herausgefordert!<br><br>" +
-                           $"Bitte vereinbart zeitnah einen Spieltermin und tragt das Ergebnis nach dem Match in der Anwendung ein.<br><br>" +
-                           $"Viel Erfolg!<br>Dein TennisBruck-Team";
-
-                _ = emailSender.SendEmailAsync(defenderPlayer.IdentityUser.Email, subject, body);
-            }
-        }
-
-        return RedirectToPage(new { competitionId, message = "Forderung erfolgreich ausgesprochen!" });
+        var (success, message) = await pyramidService.IssueChallengeAsync(competitionId, CurrentPlayer.Id, defenderTeamId);
+        return RedirectToPage(new { competitionId, message, isError = !success });
     }
 
     public async Task<IActionResult> OnPostSubmitResultAsync(int competitionId, int challengeId, int winnerTeamId,
@@ -477,49 +345,10 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         if (CurrentPlayer == null)
             return RedirectToPage(new { competitionId, message = "Bitte melde dich an.", isError = true });
 
-        var challenge = await db.PyramidChallenges
-            .Include(c => c.ChallengerTeam)
-            .Include(c => c.DefenderTeam)
-            .FirstOrDefaultAsync(c => c.Id == challengeId);
+        var (success, message) = await pyramidService.SubmitResultAsync(
+            competitionId, challengeId, winnerTeamId, score, CurrentPlayer.Id, User.IsInRole("Admin"));
 
-        if (challenge == null || challenge.Status != 0)
-            return RedirectToPage(new
-                { competitionId, message = "Forderung nicht gefunden oder bereits abgeschlossen.", isError = true });
-
-        bool isChallengerMember = await db.TeamPlayer.AnyAsync(tp =>
-            tp.TeamId == challenge.ChallengerTeamId && tp.PlayerId == CurrentPlayer.Id);
-        bool isDefenderMember = await db.TeamPlayer.AnyAsync(tp =>
-            tp.TeamId == challenge.DefenderTeamId && tp.PlayerId == CurrentPlayer.Id);
-
-        if (!User.IsInRole("Admin") && !isChallengerMember && !isDefenderMember)
-            return RedirectToPage(new { competitionId, message = "Zugriff verweigert.", isError = true });
-
-        challenge.Status = 1; // Completed
-        challenge.WinnerTeamId = winnerTeamId;
-        challenge.MatchDate = DateTime.UtcNow;
-        challenge.Score = string.IsNullOrWhiteSpace(score) ? null : score.Trim();
-
-        // SWAP RANK LOGIC: If Challenger wins, Challenger and Defender swap pyramid ranks!
-        if (winnerTeamId == challenge.ChallengerTeamId)
-        {
-            var challengerRank = await db.PyramidRanks.FirstOrDefaultAsync(r =>
-                r.CompetitionId == competitionId && r.TeamId == challenge.ChallengerTeamId);
-            var defenderRank = await db.PyramidRanks.FirstOrDefaultAsync(r =>
-                r.CompetitionId == competitionId && r.TeamId == challenge.DefenderTeamId);
-
-            if (challengerRank != null && defenderRank != null)
-            {
-                (challengerRank.Rank, defenderRank.Rank) = (defenderRank.Rank, challengerRank.Rank);
-            }
-        }
-
-        await db.SaveChangesAsync();
-
-        string msg = winnerTeamId == challenge.ChallengerTeamId
-            ? "Glückwunsch! Der Forderer hat gewonnen und übernimmt die höhere Pyramidenposition!"
-            : "Das geforderte Team hat gewonnen und verteidigt seinen Rang!";
-
-        return RedirectToPage(new { competitionId, message = msg });
+        return RedirectToPage(new { competitionId, message, isError = !success });
     }
 
     public async Task<IActionResult> OnPostCancelChallengeAsync(int competitionId, int challengeId)
@@ -528,20 +357,8 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         if (CurrentPlayer == null)
             return RedirectToPage(new { competitionId, message = "Bitte melde dich an.", isError = true });
 
-        var challenge = await db.PyramidChallenges.FirstOrDefaultAsync(c => c.Id == challengeId);
-        if (challenge == null)
-            return RedirectToPage(new { competitionId, message = "Forderung nicht gefunden.", isError = true });
-
-        bool isChallengerMember = await db.TeamPlayer.AnyAsync(tp =>
-            tp.TeamId == challenge.ChallengerTeamId && tp.PlayerId == CurrentPlayer.Id);
-
-        if (!User.IsInRole("Admin") && !isChallengerMember)
-            return RedirectToPage(new { competitionId, message = "Zugriff verweigert.", isError = true });
-
-        challenge.Status = 2; // Cancelled
-        await db.SaveChangesAsync();
-
-        return RedirectToPage(new { competitionId, message = "Forderung wurde storniert." });
+        var (success, message) = await pyramidService.CancelChallengeAsync(challengeId, CurrentPlayer.Id, User.IsInRole("Admin"));
+        return RedirectToPage(new { competitionId, message, isError = !success });
     }
 
     public async Task<IActionResult> OnPostDeletePyramidRankAsync(int competitionId, int teamId)
@@ -549,33 +366,7 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         if (!User.IsInRole("Admin"))
             return RedirectToPage(new { competitionId, message = "Zugriff verweigert.", isError = true });
 
-        var rank =
-            await db.PyramidRanks.FirstOrDefaultAsync(r => r.CompetitionId == competitionId && r.TeamId == teamId);
-        if (rank != null)
-        {
-            db.PyramidRanks.Remove(rank);
-
-            // Re-order remaining ranks sequentially
-            var remainingRanks = await db.PyramidRanks
-                .Where(r => r.CompetitionId == competitionId && r.Id != rank.Id)
-                .OrderBy(r => r.Rank)
-                .ToListAsync();
-
-            int index = 1;
-            foreach (var r in remainingRanks)
-            {
-                r.Rank = index++;
-            }
-        }
-
-        var team = await db.Teams.Include(t => t.TeamPlayers).FirstOrDefaultAsync(t => t.Id == teamId);
-        if (team != null)
-        {
-            db.TeamPlayer.RemoveRange(team.TeamPlayers);
-            db.Teams.Remove(team);
-        }
-
-        await db.SaveChangesAsync();
+        await pyramidService.DeletePyramidRankAsync(competitionId, teamId);
         return RedirectToPage(new { competitionId, message = "Teilnehmer aus der Pyramide entfernt." });
     }
 

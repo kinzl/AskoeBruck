@@ -1,4 +1,6 @@
-namespace TennisBruck.Pages;
+using TennisDb;
+
+namespace TennisBruck.Features.Pyramid.Models;
 
 public class PyramidPositionNode
 {

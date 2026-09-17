@@ -1,4 +1,4 @@
-namespace TennisBruck.Pages;
+namespace TennisBruck.Features.Pyramid.Models;
 
 public class PyramidLevel
 {

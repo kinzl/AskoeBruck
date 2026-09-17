@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using System.Net;
-using TennisBruck.Services;
+using TennisBruck.Features.Scraping;
 using Xunit;
 
 namespace TennisBruck.Tests.Services;

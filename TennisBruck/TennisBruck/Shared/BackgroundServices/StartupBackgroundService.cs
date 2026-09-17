@@ -1,7 +1,11 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using TennisDb;
 using Group = TennisDb.Group;
 
-namespace TennisBruck.Services;
+namespace TennisBruck.Shared.BackgroundServices;
 
 public class StartupBackgroundService(IServiceProvider provider) : BackgroundService
 {
@@ -73,14 +77,12 @@ public class StartupBackgroundService(IServiceProvider provider) : BackgroundSer
                 };
 
                 db.Players.Add(player);
-                // Wir speichern den Player direkt, damit er sicher in der DB ist
                 await db.SaveChangesAsync();
 
                 Console.WriteLine("ERFOLG: Admin Emil wurde inkl. Rolle komplett angelegt!");
             }
             else
             {
-                // Falls das Passwort z.B. zu schwach ist, sehen wir hier warum!
                 Console.WriteLine("FEHLER BEIM USER ERSTELLEN:");
                 foreach (var error in createResult.Errors)
                 {
@@ -98,35 +100,16 @@ public class StartupBackgroundService(IServiceProvider provider) : BackgroundSer
     private async Task DropAllTables(TennisContext db)
     {
         var sql = @"
-
 DO $$
-
 DECLARE
-
 r RECORD;
-
 BEGIN
-
 FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
-
 EXECUTE 'DROP TABLE IF EXISTS ""' || r.tablename || '"" CASCADE';
-
 END LOOP;
-
 END $$;";
 
         await db.Database.ExecuteSqlRawAsync(sql);
-
-
-// var resetSql = @"
-
-// DROP SCHEMA public CASCADE;
-
-// CREATE SCHEMA public;
-
-// ";
-
-// await db.Database.ExecuteSqlRawAsync(resetSql);
     }
 
     private Task SeedPlayer(TennisContext db)
@@ -195,7 +178,6 @@ END $$;";
         });
         db.SaveChanges();
 
-
         var tournamentRegistration1 = new TournamentRegistration()
         {
             CompetitionId = 1,
@@ -245,7 +227,7 @@ END $$;";
         db.TournamentRegistrations.Add(tournamentRegistration5);
         db.TournamentRegistrations.Add(tournamentRegistration6);
         db.SaveChanges();
-        // 1 Team erstellen und Competition zuweisen
+
         var team = new Team
         {
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel")
@@ -261,14 +243,8 @@ END $$;";
             Competition = db.Competitions.First(x => x.Name == "Herren Einzel"),
         };
         db.Teams.Add(team2);
-        // var team3 = new Team
-        // {
-        //     Competition = db.Competitions.First(x => x.Name == "Herren Doppel"),
-        // };
-        // db.Teams.Add(team3);
-        db.SaveChanges(); // TeamId wird benötigt für TeamPlayer FK
+        db.SaveChanges();
 
-// Spieler zu Team zuweisen
         var player1 = db.Players.First(x => x.Id == 1);
         var player2 = db.Players.First(x => x.Id == 2);
         var player3 = db.Players.First(x => x.Id == 3);
@@ -281,7 +257,6 @@ END $$;";
         });
         db.SaveChanges();
 
-// Team der Gruppe hinzufügen
         var groupa = new Group
         {
             GroupName = "Gruppe A",
@@ -305,9 +280,8 @@ END $$;";
             Competition = db.Competitions.First(x => x.Name == "Herren Doppel")
         };
         db.Groups.Add(groupc);
-        db.SaveChanges(); // GroupId wird benötigt
+        db.SaveChanges();
 
-//  GroupTeam erstellen
         db.GroupTeams.Add(new GroupTeam
         {
             Group = groupa,
@@ -323,12 +297,6 @@ END $$;";
             Group = groupb,
             Team = team2
         });
-        // db.GroupTeams.Add(new GroupTeam
-        // {
-        //     Group = groupc,
-        //     Team = team3,
-        //     Points = 0
-        // });
         db.SaveChanges();
     }
 }

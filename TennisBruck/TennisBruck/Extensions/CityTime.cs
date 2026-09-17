@@ -1,4 +1,4 @@
-namespace TennisBruck.Services;
+namespace TennisBruck.Extensions;
 
 public static class CityTime
 {

@@ -1,4 +1,12 @@
-namespace TennisBruck.Controller;
+using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TennisBruck.Shared.Auth;
+using TennisDb;
+
+namespace TennisBruck.Features.Reservations;
 
 [Authorize]
 [Route("[controller]/[action]")]
@@ -54,12 +62,10 @@ public class SwapPlayerController(TennisContext db, CurrentPlayerService current
         await using var transaction = await db.Database.BeginTransactionAsync();
         try
         {
-            // Remove both entries from the database
             db.HallEntities.Remove(playerCourt1);
             db.HallEntities.Remove(playerCourt2);
             await db.SaveChangesAsync();
 
-            // Re-add entries with swapped court and player assignments
             db.HallEntities.Add(new HallEntity
             {
                 Player = playerCourt2.Player,
@@ -76,7 +82,7 @@ public class SwapPlayerController(TennisContext db, CurrentPlayerService current
             await transaction.CommitAsync();
             return Ok();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             await transaction.RollbackAsync();
             return StatusCode(StatusCodes.Status500InternalServerError, "Error swapping players.");

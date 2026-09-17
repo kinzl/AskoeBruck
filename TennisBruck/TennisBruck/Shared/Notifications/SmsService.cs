@@ -2,7 +2,7 @@
 // using Twilio;
 // using Twilio.Rest.Verify.V2.Service;
 //
-// namespace TennisBruck.Services
+// namespace TennisBruck.Shared.Notifications
 // {
 //     public class SmsService
 //     {
@@ -16,7 +16,6 @@
 //             TwilioClient.Init(_accountSid, _authToken);
 //         }
 //
-//         // Send the verification code
 //         public ActionResult SendSms(string toPhoneNumber)
 //         {
 //             var verification = VerificationResource.Create(
@@ -29,7 +28,6 @@
 //             return new OkResult();
 //         }
 //
-//         // Verify the code entered by the user
 //         public ActionResult VerifyCode(string? toPhoneNumber, string code)
 //         {
 //             var verificationCheck = VerificationCheckResource.Create(
@@ -41,13 +39,10 @@
 //             if (verificationCheck.Status == "approved")
 //             {
 //                 Console.WriteLine("Verification successful!");
-//                 return new OkResult(); // Return success response
+//                 return new OkResult();
 //             }
-//             else
-//             {
-//                 Console.WriteLine("Verification failed.");
-//                 return new BadRequestObjectResult("Invalid verification code."); // Return error response
-//             }
+//
+//             return new BadRequestResult();
 //         }
 //     }
 // }

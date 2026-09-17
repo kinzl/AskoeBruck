@@ -1,7 +1,7 @@
 using Moq;
 using Moq.Protected;
 using System.Net;
-using TennisBruck.Services;
+using TennisBruck.Shared.Notifications;
 using Xunit;
 
 namespace TennisBruck.Tests.Services;

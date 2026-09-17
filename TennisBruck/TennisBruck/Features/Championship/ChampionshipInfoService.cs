@@ -1,7 +1,9 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using TennisBruck.Dto;
 
-namespace TennisBruck.Services;
+namespace TennisBruck.Features.Championship;
 
 public class ChampionshipInfoService
 {

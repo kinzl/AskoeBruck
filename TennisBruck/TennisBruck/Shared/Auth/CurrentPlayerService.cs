@@ -1,4 +1,9 @@
-namespace TennisBruck.Services;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using TennisDb;
+
+namespace TennisBruck.Shared.Auth;
 
 public class CurrentPlayerService(IHttpContextAccessor httpContextAccessor, TennisContext db)
 {

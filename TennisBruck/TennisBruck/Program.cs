@@ -8,7 +8,11 @@ using TennisContext = TennisDb.TennisContext;
 using Quartz;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
-using TennisBruck.Jobs;
+using TennisBruck.Features.Reservations;
+using TennisBruck.Features.Scraping;
+using TennisBruck.Shared.Auth;
+using TennisBruck.Shared.BackgroundServices;
+using TennisBruck.Shared.Notifications;
 
 
 string swaggerVersion = "v1";
@@ -91,6 +95,12 @@ builder.Services.AddHostedService<StartupBackgroundService>();
 builder.Services.AddHttpClient<EmailService>();
 // builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<CurrentPlayerService>();
+builder.Services.AddScoped<PyramidService>();
+builder.Services.AddScoped<PartnerBoardService>();
+builder.Services.AddScoped<ReservationService>();
+builder.Services.AddScoped<TournamentBracketEngine>();
+builder.Services.AddScoped<GroupStageEngine>();
+builder.Services.AddScoped<ChampionshipService>();
 builder.Services.AddScoped<ChampionshipInfoService>();
 builder.Services.AddHttpClient<OetvScraperService>();
 

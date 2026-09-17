@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Resend;
 
-namespace TennisBruck.Services;
+namespace TennisBruck.Shared.Notifications;
 
 public class EmailSender(ResendClient resend) : IEmailSender
 {

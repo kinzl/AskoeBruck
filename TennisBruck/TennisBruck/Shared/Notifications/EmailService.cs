@@ -1,8 +1,9 @@
 using System.Text;
+using System.Text.Json;
 using MimeKit;
 using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
-namespace TennisBruck.Services;
+namespace TennisBruck.Shared.Notifications;
 
 public class EmailService
 {
@@ -38,14 +39,10 @@ public class EmailService
         var client = new SmtpClient();
         try
         {
-            // Connect to the SMTP server
             Console.WriteLine("Connecting to smtp server");
             await client.ConnectAsync(_smtpServer, _smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
             Console.WriteLine("Connected");
-            // Authenticate
             await client.AuthenticateAsync(_smtpUser, _smtpPass);
-
-            // Send the email
             await client.SendAsync(message);
         }
         catch (Exception ex)
@@ -54,7 +51,6 @@ public class EmailService
         }
         finally
         {
-            // Disconnect from the SMTP server
             await client.DisconnectAsync(true);
         }
     }

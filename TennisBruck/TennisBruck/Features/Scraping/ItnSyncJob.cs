@@ -1,6 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Quartz;
+using TennisDb;
 
-namespace TennisBruck.Jobs;
+namespace TennisBruck.Features.Scraping;
 
 public class ItnSyncJob(IServiceProvider serviceProvider, ILogger<ItnSyncJob> logger) : IJob
 {
@@ -20,13 +24,11 @@ public class ItnSyncJob(IServiceProvider serviceProvider, ILogger<ItnSyncJob> lo
     {
         logger.LogInformation("Starting ITN sync process via Quartz...");
 
-        // Create a new scope to resolve scoped services like DbContext
         using var scope = serviceProvider.CreateScope();
         
-        var dbContext = scope.ServiceProvider.GetRequiredService<TennisDb.TennisContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<TennisContext>();
         var scraperService = scope.ServiceProvider.GetRequiredService<OetvScraperService>();
 
-        // Find ALL players so we can map those without a URL
         var allPlayers = await dbContext.Players.ToListAsync(stoppingToken);
 
         int updatedCount = 0;
@@ -35,7 +37,6 @@ public class ItnSyncJob(IServiceProvider serviceProvider, ILogger<ItnSyncJob> lo
         {
             if (stoppingToken.IsCancellationRequested) break;
 
-            // 1. Attempt to Auto-Map if they have no URL
             if (string.IsNullOrEmpty(player.NuLigaPlayerUrl) && 
                 !string.IsNullOrEmpty(player.Firstname) && 
                 !string.IsNullOrEmpty(player.Lastname))
@@ -47,19 +48,16 @@ public class ItnSyncJob(IServiceProvider serviceProvider, ILogger<ItnSyncJob> lo
                     player.Lastname, 
                     "ASKÖ Bruck - Peuerbach");
 
-                // If mapping succeeded, save now so we don't lose it if the process crashes later
                 if (!string.IsNullOrEmpty(player.NuLigaPlayerUrl))
                 {
                     logger.LogInformation("Successfully mapped profile for {First} {Last}.", player.Firstname, player.Lastname);
-                    updatedCount++; // Count mapping as an update
+                    updatedCount++;
                     await dbContext.SaveChangesAsync(stoppingToken); 
                 }
                 
-                // Polite delay after search
                 await Task.Delay(Random.Shared.Next(1500, 3000), stoppingToken);
             }
 
-            // 2. Fetch ITN if they have a URL
             if (!string.IsNullOrEmpty(player.NuLigaPlayerUrl))
             {
                 var newItn = await scraperService.GetPlayerItnAsync(player.NuLigaPlayerUrl);
@@ -71,7 +69,6 @@ public class ItnSyncJob(IServiceProvider serviceProvider, ILogger<ItnSyncJob> lo
                     updatedCount++;
                 }
 
-                // Be polite to the OETV servers, wait a little bit between requests
                 await Task.Delay(Random.Shared.Next(1000, 3000), stoppingToken);
             }
         }

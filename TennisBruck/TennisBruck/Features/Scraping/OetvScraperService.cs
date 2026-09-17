@@ -1,8 +1,11 @@
 using System.Globalization;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
-namespace TennisBruck.Services;
+namespace TennisBruck.Features.Scraping;
 
 public class OetvScraperService(HttpClient httpClient, ILogger<OetvScraperService> logger, IConfiguration configuration)
 {
@@ -18,7 +21,6 @@ public class OetvScraperService(HttpClient httpClient, ILogger<OetvScraperServic
 
         try
         {
-            // Extract the playerId from the end of the URL (e.g. NU12345)
             var uri = new Uri(nuLigaPlayerUrl);
             var playerId = uri.Segments.Last().Trim('/');
 
@@ -36,7 +38,7 @@ public class OetvScraperService(HttpClient httpClient, ILogger<OetvScraperServic
             response.EnsureSuccessStatusCode();
 
             var jsonContent = await response.Content.ReadAsStringAsync();
-            using var document = System.Text.Json.JsonDocument.Parse(jsonContent);
+            using var document = JsonDocument.Parse(jsonContent);
 
             var root = document.RootElement;
             if (root.TryGetProperty("success", out var successElement) && successElement.GetBoolean() == true)
@@ -45,13 +47,12 @@ public class OetvScraperService(HttpClient httpClient, ILogger<OetvScraperServic
                     dataElement.TryGetProperty("player", out var playerObj))
                 {
                     if (playerObj.TryGetProperty("fedRank", out var fedRankElement) &&
-                        fedRankElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                        fedRankElement.ValueKind == JsonValueKind.Number)
                     {
                         return fedRankElement.GetDecimal();
                     }
 
-                    // Fallback in case fedrank is a string or null (player has no ITN yet)
-                    if (fedRankElement.ValueKind == System.Text.Json.JsonValueKind.String)
+                    if (fedRankElement.ValueKind == JsonValueKind.String)
                     {
                         var itnStr = fedRankElement.GetString()?.Replace(',', '.');
                         if (decimal.TryParse(itnStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal itn))
@@ -78,7 +79,6 @@ public class OetvScraperService(HttpClient httpClient, ILogger<OetvScraperServic
     {
         try
         {
-            // Call the internal JSON API used by the OETV frontend
             string apiKey = GetApiKey();
             string apiUrl =
                 $"https://www.oetv.at/?oetvappapi=1&apikey={apiKey}&method=nu-players&firstname={Uri.EscapeDataString(firstName)}&lastname={Uri.EscapeDataString(lastName)}";
@@ -113,15 +113,11 @@ public class OetvScraperService(HttpClient httpClient, ILogger<OetvScraperServic
                         {
                             var clubName = clubNameElement.GetString() ?? "";
 
-                            // Because the ÖTV API often returns broken character encodings for special characters like 'Ö'
-                            // (e.g. ASK Bruck - Peuerbach), a strict Equals check will fail. 
-                            // We split targetClubName into tokens and ensure the API clubName contains the safe ones.
                             var tokens = targetClubName.Split(new[] { ' ', '-' },
                                 StringSplitOptions.RemoveEmptyEntries);
                             clubMatches = true;
                             foreach (var token in tokens)
                             {
-                                // Skip checking tokens with special characters to avoid encoding traps
                                 if (token.Contains("Ö", StringComparison.OrdinalIgnoreCase) ||
                                     token.Contains("ö", StringComparison.OrdinalIgnoreCase)) continue;
 
@@ -145,7 +141,6 @@ public class OetvScraperService(HttpClient httpClient, ILogger<OetvScraperServic
                                               StringComparison.OrdinalIgnoreCase);
                         }
 
-                        // Enforce match on club AND exact match on first/last name
                         if (clubMatches && nameMatches)
                         {
                             matchingPlayers.Add(player);

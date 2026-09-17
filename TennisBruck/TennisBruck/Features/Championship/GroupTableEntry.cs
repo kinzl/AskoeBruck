@@ -1,4 +1,4 @@
-namespace TennisBruck.Pages;
+namespace TennisBruck.Features.Championship;
 
 public class GroupTableEntry
 {
@@ -10,10 +10,8 @@ public class GroupTableEntry
     public int SetsWon { get; set; }
     public int SetsLost { get; set; }
     public int GamesWon { get; set; }
-
     public int GamesLost { get; set; }
 
     public int SetDifference => SetsWon - SetsLost;
     public int GameDifference => GamesWon - GamesLost;
-
 }
