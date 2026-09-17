@@ -21,6 +21,8 @@ public class WebPushNotificationService
     private readonly ILogger<WebPushNotificationService> _logger;
     private readonly VapidDetails _vapidDetails;
     private readonly WebPushClient _client;
+    private static VapidDetails? _cachedVapidDetails;
+    private static readonly object _vapidLock = new();
 
     public WebPushNotificationService(
         TennisContext db,
@@ -35,16 +37,26 @@ public class WebPushNotificationService
         var publicKey = config["Vapid:PublicKey"];
         var privateKey = config["Vapid:PrivateKey"];
 
-        if (string.IsNullOrWhiteSpace(publicKey) || string.IsNullOrWhiteSpace(privateKey))
+        if (!string.IsNullOrWhiteSpace(publicKey) && !string.IsNullOrWhiteSpace(privateKey))
         {
-            // Auto-generate VAPID keys for zero-config local development and testing
-            var generatedKeys = VapidHelper.GenerateVapidKeys();
-            publicKey = generatedKeys.PublicKey;
-            privateKey = generatedKeys.PrivateKey;
-            _logger.LogInformation("Generated ephemeral VAPID keys for Web Push. Set Vapid:PublicKey and Vapid:PrivateKey in appsettings.json to persist.");
+            _vapidDetails = new VapidDetails(subject, publicKey, privateKey);
         }
-
-        _vapidDetails = new VapidDetails(subject, publicKey, privateKey);
+        else
+        {
+            if (_cachedVapidDetails == null)
+            {
+                lock (_vapidLock)
+                {
+                    if (_cachedVapidDetails == null)
+                    {
+                        var generatedKeys = VapidHelper.GenerateVapidKeys();
+                        _cachedVapidDetails = new VapidDetails(subject, generatedKeys.PublicKey, generatedKeys.PrivateKey);
+                        _logger.LogInformation("Generated ephemeral in-memory VAPID keys for Web Push.");
+                    }
+                }
+            }
+            _vapidDetails = _cachedVapidDetails;
+        }
     }
 
     public string GetVapidPublicKey() => _vapidDetails.PublicKey;

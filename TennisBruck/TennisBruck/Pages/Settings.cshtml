@@ -256,11 +256,15 @@
         }
 
         async function updateStatus() {
-            if (!window.TennisPush || !window.TennisPush.isSupported()) {
-                badge.innerText = 'Nicht unterstützt';
-                badge.style.background = '#fee2e2';
-                badge.style.color = '#ef4444';
-                btnEnable.disabled = true;
+            if (!window.TennisPush) return;
+            const support = window.TennisPush.getSupportDetails ? window.TennisPush.getSupportDetails() : { supported: window.TennisPush.isSupported() };
+
+            if (!support.supported) {
+                badge.innerText = support.isIOSNonStandalone ? 'Home-Bildschirm nötig' : 'Nicht unterstützt';
+                badge.style.background = '#fef3c7';
+                badge.style.color = '#92400e';
+                showAlert(support.reason, false);
+                btnEnable.disabled = false;
                 return;
             }
 
@@ -271,6 +275,7 @@
                 btnEnable.style.display = 'none';
                 btnTest.style.display = 'none';
                 btnDisable.style.display = 'none';
+                showAlert("Benachrichtigungen sind für diese Website im Browser blockiert. Bitte erlaube Benachrichtigungen in den Website-Einstellungen deines Browsers.", false);
                 return;
             }
 
