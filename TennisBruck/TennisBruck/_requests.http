@@ -9,9 +9,9 @@ POST {{baseUrl}}/api/push/subscribe
 Content-type: application/json
 
 {
-      "endpoint": "abc",
-      "p256dh": "abc",
-      "auth": "abc"
+   "endpoint": "abc",
+   "p256dh": "abc",
+   "auth": "abc"
 }
 #####
 POST {{baseUrl}}/api/push/test

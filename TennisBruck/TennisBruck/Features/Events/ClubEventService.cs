@@ -1,23 +1,6 @@
 using System.Text;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using TennisDb;
-
-using TennisBruck.Features.Scraping;
 
 namespace TennisBruck.Features.Events;
-
-public class ClubEventDashboardVm
-{
-    public List<ClubEvent> PinnedEvents { get; set; } = [];
-    public List<ClubEvent> UpcomingEvents { get; set; } = [];
-    public List<ClubEvent> PastEvents { get; set; } = [];
-    public List<OetvMatch> UpcomingMatches { get; set; } = [];
-    public List<OetvMatch> PastMatches { get; set; } = [];
-    public List<string> MatchCategories { get; set; } = [];
-}
 
 public class ClubEventService(
     TennisContext db,

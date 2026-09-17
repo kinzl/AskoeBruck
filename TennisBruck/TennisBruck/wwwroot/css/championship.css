@@ -1810,16 +1810,17 @@ select:focus {
 }
 
 .status-closed {
-    color: #dc2626;
+    color: #64748b;
 }
 
 .comp-arrow {
-    color: var(--accent-color);
+    color: var(--nav-bg);
     font-weight: 700;
-    transition: transform 0.2s;
+    transition: all 0.2s ease;
 }
 
 .overview-comp-card:hover .comp-arrow {
+    color: #15803d;
     transform: translateX(4px);
 }
 
