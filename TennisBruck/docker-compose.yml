@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: tennis_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE:-tennisbruck}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DATABASE:-tennisbruck}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mynetwork
+
+  tennis_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kinzla/tennisbruck:latest
+    container_name: tennis_app
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE:-tennisbruck}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      AUTHENTICATION_GOOGLE_CLIENTID: ${AUTHENTICATION_GOOGLE_CLIENTID:-}
+      AUTHENTICATION_GOOGLE_CLIENTSECRET: ${AUTHENTICATION_GOOGLE_CLIENTSECRET:-}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mynetwork
+
+  # Web-UI für PostgreSQL Datenbankverwaltung (unter http://localhost:8082)
+  adminer:
+    image: adminer:latest
+    container_name: tennis_adminer
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    depends_on:
+      - postgres
+    networks:
+      - mynetwork
+
+volumes:
+  postgres_data:
+
+networks:
+  mynetwork:
+    driver: bridge
