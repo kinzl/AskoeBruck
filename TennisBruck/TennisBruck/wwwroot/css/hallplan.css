@@ -616,12 +616,31 @@ input:checked + .slider:before {
    ========================================== */
 @media (max-width: 768px) {
     .app-header {
-        padding: 30px 15px 40px 15px;
+        padding: 15px 12px 35px 12px;
+    }
+
+    .header-top-bar {
+        padding-bottom: 10px;
+    }
+
+    .btn-back-header {
+        padding: 5px 12px;
+        font-size: 0.8rem;
+    }
+
+    .app-title {
+        font-size: 1.3rem;
+    }
+
+    .header-subtitle {
+        font-size: 0.82rem;
+        margin-top: 4px;
     }
 
     .main-container {
-        padding: 0 10px;
-        margin-top: -20px;
+        padding: 0 8px;
+        margin-top: -22px;
+        gap: 12px;
     }
 
     .desktop-name {
@@ -632,10 +651,6 @@ input:checked + .slider:before {
         display: inline !important;
     }
 
-    .app-title {
-        font-size: 1.4rem;
-    }
-
     .players-2x2-grid {
         grid-template-columns: 1fr 1fr; /* back to 2×2 on mobile */
         gap: 4px;
@@ -643,7 +658,7 @@ input:checked + .slider:before {
     }
 
     .compact-drop {
-        min-height: 44px;
+        min-height: 42px;
     }
 
     .compact-player {
@@ -652,9 +667,9 @@ input:checked + .slider:before {
     }
 
     .avatar-micro {
-        width: 22px;
-        height: 22px;
-        font-size: 0.68rem;
+        width: 20px;
+        height: 20px;
+        font-size: 0.65rem;
         flex-shrink: 0;
     }
 
@@ -664,57 +679,88 @@ input:checked + .slider:before {
 
     .top-dashboard-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
 
     .admin-grid {
         grid-template-columns: 1fr;
+        gap: 10px;
     }
 
     .modern-card {
-        padding: 15px;
+        padding: 12px;
+        border-radius: var(--border-radius-sm);
     }
 
     .card-status-flex {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
-    }
-
-    .section-title {
-        font-size: 1.1rem;
-    }
-
-    .substitute-bench {
         gap: 8px;
     }
 
-    .player-slot {
+    .section-title {
+        font-size: 1rem;
+        margin-bottom: 12px;
+    }
+
+    .section-description {
+        font-size: 0.78rem;
+        margin-bottom: 10px;
+    }
+
+    .input-label, .status-label {
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+
+    .status-heading {
+        font-size: 1rem;
+    }
+
+    .input-field, .custom-select {
+        padding: 7px 10px;
         font-size: 0.85rem;
+        border-radius: 6px;
+    }
+
+    .btn-action {
+        padding: 7px 14px;
+        font-size: 0.82rem;
+        border-radius: 6px;
+    }
+
+    .substitute-bench {
+        gap: 6px;
+    }
+
+    .player-slot {
+        font-size: 0.8rem;
+        padding: 5px 10px;
     }
 
     .hallplan-header-card {
         flex-direction: row;
         flex-wrap: wrap;
-        gap: 20px;
+        gap: 12px;
         align-items: center;
         justify-content: space-between;
-        padding: 15px;
+        padding: 12px;
     }
     
     .hallplan-select-wrapper {
         flex: 1;
-        min-width: 200px;
+        min-width: 180px;
     }
     
     .hallplan-status-wrapper {
         border-left: none;
         padding-left: 0;
-        gap: 15px;
+        gap: 10px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         flex: 1;
-        min-width: 200px;
+        min-width: 180px;
     }
 }
 
@@ -725,7 +771,12 @@ input:checked + .slider:before {
     }
 
     .compact-drop {
-        min-height: 40px;
+        min-height: 38px;
+    }
+
+    .hallplan-header-card {
+        flex-direction: column;
+        align-items: stretch;
     }
 }
 

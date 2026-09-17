@@ -103,6 +103,7 @@ builder.Services.AddScoped<GroupStageEngine>();
 builder.Services.AddScoped<ChampionshipService>();
 builder.Services.AddScoped<ChampionshipInfoService>();
 builder.Services.AddScoped<WebPushNotificationService>();
+builder.Services.AddScoped<ClubEventService>();
 builder.Services.AddHttpClient<OetvScraperService>();
 
 builder.Services.AddQuartz(q =>

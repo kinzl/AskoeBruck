@@ -56,6 +56,13 @@
             <button type="submit" class="btn-action btn-accent">Jetzt Reservieren</button>
         </form>
 
+        <form method="get" asp-page="/Events" class="dashboard-card">
+            <div class="card-icon">📢</div>
+            <h2 class="card-title">Infoboard & Termine</h2>
+            <p class="card-desc">Vereins-Events, Feste und alle Liga-Spiele unserer Mannschaften.</p>
+            <button type="submit" class="btn-action">Infoboard öffnen</button>
+        </form>
+
         @if (User.Identity!.IsAuthenticated)
         {
             <form method="get" asp-page="/Championship" class="dashboard-card">

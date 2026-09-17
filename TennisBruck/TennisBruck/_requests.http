@@ -2,6 +2,28 @@
 ##################################################
 
 
+################################################## push
+GET {{baseUrl}}/api/push/public-key
+#####
+POST {{baseUrl}}/api/push/subscribe
+Content-type: application/json
+
+{
+      "endpoint": "abc",
+      "p256dh": "abc",
+      "auth": "abc"
+}
+#####
+POST {{baseUrl}}/api/push/test
+#####
+POST {{baseUrl}}/api/push/unsubscribe
+Content-type: application/json
+
+{
+   "endpoint": "abc"
+}
+#####
+
 ################################################## SwapPlayer
 POST {{baseUrl}}/SwapPlayer/OnPostSwapPlayers
 #####

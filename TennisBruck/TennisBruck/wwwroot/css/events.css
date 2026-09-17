@@ -1,0 +1,1240 @@
+/* =========================================================
+   TENNISBRUCK INFOBOARD & EVENTS - STYLING
+   ========================================================= */
+:root {
+    --app-bg: #f8fafc;
+    --nav-bg: #0f172a;
+    --nav-accent: #1e293b;
+    --accent-color: #d9f95d;
+    --accent-hover: #bceb15;
+    --text-light: #f8fafc;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --card-bg: #ffffff;
+    --border-subtle: #e2e8f0;
+    --border-radius-lg: 16px;
+    --border-radius-sm: 8px;
+    --shadow-card: 0 10px 25px -5px rgba(15, 23, 42, 0.06);
+    --shadow-hover: 0 16px 32px -6px rgba(15, 23, 42, 0.12);
+}
+
+body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: var(--app-bg);
+    color: var(--text-dark);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+/* --- HEADER --- */
+.events-header {
+    background-color: var(--nav-bg);
+    padding: 20px 16px 24px 16px;
+    box-sizing: border-box;
+    text-align: center;
+    position: relative;
+}
+
+.header-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.header-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.btn-back-header {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-back-header:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: translateX(-3px);
+}
+
+.app-title {
+    color: var(--text-light);
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.02em;
+}
+
+.app-subtitle {
+    color: #94a3b8;
+    font-size: 0.92rem;
+    margin: 0;
+}
+
+/* --- MAIN TABS --- */
+.tab-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+    margin-bottom: 0;
+}
+
+.tab-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: white;
+}
+
+.tab-btn.active {
+    background: var(--accent-color);
+    color: #0f172a;
+    border-color: var(--accent-color);
+    box-shadow: 0 2px 10px rgba(217, 249, 93, 0.3);
+}
+
+/* --- MAIN CONTAINER --- */
+.main-container {
+    max-width: 1000px;
+    margin: 22px auto 60px auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+/* --- FILTER PILLS --- */
+.filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: var(--card-bg);
+    padding: 10px 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    margin-bottom: 18px;
+    border: 1px solid var(--border-subtle);
+}
+
+.filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.pill-link {
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 16px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.pill-link:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.pill-link.active {
+    background: #0f172a;
+    color: #ffffff;
+}
+
+/* --- ACTION BUTTONS --- */
+.btn-primary {
+    background: var(--accent-color);
+    color: #0f172a;
+    border: none;
+    padding: 10px 18px;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+/* --- ALERTS --- */
+.alert-box {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    padding: 14px 18px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 24px;
+    font-weight: 500;
+}
+
+/* --- PINNED HIGHLIGHTS --- */
+.pinned-section {
+    margin-bottom: 35px;
+}
+
+.section-headline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 16px;
+}
+
+.pinned-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: white;
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+    border-left: 5px solid var(--accent-color);
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.pinned-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--accent-color);
+    color: #0f172a;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.05em;
+}
+
+.pinned-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.4rem;
+    color: #ffffff;
+    max-width: 80%;
+}
+
+.pinned-card p {
+    color: #cbd5e1;
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+}
+
+/* --- EVENTS GRID --- */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 22px;
+}
+
+.event-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-subtle);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.25s ease;
+    position: relative;
+}
+
+.event-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+}
+
+.event-card-top {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+/* Date tile */
+.date-badge {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    text-align: center;
+    min-width: 60px;
+    box-sizing: border-box;
+}
+
+.date-day {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+}
+
+.date-month {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+}
+
+.event-info {
+    flex: 1;
+}
+
+.category-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.category-turnier { background: #fef3c7; color: #b45309; }
+.category-fest { background: #dcfce7; color: #15803d; }
+.category-arbeit { background: #e0e7ff; color: #4338ca; }
+.category-jugend { background: #fce7f3; color: #be185d; }
+.category-allgemein { background: #f1f5f9; color: #475569; }
+
+.event-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+    color: var(--text-dark);
+}
+
+.event-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.event-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.event-desc {
+    font-size: 0.92rem;
+    color: #334155;
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 14px;
+    border-top: 1px solid #f1f5f9;
+    margin-top: auto;
+}
+
+.btn-ics {
+    background: #f8fafc;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-ics:hover {
+    background: #0f172a;
+    color: white;
+    border-color: #0f172a;
+}
+
+.admin-actions {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.btn-admin-icon {
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-admin-icon:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.btn-admin-icon.danger:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    border-color: #fca5a5;
+}
+
+/* --- TEAM MATCH CARDS (ÖTV MATCHES) --- */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 14px;
+}
+
+.match-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    border: 1px solid var(--border-subtle);
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+}
+
+.match-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.07);
+}
+
+.match-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.match-league {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.35;
+    flex: 1;
+    word-break: break-word;
+}
+
+.match-date-row,
+.match-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.match-date-icon {
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.match-dot {
+    color: #cbd5e1;
+}
+
+.match-time {
+    font-weight: 500;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.home-badge {
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.away-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.match-teams-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px 10px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #f1f5f9;
+    margin-bottom: 8px;
+}
+
+.match-team-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #334155;
+    font-weight: 600;
+}
+
+.match-team-row.highlight {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.match-team-row.highlight .match-team-name {
+    color: #15803d;
+}
+
+.match-team-score {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0f172a;
+    min-width: 16px;
+    text-align: right;
+}
+
+.match-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.match-footer-links {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.btn-compact {
+    background: #f8fafc;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-compact:hover {
+    background: #0f172a;
+    color: white;
+    border-color: #0f172a;
+}
+
+.btn-compact.accent {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.btn-compact.accent:hover {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+/* --- EMPTY STATES --- */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    border: 1px dashed #cbd5e1;
+    color: #64748b;
+    grid-column: 1 / -1;
+}
+
+.empty-state-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- MODAL --- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.7);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    overflow-y: auto;
+    padding: 30px 20px;
+    box-sizing: border-box;
+}
+
+.modal-card {
+    background: #ffffff;
+    max-width: 580px;
+    margin: 0 auto;
+    border-radius: var(--border-radius-lg);
+    padding: 28px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+}
+
+.modal-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #334155;
+}
+
+.form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: #0f172a;
+}
+
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+/* =========================================================
+   DIGITAL NOTICE BOARD / SCHWARZES BRETT
+   ========================================================= */
+.board-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: var(--card-bg);
+    padding: 12px 18px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    margin-bottom: 16px;
+    border: 1px solid var(--border-subtle);
+}
+
+.board-header-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.board-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.board-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    border: 1px solid var(--border-subtle);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+
+.board-card:hover {
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07);
+    transform: translateY(-1px);
+}
+
+.board-card.pinned {
+    border-left: 4px solid #3b82f6;
+    background: linear-gradient(to right, #ffffff, #f8fafc);
+}
+
+.board-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.board-badge-pinned {
+    display: inline-flex;
+    align-items: center;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+}
+
+.board-card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+    line-height: 1.35;
+}
+
+.board-card-date {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.board-card-meta {
+    font-size: 0.82rem;
+    color: #475569;
+    margin-bottom: 6px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.board-card-text {
+    font-size: 0.9rem;
+    color: #334155;
+    line-height: 1.55;
+    white-space: pre-line;
+    margin: 8px 0;
+}
+
+/* --- PDF ATTACHMENT COMPACT --- */
+.board-pdf-compact {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 6px 12px;
+    margin: 8px 0;
+    font-size: 0.82rem;
+}
+
+.pdf-tag {
+    background: #ef4444;
+    color: white;
+    font-weight: 800;
+    font-size: 0.68rem;
+    padding: 2px 5px;
+    border-radius: 4px;
+}
+
+.pdf-name {
+    font-weight: 600;
+    color: #991b1b;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-pdf-link {
+    color: #ef4444;
+    font-weight: 700;
+    text-decoration: none;
+    margin-left: 4px;
+}
+
+.btn-pdf-link:hover {
+    text-decoration: underline;
+}
+
+/* --- IMAGE / FLYER PREVIEW --- */
+.board-flyer-wrap {
+    margin-top: 10px;
+    border-radius: 10px;
+    overflow: hidden;
+    max-height: 260px;
+    border: 1px solid var(--border-subtle);
+}
+
+.board-flyer-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.board-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* =========================================================
+   ADMIN TOOLBAR & ACTION BUTTONS
+   ========================================================= */
+.admin-toolbar-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.admin-toolbar-wrap .sync-btn {
+    padding: 7px 14px;
+    font-size: 0.84rem;
+    background: #2563eb;
+    border: 1px solid #1d4ed8;
+    color: white;
+}
+
+.admin-toolbar-wrap .sync-btn:hover {
+    background: #1d4ed8;
+}
+
+.admin-toolbar-wrap .create-match-btn {
+    padding: 6px 12px;
+    font-size: 0.82rem;
+}
+
+.admin-toolbar-wrap .clear-matches-btn {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+}
+
+/* =========================================================
+   RESPONSIVE MOBILE STYLING (< 768px & < 480px)
+   ========================================================= */
+@media (max-width: 768px) {
+    /* Header & Titles */
+    .events-header {
+        padding: 14px 12px 18px 12px;
+    }
+
+    .app-title {
+        font-size: 1.35rem;
+        margin-bottom: 2px;
+    }
+
+    .app-subtitle {
+        font-size: 0.8rem;
+        line-height: 1.35;
+    }
+
+    .header-top-bar {
+        margin-bottom: 8px;
+    }
+
+    .btn-back-header {
+        padding: 4px 10px;
+        font-size: 0.74rem;
+        border-radius: 12px;
+    }
+
+    /* Tab navigation as compact 2-column switch */
+    .tab-navigation {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-top: 12px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .tab-btn {
+        padding: 7px 8px;
+        font-size: 0.78rem;
+        justify-content: center;
+        text-align: center;
+        border-radius: 10px;
+        line-height: 1.2;
+        white-space: normal;
+        gap: 4px;
+    }
+
+    /* Main container */
+    .main-container {
+        margin: 12px auto 35px auto;
+        padding: 0 10px;
+    }
+
+    /* Filter Bar & Pills */
+    .filter-bar {
+        padding: 8px 10px;
+        gap: 8px;
+        margin-bottom: 12px;
+        border-radius: 10px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-pills {
+        gap: 5px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .filter-pills::-webkit-scrollbar {
+        display: none;
+    }
+
+    .pill-link {
+        padding: 4px 9px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+        border-radius: 12px;
+    }
+
+    .admin-toolbar-wrap {
+        gap: 6px;
+        width: 100%;
+    }
+
+    .admin-toolbar-wrap .sync-btn,
+    .admin-toolbar-wrap .create-match-btn,
+    .admin-toolbar-wrap .clear-matches-btn {
+        font-size: 0.75rem;
+        padding: 5px 9px;
+    }
+
+    /* Section headlines */
+    .section-headline {
+        font-size: 1.05rem;
+        margin-top: 16px;
+        margin-bottom: 10px;
+    }
+
+    /* Match Cards & Grid */
+    .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .match-card {
+        padding: 10px 12px;
+        border-radius: 10px;
+    }
+
+    .match-card-top {
+        gap: 8px;
+        margin-bottom: 3px;
+    }
+
+    .match-league {
+        font-size: 0.86rem;
+        line-height: 1.3;
+    }
+
+    .match-date-row {
+        font-size: 0.75rem;
+        margin-bottom: 6px;
+        gap: 5px;
+    }
+
+    .match-teams-list {
+        padding: 6px 8px;
+        gap: 3px;
+        margin-bottom: 6px;
+        border-radius: 6px;
+    }
+
+    .match-team-row {
+        font-size: 0.82rem;
+    }
+
+    .match-team-name {
+        font-size: 0.82rem;
+    }
+
+    .match-team-score {
+        font-size: 0.86rem;
+    }
+
+    .home-badge, .away-badge {
+        font-size: 0.68rem;
+        padding: 2px 6px;
+        border-radius: 8px;
+    }
+
+    .match-card-footer {
+        padding-top: 5px;
+        margin-top: 5px;
+    }
+
+    .btn-compact {
+        padding: 3px 7px;
+        font-size: 0.72rem;
+        border-radius: 6px;
+    }
+
+    /* Notice Board Header & Cards */
+    .board-header-bar {
+        padding: 8px 10px;
+        border-radius: 10px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .board-header-title {
+        font-size: 0.94rem;
+    }
+
+    .board-header-bar .btn-primary {
+        width: 100%;
+        justify-content: center;
+        padding: 7px 12px;
+        font-size: 0.8rem;
+        box-sizing: border-box;
+    }
+
+    .board-card {
+        padding: 11px 13px;
+        border-radius: 10px;
+    }
+
+    .board-card-title {
+        font-size: 1.02rem;
+        line-height: 1.3;
+    }
+
+    .board-card-date {
+        font-size: 0.74rem;
+    }
+
+    .board-card-meta {
+        font-size: 0.76rem;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+
+    .board-card-text {
+        font-size: 0.84rem;
+        line-height: 1.45;
+        margin: 5px 0;
+    }
+
+    .board-badge-pinned {
+        font-size: 0.66rem;
+        padding: 1px 5px;
+        border-radius: 4px;
+    }
+
+    .board-pdf-compact {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        margin: 5px 0;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .pdf-name {
+        max-width: 170px;
+    }
+
+    .board-card-footer {
+        padding-top: 6px;
+        margin-top: 6px;
+    }
+
+    .btn-ics {
+        padding: 4px 8px;
+        font-size: 0.74rem;
+        border-radius: 5px;
+    }
+
+    .btn-admin-icon {
+        padding: 4px 7px;
+        font-size: 0.74rem;
+    }
+
+    /* Modal dialogs */
+    .modal-overlay {
+        padding: 14px 10px;
+    }
+
+    .modal-card {
+        padding: 16px 14px;
+        border-radius: 12px;
+    }
+
+    .modal-card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+    }
+
+    .form-group {
+        margin-bottom: 10px;
+    }
+
+    .form-label {
+        font-size: 0.78rem;
+        margin-bottom: 3px;
+    }
+
+    .form-input, .form-select, .form-textarea {
+        padding: 7px 9px;
+        font-size: 0.86rem;
+    }
+
+    .form-grid-2 {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    /* Empty states */
+    .empty-state {
+        padding: 24px 14px;
+        border-radius: 10px;
+    }
+
+    .empty-state-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+
+    .empty-state h3 {
+        font-size: 1.05rem;
+    }
+
+    .empty-state p {
+        font-size: 0.82rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-title {
+        font-size: 1.2rem;
+    }
+
+    .app-subtitle {
+        font-size: 0.75rem;
+    }
+
+    .tab-btn {
+        font-size: 0.72rem;
+        padding: 6px 3px;
+    }
+
+    .match-league {
+        font-size: 0.82rem;
+    }
+
+    .match-team-row {
+        font-size: 0.8rem;
+    }
+
+    .pdf-name {
+        max-width: 120px;
+    }
+}
+

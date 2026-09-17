@@ -1,0 +1,816 @@
+@page
+@model TennisBruck.Pages.EventsModel
+@{
+    Layout = null;
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infoboard & Meisterschaft - ASKÖ Bruck</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/events.css" asp-append-version="true">
+    <partial name="_PwaHeaders"/>
+</head>
+<body>
+
+<header class="events-header">
+    <div class="header-inner">
+        <div class="header-top-bar">
+            <a href="/" class="btn-back-header">
+                ← Zum Dashboard
+            </a>
+        </div>
+
+        <h1 class="app-title">Vereins-Infoboard</h1>
+        <p class="app-subtitle">Aushänge, PDF-Ausschreibungen und offizielle ÖTV-Meisterschaftsspiele</p>
+
+        <!-- MAIN TABS -->
+        <nav class="tab-navigation">
+            <a asp-page="/Events" asp-route-activeTab="events"
+               class="tab-btn @(Model.ActiveTab == "events" ? "active" : "")">
+                Schwarzes Brett & Aushänge
+            </a>
+            <a asp-page="/Events" asp-route-activeTab="matches"
+               class="tab-btn @(Model.ActiveTab == "matches" ? "active" : "")">
+                ÖTV Meisterschaftsspiele
+            </a>
+        </nav>
+    </div>
+</header>
+
+<main class="main-container">
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert-box">
+            @Model.Message
+        </div>
+    }
+
+    <!-- TAB 1: DIGITAL NOTICE BOARD (SCHWARZES BRETT) - NO CATEGORY FILTERS -->
+    @if (Model.ActiveTab == "events")
+    {
+        <div class="board-header-bar">
+            <div class="board-header-title">
+                Aktuelle Aushänge & Mitteilungen
+            </div>
+
+            @if (isAdmin)
+            {
+                <button type="button" class="btn-primary" onclick="openEventModal()">
+                    + Neuer Aushang / PDF hochladen
+                </button>
+            }
+        </div>
+
+        @if (!Model.PinnedEvents.Any() && !Model.UpcomingEvents.Any())
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                </div>
+                <h3>Aktuell keine Aushänge vorhanden</h3>
+                <p>Sobald neue Informationen oder Ausschreibungen veröffentlicht werden, erscheinen sie hier.</p>
+                @if (isAdmin)
+                {
+                    <button type="button" class="btn-primary" style="margin-top:16px;" onclick="openEventModal()">
+                        + Ersten Aushang erstellen
+                    </button>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="board-list">
+                @* PINNED NOTICES *@
+                @foreach (var p in Model.PinnedEvents)
+                {
+                    <div class="board-card pinned">
+                        <div class="board-card-top">
+                            <div>
+                                <span class="board-badge-pinned">Angeheftet</span>
+                                <h2 class="board-card-title">@p.Title</h2>
+                            </div>
+                            <div class="board-card-date">
+                                @if (p.StartDate > DateTime.MinValue && p.StartDate.Year > 2000)
+                                {
+                                    <span>@p.StartDate.ToString("dd.MM.yyyy" + (p.StartDate.Hour != 0 || p.StartDate.Minute != 0 ? " · HH:mm" : "")) Uhr</span>
+                                }
+                                else
+                                {
+                                    <span>@p.CreatedAt.ToString("dd.MM.yyyy")</span>
+                                }
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(p.Location) && !p.Location.Contains("Bruck", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="board-card-meta">
+                                <span>Ort: @p.Location</span>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(p.Description))
+                        {
+                            <div class="board-card-text">@p.Description</div>
+                        }
+
+                        @* COMPACT PDF ATTACHMENT *@
+                        @if (!string.IsNullOrEmpty(p.AttachmentUrl))
+                        {
+                            <div>
+                                <div class="board-pdf-compact">
+                                    <span class="pdf-tag">PDF</span>
+                                    <span class="pdf-name">@(p.AttachmentName ?? "Dokument.pdf")</span>
+                                    <a href="@p.AttachmentUrl" target="_blank" class="btn-pdf-link">
+                                        Ansehen ↗
+                                    </a>
+                                </div>
+                            </div>
+                        }
+
+                        @* IMAGE / FLYER *@
+                        @if (!string.IsNullOrEmpty(p.ImageUrl))
+                        {
+                            <div class="board-flyer-wrap">
+                                <a href="@p.ImageUrl" target="_blank">
+                                    <img src="@p.ImageUrl" alt="@p.Title" class="board-flyer-img"/>
+                                </a>
+                            </div>
+                        }
+
+                        <div class="board-card-footer">
+                            <div>
+                                <a asp-page-handler="DownloadEventIcs" asp-route-id="@p.Id" class="btn-ics">
+                                    In Kalender speichern
+                                </a>
+                            </div>
+
+                            @if (isAdmin)
+                            {
+                                <div class="admin-actions">
+                                    <form method="post" asp-page-handler="TogglePinEvent" asp-route-id="@p.Id"
+                                          style="display:inline;margin:0;">
+                                        <button type="submit" class="btn-admin-icon" title="Fixierung lösen">Lösen
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn-admin-icon" title="Bearbeiten"
+                                            data-id="@p.Id"
+                                            data-title="@p.Title"
+                                            data-desc="@p.Description"
+                                            data-cat="@p.Category"
+                                            data-start="@p.StartDate.ToString("yyyy-MM-ddTHH:mm")"
+                                            data-end="@(p.EndDate?.ToString("yyyy-MM-ddTHH:mm") ?? "")"
+                                            data-loc="@p.Location"
+                                            onclick="openEditEventModalFromBtn(this)">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                             stroke-linejoin="round">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                        </svg>
+                                    </button>
+                                    <form method="post" asp-page-handler="DeleteEvent" asp-route-id="@p.Id"
+                                          style="display:inline;margin:0;"
+                                          onsubmit="return confirm('Aushang wirklich löschen?');">
+                                        <button type="submit" class="btn-admin-icon danger" title="Löschen">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                 stroke-linejoin="round">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path
+                                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @* REGULAR NOTICES *@
+                @foreach (var ev in Model.UpcomingEvents)
+                {
+                    <div class="board-card">
+                        <div class="board-card-top">
+                            <h2 class="board-card-title">@ev.Title</h2>
+                            <div class="board-card-date">
+                                @if (ev.StartDate > DateTime.MinValue && ev.StartDate.Year > 2000)
+                                {
+                                    <span>@ev.StartDate.ToString("dd.MM.yyyy" + (ev.StartDate.Hour != 0 || ev.StartDate.Minute != 0 ? " · HH:mm" : "")) Uhr</span>
+                                }
+                                else
+                                {
+                                    <span>@ev.CreatedAt.ToString("dd.MM.yyyy")</span>
+                                }
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(ev.Location) && !ev.Location.Contains("Bruck", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="board-card-meta">
+                                <span>Ort: @ev.Location</span>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(ev.Description))
+                        {
+                            <div class="board-card-text">@ev.Description</div>
+                        }
+
+                        @* COMPACT PDF ATTACHMENT *@
+                        @if (!string.IsNullOrEmpty(ev.AttachmentUrl))
+                        {
+                            <div>
+                                <div class="board-pdf-compact">
+                                    <span class="pdf-tag">PDF</span>
+                                    <span class="pdf-name">@(ev.AttachmentName ?? "Dokument.pdf")</span>
+                                    <a href="@ev.AttachmentUrl" target="_blank" class="btn-pdf-link">
+                                        Ansehen ↗
+                                    </a>
+                                </div>
+                            </div>
+                        }
+
+                        @* IMAGE / FLYER *@
+                        @if (!string.IsNullOrEmpty(ev.ImageUrl))
+                        {
+                            <div class="board-flyer-wrap">
+                                <a href="@ev.ImageUrl" target="_blank">
+                                    <img src="@ev.ImageUrl" alt="@ev.Title" class="board-flyer-img"/>
+                                </a>
+                            </div>
+                        }
+
+                        <div class="board-card-footer">
+                            <div>
+                                <a asp-page-handler="DownloadEventIcs" asp-route-id="@ev.Id" class="btn-ics">
+                                    In Kalender speichern
+                                </a>
+                            </div>
+
+                            @if (isAdmin)
+                            {
+                                <div class="admin-actions">
+                                    <form method="post" asp-page-handler="TogglePinEvent" asp-route-id="@ev.Id"
+                                          style="display:inline;margin:0;">
+                                        <button type="submit" class="btn-admin-icon" title="Oben anheften">Anheften
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn-admin-icon" title="Bearbeiten"
+                                            data-id="@ev.Id"
+                                            data-title="@ev.Title"
+                                            data-desc="@ev.Description"
+                                            data-cat="@ev.Category"
+                                            data-start="@ev.StartDate.ToString("yyyy-MM-ddTHH:mm")"
+                                            data-end="@(ev.EndDate?.ToString("yyyy-MM-ddTHH:mm") ?? "")"
+                                            data-loc="@ev.Location"
+                                            onclick="openEditEventModalFromBtn(this)">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                             stroke-linejoin="round">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                        </svg>
+                                    </button>
+                                    <form method="post" asp-page-handler="DeleteEvent" asp-route-id="@ev.Id"
+                                          style="display:inline;margin:0;"
+                                          onsubmit="return confirm('Aushang wirklich löschen?');">
+                                        <button type="submit" class="btn-admin-icon danger" title="Löschen">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                 stroke-linejoin="round">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path
+                                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @* PAST NOTICES ACCORDION *@
+        @if (Model.PastEvents.Any())
+        {
+            <details style="margin-top:40px;cursor:pointer;">
+                <summary style="font-weight:700;color:#64748b;font-size:1.05rem;margin-bottom:18px;">
+                    Vergangene Aushänge & Termine archiviert anzeigen (@Model.PastEvents.Count)
+                </summary>
+                <div class="board-list" style="opacity:0.75;">
+                    @foreach (var ev in Model.PastEvents)
+                    {
+                        <div class="board-card">
+                            <div class="board-card-top">
+                                <h3 class="board-card-title" style="font-size:1.15rem;">@ev.Title</h3>
+                                <div class="board-card-date">@ev.StartDate.ToString("dd.MM.yyyy")</div>
+                            </div>
+                            <div class="board-card-text">@ev.Description</div>
+                            @if (!string.IsNullOrEmpty(ev.AttachmentUrl))
+                            {
+                                <div class="board-pdf-banner" style="padding:10px 14px;">
+                                    <div class="pdf-icon-box" style="width:34px;height:34px;font-size:0.75rem;">PDF
+                                    </div>
+                                    <div class="pdf-info-wrap">
+                                        <div class="pdf-filename">@(ev.AttachmentName ?? "Dokument.pdf")</div>
+                                    </div>
+                                    <a href="@ev.AttachmentUrl" target="_blank" class="btn-pdf-open"
+                                       style="padding:6px 10px;font-size:0.8rem;">
+                                        Öffnen ↗
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </details>
+        }
+    }
+
+    <!-- TAB 2: ÖTV LEAGUE & TEAM MATCHES - WITH CATEGORY FILTER -->
+    @if (Model.ActiveTab == "matches")
+    {
+        @if (isAdmin || Model.AvailableMatchCategories.Count > 1)
+        {
+            <div class="filter-bar">
+                @if (Model.AvailableMatchCategories.Count > 1)
+                {
+                    <div class="filter-pills">
+                        <a asp-page="/Events" asp-route-activeTab="matches" asp-route-matchCategory="Alle"
+                           class="pill-link @(Model.SelectedMatchCategory == "Alle" ? "active" : "")">
+                            Alle
+                        </a>
+                        @foreach (var cat in Model.AvailableMatchCategories)
+                        {
+                            <a asp-page="/Events" asp-route-activeTab="matches" asp-route-matchCategory="@cat"
+                               class="pill-link @(Model.SelectedMatchCategory == cat ? "active" : "")">
+                                @cat
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div></div>
+                }
+
+                @if (isAdmin)
+                {
+                    <div class="admin-toolbar-wrap">
+                        <form method="post" asp-page-handler="SyncOetvMatches" style="margin:0;">
+                            <input type="hidden" name="clubIdentifier" value="40291"/>
+                            <button type="submit" class="btn-primary sync-btn"
+                                    title="Aktuellen Spielplan direkt vom ÖTV abrufen">
+                                ÖTV-Spielplan abrufen
+                            </button>
+                        </form>
+                        <button type="button" class="btn-ics create-match-btn" onclick="openMatchModal()"
+                                title="Manuell ein Spiel eintragen">
+                            + Spiel manuell anlegen
+                        </button>
+                        @if (Model.UpcomingMatches.Any() || Model.PastMatches.Any())
+                        {
+                            <form method="post" asp-page-handler="ClearMatches" style="margin:0;"
+                                  onsubmit="return confirm('Möchtest du wirklich alle Meisterschaftsspiele löschen?');">
+                                <button type="submit" class="btn-admin-icon danger clear-matches-btn"
+                                        title="Alle Meisterschaftsspiele leeren">
+                                    Alle löschen
+                                </button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="section-headline">
+            Anstehende Meisterschaftsspiele
+        </div>
+
+        @if (!Model.UpcomingMatches.Any())
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path
+                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                </div>
+                <h3>Keine Meisterschaftsspiele eingetragen</h3>
+                <p>Klicke oben auf „ÖTV-Spielplan abrufen“, um die aktuellen Meisterschaftsspiele direkt vom ÖTV-Verband
+                    zu laden.</p>
+                @if (isAdmin)
+                {
+                    <form method="post" asp-page-handler="SyncOetvMatches" style="margin-top:16px;">
+                        <input type="hidden" name="clubIdentifier" value="40291"/>
+                        <button type="submit" class="btn-primary"
+                                style="background:#2563eb;border-color:#1d4ed8;color:white;">
+                            ÖTV-Spielplan abrufen
+                        </button>
+                    </form>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="cards-grid">
+                @foreach (var match in Model.UpcomingMatches)
+                {
+                    <div class="match-card">
+                        <div>
+                            <div class="match-card-top">
+                                <span class="match-league">@match.CompetitionName</span>
+                                <span class="@(match.IsHomeMatch ? "home-badge" : "away-badge")">
+                                    @(match.IsHomeMatch ? "Heim" : "Auswärts")
+                                </span>
+                            </div>
+                            <div class="match-date-row">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                     class="match-date-icon">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                <span>@match.MatchDateTime.ToString("ddd, dd.MM. · HH:mm", new System.Globalization.CultureInfo("de-AT")) Uhr</span>
+                            </div>
+
+                            <div class="match-teams-list">
+                                <div
+                                    class="match-team-row @(match.HomeTeam.Contains("Bruck", StringComparison.OrdinalIgnoreCase) ? "highlight" : "")">
+                                    <span class="match-team-name">@match.HomeTeam</span>
+                                </div>
+                                <div
+                                    class="match-team-row @(match.AwayTeam.Contains("Bruck", StringComparison.OrdinalIgnoreCase) ? "highlight" : "")">
+                                    <span class="match-team-name">@match.AwayTeam</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="match-card-footer">
+                            <div class="match-footer-links">
+                                <a asp-page-handler="DownloadMatchIcs" asp-route-id="@match.Id" class="btn-compact">
+                                    In Kalender
+                                </a>
+                                @if (!string.IsNullOrEmpty(match.OetvUrl))
+                                {
+                                    <a href="@match.OetvUrl" target="_blank" class="btn-compact accent">
+                                        ÖTV Bericht ↗
+                                    </a>
+                                }
+                            </div>
+
+                            @if (isAdmin)
+                            {
+                                <form method="post" asp-page-handler="DeleteTeamMatch" asp-route-id="@match.Id"
+                                      style="display:inline;margin:0;"
+                                      onsubmit="return confirm('Spiel wirklich löschen?');">
+                                    <button type="submit" class="btn-admin-icon danger" title="Spiel löschen">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                             stroke-linejoin="round">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path
+                                                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- COMPLETED MATCHES & RESULTS -->
+        @if (Model.PastMatches.Any())
+        {
+            <div class="section-headline" style="margin-top:28px;">
+                Gespielte Matches & Ergebnisse
+            </div>
+            <div class="cards-grid">
+                @foreach (var match in Model.PastMatches)
+                {
+                    string? homeScore = null;
+                    string? awayScore = null;
+                    if (!string.IsNullOrEmpty(match.Score) && match.Score.Contains(':'))
+                    {
+                        var scoreParts = match.Score.Split(':');
+                        homeScore = scoreParts[0].Trim();
+                        awayScore = scoreParts[1].Trim();
+                    }
+                    else if (!string.IsNullOrEmpty(match.Score))
+                    {
+                        homeScore = match.Score;
+                    }
+
+                    <div class="match-card">
+                        <div>
+                            <div class="match-card-top">
+                                <span class="match-league">@match.CompetitionName</span>
+                                <span class="@(match.IsHomeMatch ? "home-badge" : "away-badge")">
+                                    @(match.IsHomeMatch ? "Heim" : "Auswärts")
+                                </span>
+                            </div>
+                            <div class="match-date-row">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                     class="match-date-icon">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                <span>@match.MatchDateTime.ToString("ddd, dd.MM.yyyy", new System.Globalization.CultureInfo("de-AT"))</span>
+                            </div>
+
+                            <div class="match-teams-list">
+                                <div
+                                    class="match-team-row @(match.HomeTeam.Contains("Bruck", StringComparison.OrdinalIgnoreCase) ? "highlight" : "")">
+                                    <span class="match-team-name">@match.HomeTeam</span>
+                                    @if (!string.IsNullOrEmpty(homeScore))
+                                    {
+                                        <span class="match-team-score">@homeScore</span>
+                                    }
+                                </div>
+                                <div
+                                    class="match-team-row @(match.AwayTeam.Contains("Bruck", StringComparison.OrdinalIgnoreCase) ? "highlight" : "")">
+                                    <span class="match-team-name">@match.AwayTeam</span>
+                                    @if (!string.IsNullOrEmpty(awayScore))
+                                    {
+                                        <span class="match-team-score">@awayScore</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="match-card-footer">
+                            <div class="match-footer-links">
+                                @if (!string.IsNullOrEmpty(match.OetvUrl))
+                                {
+                                    <a href="@match.OetvUrl" target="_blank" class="btn-compact accent">
+                                        ÖTV Spielbericht ↗
+                                    </a>
+                                }
+                            </div>
+
+                            @if (isAdmin)
+                            {
+                                <form method="post" asp-page-handler="DeleteTeamMatch" asp-route-id="@match.Id"
+                                      style="display:inline;margin:0;" onsubmit="return confirm('Spiel löschen?');">
+                                    <button type="submit" class="btn-admin-icon danger" title="Spiel löschen">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                             stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                             stroke-linejoin="round">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path
+                                                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+
+</main>
+
+@if (isAdmin)
+{
+    <!-- MODAL: CREATE / EDIT NOTICE (AUSHANG MIT TEXT & PDF) -->
+    <div id="event-modal" class="modal-overlay">
+        <div class="modal-card">
+            <button type="button" class="modal-close" onclick="closeEventModal()">✕</button>
+            <h2 id="event-modal-title" style="margin:0 0 20px 0;font-size:1.4rem;">Neuen Aushang veröffentlichen</h2>
+
+            <form id="event-form" method="post" asp-page-handler="CreateEvent" enctype="multipart/form-data">
+                <input type="hidden" id="event-id" name="Id" value="0"/>
+                <input type="hidden" id="ev-cat" name="Category" value="Aushang"/>
+
+                <div class="form-group">
+                    <label class="form-label" for="ev-title">Titel / Betreff des Aushangs</label>
+                    <input type="text" id="ev-title" name="Title" required class="form-input"
+                           placeholder="z.B. Frühjahrs-Instandsetzung oder Ausschreibung Vereinsmeisterschaft"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ev-desc">Inhalt / Mitteilungstext</label>
+                    <textarea id="ev-desc" name="Description" rows="5" class="form-textarea"
+                              placeholder="Wichtige Infos für die Mitglieder, Details, Zeiten, Anmeldung..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ev-pdf">PDF-Ausschreibung oder Dokument hochladen</label>
+                    <input type="file" id="ev-pdf" name="pdfFile" accept=".pdf" class="form-input"/>
+                    <small style="color:#64748b;font-size:0.8rem;">Optional: Lade ein PDF hoch (z.B.
+                        Turnierausschreibung, Flyer, Anmeldeformular)</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="ev-image">Bild / Flyer anhängen (Optional)</label>
+                    <input type="file" id="ev-image" name="imageFile" accept="image/*" class="form-input"/>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="ev-start">Termin / Datum (Optional)</label>
+                        <input type="datetime-local" id="ev-start" name="StartDate" class="form-input"/>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ev-location">Ort / Anlage (Optional)</label>
+                        <input type="text" id="ev-location" name="Location"
+                               placeholder="z. B. Clubheim, Turnhalle (optional)" class="form-input"/>
+                    </div>
+                </div>
+
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+                    <input type="checkbox" id="ev-pin" name="IsPinned" value="true"
+                           style="width:18px;height:18px;cursor:pointer;"/>
+                    <label for="ev-pin" style="cursor:pointer;font-weight:600;font-size:0.95rem;">Diesen Aushang ganz
+                        oben auf dem Infobrett anheften</label>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px;">
+                    <button type="button" class="btn-ics" onclick="closeEventModal()">Abbrechen</button>
+                    <button type="submit" class="btn-primary">Aushang veröffentlichen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CREATE / EDIT TEAM MATCH -->
+    <div id="match-modal" class="modal-overlay">
+        <div class="modal-card">
+            <button type="button" class="modal-close" onclick="closeMatchModal()">✕</button>
+            <h2 id="match-modal-title" style="margin:0 0 20px 0;font-size:1.4rem;">ÖTV Meisterschaftsspiel
+                eintragen</h2>
+
+            <form id="match-form" method="post" asp-page-handler="CreateTeamMatch">
+                <input type="hidden" id="match-id" name="Id" value="0"/>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="match-comp">Bewerb / Liga</label>
+                        <input type="text" id="match-comp" name="CompetitionName" required class="form-input"
+                               placeholder="z.B. OÖTV 1. Klasse West"/>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="match-cat">Kategorie</label>
+                        <select id="match-cat" name="Category" class="form-select">
+                            <option value="Herren">Herren</option>
+                            <option value="Damen">Damen</option>
+                            <option value="Jugend / Kids">Jugend / Kids</option>
+                            <option value="Senioren">Senioren (35+, 45+)</option>
+                            <option value="Mixed">Mixed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="match-home">Heimmannschaft</label>
+                        <input type="text" id="match-home" name="HomeTeam" value="ASKÖ Bruck 1" required
+                               class="form-input"/>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="match-away">Gastmannschaft</label>
+                        <input type="text" id="match-away" name="AwayTeam" required class="form-input"
+                               placeholder="z.B. UTC Peuerbach 1"/>
+                    </div>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="match-date">Spieldatum & Beginn</label>
+                        <input type="datetime-local" id="match-date" name="MatchDateTime" required class="form-input"/>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="match-homeaway">Spielort-Typ</label>
+                        <select id="match-homeaway" name="IsHomeMatch" class="form-select"
+                                onchange="onHomeAwayChange(this.value)">
+                            <option value="true">Heimspiel (in Bruck)</option>
+                            <option value="false">Auswärtsspiel</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="match-venue">Austragungsort / Adresse</label>
+                    <input type="text" id="match-venue" name="Venue" value="Tennisanlage ASKÖ Bruck" required
+                           class="form-input"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="match-oetv">ÖTV / nuLiga Link zum Spielbericht (Optional)</label>
+                    <input type="url" id="match-oetv" name="OetvUrl" class="form-input"
+                           placeholder="https://www.oetv.at/liga/..."/>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+                    <button type="button" class="btn-ics" onclick="closeMatchModal()">Abbrechen</button>
+                    <button type="submit" class="btn-primary">Spiel eintragen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<script>
+    function openEventModal() {
+        document.getElementById('event-modal-title').innerText = 'Neuen Aushang veröffentlichen';
+        document.getElementById('event-id').value = '0';
+        document.getElementById('ev-title').value = '';
+        document.getElementById('ev-desc').value = '';
+        document.getElementById('ev-location').value = '';
+        document.getElementById('ev-start').value = '';
+        document.getElementById('ev-pin').checked = false;
+        document.getElementById('event-form').action = '?handler=CreateEvent';
+        document.getElementById('event-modal').style.display = 'block';
+    }
+
+    function openEditEventModalFromBtn(btn) {
+        const ds = btn.dataset;
+        openEditEventModal(ds.id, ds.title, ds.desc, ds.cat, ds.start, ds.end, ds.loc);
+    }
+
+    function openEditEventModal(id, title, desc, cat, start, end, loc) {
+        document.getElementById('event-modal-title').innerText = 'Aushang bearbeiten';
+        document.getElementById('event-id').value = id;
+        document.getElementById('ev-title').value = title;
+        document.getElementById('ev-desc').value = desc;
+        document.getElementById('ev-location').value = loc;
+        document.getElementById('ev-start').value = start;
+        document.getElementById('event-form').action = '?handler=UpdateEvent';
+        document.getElementById('event-modal').style.display = 'block';
+    }
+
+    function closeEventModal() {
+        document.getElementById('event-modal').style.display = 'none';
+    }
+
+    function openMatchModal() {
+        document.getElementById('match-modal-title').innerText = 'ÖTV Meisterschaftsspiel eintragen';
+        document.getElementById('match-id').value = '0';
+        document.getElementById('match-comp').value = '';
+        document.getElementById('match-cat').value = 'Herren';
+        document.getElementById('match-home').value = 'ASKÖ Bruck 1';
+        document.getElementById('match-away').value = '';
+        document.getElementById('match-date').value = '';
+        document.getElementById('match-homeaway').value = 'true';
+        document.getElementById('match-venue').value = 'Tennisanlage ASKÖ Bruck';
+        document.getElementById('match-oetv').value = '';
+        document.getElementById('match-form').action = '?handler=CreateTeamMatch';
+        document.getElementById('match-modal').style.display = 'block';
+    }
+
+    function closeMatchModal() {
+        document.getElementById('match-modal').style.display = 'none';
+    }
+
+    function onHomeAwayChange(isHome) {
+        const venueInput = document.getElementById('match-venue');
+        if (isHome === 'true') {
+            venueInput.value = 'Tennisanlage ASKÖ Bruck';
+        } else {
+            const awayTeam = document.getElementById('match-away').value;
+            venueInput.value = awayTeam ? 'Tennisanlage ' + awayTeam : '';
+        }
+    }
+
+    // Close on outside click
+    window.onclick = function (e) {
+        if (e.target.classList && e.target.classList.contains('modal-overlay')) {
+            e.target.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>

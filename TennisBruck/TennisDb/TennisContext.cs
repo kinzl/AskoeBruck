@@ -40,6 +40,8 @@ public class TennisContext : IdentityDbContext<IdentityUser>, IDataProtectionKey
     public DbSet<PyramidRank> PyramidRanks { get; set; }
     public DbSet<PyramidChallenge> PyramidChallenges { get; set; }
     public DbSet<PushSubscriptionEntity> PushSubscriptions { get; set; }
+    public DbSet<ClubEvent> ClubEvents { get; set; }
+    public DbSet<OetvMatch> OetvMatches { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -24,3 +24,41 @@
 .footer-links {
     justify-content: center;
 }
+
+@media (max-width: 768px) {
+    .site-footer {
+        padding: 1rem 0.5rem;
+        font-size: 0.78rem;
+    }
+
+    .footer-copy {
+        margin-bottom: 4px;
+        font-size: 0.75rem;
+    }
+
+    .footer-links {
+        gap: 6px;
+        font-size: 0.78rem;
+    }
+
+    /* Common layout containers (legal pages, etc.) */
+    main.pb-3 {
+        padding-bottom: 1rem !important;
+    }
+
+    .container.mt-5 {
+        margin-top: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .container h1 {
+        font-size: 1.35rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    .container .card-body {
+        padding: 1rem !important;
+    }
+}

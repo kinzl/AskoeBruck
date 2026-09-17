@@ -715,29 +715,185 @@ body {
 }
 
 /* --- RESPONSIVE MEDIA QUERIES --- */
-@media (max-width: 600px) {
-    .pyramid-node {
-        width: 140px;
-        min-height: 64px;
-        padding: 8px 6px;
+@media (max-width: 768px) {
+    .app-header {
+        padding: 15px 12px 20px 12px;
     }
 
-    .node-team-name {
+    .header-top-bar {
+        padding-bottom: 10px;
+    }
+
+    .btn-back-header {
+        padding: 5px 12px;
         font-size: 0.8rem;
     }
 
     .app-title {
-        font-size: 1.6rem;
+        font-size: 1.3rem;
+    }
+
+    .header-subtitle {
+        font-size: 0.82rem;
+        margin-top: 4px;
+    }
+
+    .competition-pills {
+        gap: 6px;
+        margin-top: 12px;
+        margin-bottom: 6px;
+    }
+
+    .pill-btn {
+        padding: 5px 12px;
+        font-size: 0.78rem;
+    }
+
+    .main-container {
+        margin: 14px auto 30px auto;
+        padding: 0 8px;
+        gap: 14px;
+    }
+
+    .modern-card {
+        padding: 12px;
+        border-radius: var(--border-radius-sm);
+    }
+
+    .comp-info-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+    }
+
+    .comp-title {
+        font-size: 1.05rem;
+    }
+
+    .user-join-card {
+        padding: 12px;
+        gap: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom: 16px;
+    }
+
+    .user-join-title {
+        font-size: 0.95rem;
+    }
+
+    .user-join-desc {
+        font-size: 0.8rem;
+    }
+
+    .user-join-form {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-join {
+        width: 100%;
+        text-align: center;
+        padding: 7px 14px;
+        font-size: 0.82rem;
+    }
+
+    .pyramid-container {
+        gap: 12px;
+        margin: 16px 0;
+    }
+
+    .pyramid-level {
+        gap: 8px;
+    }
+
+    .pyramid-node {
+        width: 140px;
+        min-height: 60px;
+        padding: 6px 6px;
+    }
+
+    .node-team-name {
+        font-size: 0.78rem;
+        line-height: 1.2;
+    }
+
+    .rank-badge {
+        font-size: 0.65rem;
+        padding: 1px 6px;
+        top: -9px;
     }
 
     .admin-create-form {
         flex-direction: column;
         align-items: stretch;
+        gap: 8px;
     }
 
     .admin-strip-flex {
         flex-direction: column;
         align-items: stretch;
+        gap: 8px;
+    }
+
+    .admin-player-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .admin-player-form {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .select-admin-player {
+        width: 100% !important;
+    }
+
+    .btn-action {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+
+    .form-input {
+        padding: 6px 8px;
+        font-size: 0.85rem;
+    }
+
+    .modal-card {
+        max-width: 95vw;
+        border-radius: 12px;
+    }
+
+    .modal-header {
+        padding: 12px 14px;
+    }
+
+    .modal-body {
+        padding: 14px;
+    }
+
+    .modal-footer {
+        padding: 12px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pyramid-node {
+        width: calc(50% - 6px);
+        min-width: 115px;
+        max-width: 155px;
+        min-height: 56px;
+        padding: 5px 3px;
+    }
+
+    .node-team-name {
+        font-size: 0.72rem;
     }
 }
 

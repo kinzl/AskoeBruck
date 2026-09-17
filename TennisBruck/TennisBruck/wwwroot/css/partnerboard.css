@@ -85,19 +85,122 @@ body {
 /* ==========================================
    MOBILE LAYOUT (RESPONSIVE)
    ========================================== */
+/* ==========================================
+   MOBILE LAYOUT (RESPONSIVE)
+   ========================================== */
 @media (max-width: 768px) {
     .dark-header-section {
-        height: 200px;
-        padding: 20px 15px 0 15px;
+        height: auto;
+        min-height: 120px;
+        padding: 15px 12px 35px 12px;
+    }
+
+    .dark-header-section h1 {
+        font-size: 1.3rem !important;
+        margin-bottom: 4px !important;
+    }
+
+    .dark-header-section p {
+        font-size: 0.8rem !important;
+        margin-bottom: 0 !important;
+    }
+
+    .header-top-bar {
+        padding-bottom: 10px;
+    }
+
+    .back-button {
+        padding: 5px 12px;
+        font-size: 0.8rem;
     }
 
     .main-content-container {
-        padding: 0 10px;
-        margin-top: -20px;
+        padding: 0 8px;
+        margin-top: -22px;
+        margin-bottom: 30px;
     }
 
     .hallenplan-card {
-        padding: 15px;
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 14px;
+    }
+
+    .hallenplan-card h5 {
+        font-size: 0.95rem;
+    }
+
+    .btn-limone {
+        padding: 6px 14px;
+        font-size: 0.82rem;
+        border-radius: 6px;
+    }
+
+    .filter-card .form-control-sm {
+        font-size: 0.8rem;
+        padding: 4px 6px;
+    }
+
+    .filter-card .form-label {
+        font-size: 0.7rem !important;
+        margin-bottom: 2px !important;
+    }
+
+    .filter-card .btn-sm {
+        font-size: 0.78rem;
+        padding: 5px 8px;
+    }
+
+    .empty-state-icon {
+        font-size: 2.2rem;
+    }
+
+    .empty-state-icon + h4 {
+        font-size: 1.1rem;
+    }
+
+    .list-group-item {
+        padding: 10px 12px !important;
+    }
+
+    .badge-fixed {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .list-group-item.d-flex {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px;
+    }
+
+    .list-group-item > div:first-child {
+        width: 100% !important;
+        padding-right: 0 !important;
+    }
+
+    .list-group-item .text-end {
+        text-align: left !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+        margin-left: 0 !important;
+        width: 100%;
+        border-top: 1px solid #f1f5f9;
+        padding-top: 8px;
+    }
+
+    .list-group-item .text-end .badge {
+        margin-bottom: 0 !important;
+        margin-right: auto;
+    }
+
+    .list-group-item .text-end .btn {
+        width: auto !important;
     }
 }
 .alert-success-pb { background-color: #e8f5e9; border-left: 5px solid #4caf50; border-radius: 8px; }

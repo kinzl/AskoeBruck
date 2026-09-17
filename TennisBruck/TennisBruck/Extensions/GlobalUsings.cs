@@ -17,6 +17,7 @@ global using TennisBruck.Features.Pyramid;
 global using TennisBruck.Features.Pyramid.Models;
 global using TennisBruck.Features.PartnerBoard;
 global using TennisBruck.Features.Championship;
+global using TennisBruck.Features.Events;
 global using System.Diagnostics;
 global using System.Security.Claims;
 global using Microsoft.AspNetCore.Authentication;

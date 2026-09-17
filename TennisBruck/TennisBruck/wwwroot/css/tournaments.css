@@ -537,3 +537,154 @@
     font-weight: bold;
     display: inline-block;
 }
+
+/* ==========================================
+   MOBILE LAYOUT (RESPONSIVE)
+   ========================================== */
+@media (max-width: 768px) {
+    .competition-pills {
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    .pill-btn {
+        padding: 5px 10px;
+        font-size: 0.78rem;
+    }
+
+    .pill-select {
+        padding: 5px 28px 5px 10px !important;
+        font-size: 0.78rem !important;
+    }
+
+    .competition-title {
+        font-size: 1.05rem;
+    }
+
+    .registration-text {
+        font-size: 0.8rem;
+    }
+
+    .admin-strip {
+        padding: 10px;
+    }
+
+    .admin-create-form {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .admin-strip-flex {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .match-scorecard {
+        padding: 8px 10px;
+        margin-bottom: 8px;
+        gap: 6px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .match-main-info {
+        width: 100%;
+        gap: 8px;
+        justify-content: space-between;
+        align-items: center;
+        min-width: 0;
+    }
+
+    .match-players-stacked {
+        max-width: 100% !important;
+        width: 100%;
+    }
+
+    .match-player-row {
+        padding: 4px 8px;
+        font-size: 0.82rem;
+    }
+
+    .match-player-score-inline {
+        font-size: 0.78rem;
+        padding: 1px 6px;
+    }
+
+    .match-meta-container {
+        gap: 4px;
+    }
+
+    .badge-phase {
+        font-size: 0.68rem;
+        padding: 2px 6px;
+    }
+
+    .match-action-form {
+        width: 100%;
+        gap: 4px;
+    }
+
+    .input-score-sm {
+        width: 75px;
+        min-width: 55px;
+        padding: 4px 5px;
+        font-size: 0.78rem;
+    }
+
+    .btn-dark-pill {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+
+    .admin-time-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+    }
+
+    .admin-time-form input[type="date"],
+    .admin-time-form input[type="time"],
+    .admin-time-form .input-auto {
+        width: 100% !important;
+        max-width: none;
+        padding: 4px 6px;
+        font-size: 0.8rem;
+        height: 30px;
+    }
+
+    .admin-time-form .btn-action,
+    .admin-time-form button {
+        grid-column: 1 / -1;
+        height: 30px;
+        font-size: 0.8rem;
+        line-height: 30px;
+    }
+
+    .badge-count,
+    .badge-closed,
+    .badge-open {
+        font-size: 0.78rem;
+        padding: 5px 10px;
+    }
+
+    .pair-row {
+        padding: 5px 8px;
+        gap: 6px;
+    }
+
+    .pair-select {
+        font-size: 0.8rem;
+        padding: 4px 22px 4px 6px;
+    }
+
+    .pair-name {
+        font-size: 0.8rem;
+        padding: 4px 6px;
+    }
+}

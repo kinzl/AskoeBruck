@@ -465,46 +465,60 @@ body {
     }
 
     .app-header {
-        min-height: 140px;
-        padding: 20px 15px 45px 15px;
+        min-height: 120px;
+        padding: 15px 12px 35px 12px;
     }
 
-    .main-container {
-        padding: 0 10px;
-        margin-top: -25px;
+    .header-top-bar {
+        padding-bottom: 10px;
     }
 
-    .main-container.has-message {
-        margin-top: 14px;
-    }
-
-    .modern-card {
-        padding: 12px;
+    .btn-back-header {
+        padding: 5px 12px;
+        font-size: 0.8rem;
     }
 
     .app-title {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
+    }
+
+    .main-container {
+        padding: 0 8px;
+        margin-top: -22px;
+        gap: 14px;
+    }
+
+    .main-container.has-message {
+        margin-top: 12px;
+    }
+
+    .modern-card {
+        padding: 10px;
+        border-radius: var(--border-radius-sm);
     }
 
     /* Date navigation pill stays full-width but smaller */
     .date-nav-wrapper {
         max-width: 100%;
         border-radius: 12px;
+        padding: 4px;
+        margin: 0 auto 16px auto;
     }
 
     .btn-date {
-        padding: 8px 10px;
-        font-size: 0.85rem;
+        padding: 6px 10px;
+        font-size: 0.8rem;
     }
 
     .date-picker-input {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        padding: 6px 8px;
     }
 
     /* Admin panel: compact 3-column grid on mobile — Platz · Von · Bis on one line */
     .admin-panel {
         padding: 8px 10px;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
     }
 
     .admin-panel-title {
@@ -528,7 +542,7 @@ body {
     .admin-form > button[type="submit"] {
         grid-column: 1 / -1;
         margin-top: 2px;
-        padding: 7px 12px !important;
+        padding: 6px 12px !important;
         font-size: 0.8rem;
     }
 
@@ -543,6 +557,131 @@ body {
     .form-input {
         padding: 4px 5px;
         font-size: 0.8rem;
+    }
+
+    /* Table compact styles on mobile */
+    .court-table {
+        font-size: 0.7rem;
+    }
+
+    .court-table th {
+        padding: 5px 1px;
+        font-size: 0.68rem;
+    }
+
+    .court-table td {
+        padding: 3px 1px;
+    }
+
+    .court-table th.time-col,
+    .court-table td.time-col {
+        width: 38px;
+    }
+
+    .time-label {
+        font-size: 0.68rem;
+    }
+
+    .weather-info {
+        font-size: 0.62rem;
+        min-height: 14px;
+        margin-top: 1px;
+    }
+
+    .reserved-name {
+        font-size: 0.64rem;
+        margin-bottom: 2px;
+        line-height: 1.15;
+    }
+
+    .reserved-time {
+        font-size: 0.58rem;
+        margin-top: 1px;
+    }
+
+    .edit-indicator {
+        font-size: 0.54rem;
+        margin-top: 2px;
+    }
+
+    .btn-reserve {
+        width: 20px;
+        height: 20px;
+    }
+
+    .btn-reserve::before {
+        width: 8px;
+        height: 2px;
+    }
+
+    .btn-reserve::after {
+        width: 2px;
+        height: 8px;
+    }
+
+    .btn-delete-res {
+        padding: 1px 2px;
+        font-size: 0.6rem;
+        max-width: 50px;
+    }
+
+    /* Modal dialog on mobile */
+    .modal-overlay {
+        padding: 10px;
+    }
+
+    .modal-card {
+        max-width: 100%;
+        border-radius: 12px;
+        max-height: 92vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        padding: 12px 14px;
+    }
+
+    .modal-header h3 {
+        font-size: 0.95rem;
+    }
+
+    .modal-body {
+        padding: 14px;
+        gap: 10px;
+    }
+
+    .modal-row {
+        gap: 8px;
+    }
+
+    .modal-footer {
+        padding: 12px 14px;
+    }
+
+    .btn-modal-cancel,
+    .btn-modal-delete {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+
+    .btn-modal-submit-custom {
+        padding: 6px 14px !important;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .admin-form {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .admin-form > div:nth-child(2) {
+        grid-column: 1 / -1;
     }
 }
 
