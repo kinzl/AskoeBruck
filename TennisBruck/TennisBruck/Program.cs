@@ -209,26 +209,10 @@ return;
 void ConnectToPostgresDb()
 {
     string connectionString = builder.Configuration.GetConnectionString("PostgresSql")!;
-    var db = Environment.GetEnvironmentVariable("POSTGRES_DATABASE") ?? "tennisbruck";
-    var user = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres";
-    var pass = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "postgres";
-    var host = Environment.GetEnvironmentVariable("POSTGRES_HOST");
-    var port = Environment.GetEnvironmentVariable("POSTGRES_PORT");
-
-    connectionString = connectionString
-        .Replace("myDatabase", db)
-        .Replace("myUsername", user)
-        .Replace("myPassword", pass);
-
-    if (!string.IsNullOrWhiteSpace(host))
-    {
-        connectionString = connectionString.Replace("localhost", host);
-    }
-    if (!string.IsNullOrWhiteSpace(port))
-    {
-        connectionString = connectionString.Replace("5432", port);
-    }
-
+    connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("POSTGRES_DATABASE"))
+        .Replace("myUsername", Environment.GetEnvironmentVariable("POSTGRES_USER"))
+        .Replace("myPassword", Environment.GetEnvironmentVariable("POSTGRES_PASSWORD"));
+// connectionString = "Host=localhost;Port=5432;Database=mydatabase;Username=myuser;Password=mypassword";
     builder.Services.AddDbContext<TennisContext>(options =>
         options.UseNpgsql(connectionString));
 }
@@ -236,17 +220,10 @@ void ConnectToPostgresDb()
 void ConnectToNeonDb()
 {
     string connectionString = builder.Configuration.GetConnectionString("NeonDb")!;
-    var db = Environment.GetEnvironmentVariable("POSTGRES_DATABASE") ?? "myDatabase";
-    var user = Environment.GetEnvironmentVariable("NEONDB_USERNAME") ?? "neonDbUsername";
-    var pass = Environment.GetEnvironmentVariable("NEONDB_PASSWORD") ?? "neonDbPassword";
-    var host = Environment.GetEnvironmentVariable("NEONDB_HOST") ?? "neonDbHost";
-
-    connectionString = connectionString
-        .Replace("myDatabase", db)
-        .Replace("neonDbUsername", user)
-        .Replace("neonDbPassword", pass)
-        .Replace("neonDbHost", host);
-
+    connectionString = connectionString.Replace("myDatabase", Environment.GetEnvironmentVariable("POSTGRES_DATABASE"))
+        .Replace("neonDbUsername", Environment.GetEnvironmentVariable("NEONDB_USERNAME"))
+        .Replace("neonDbPassword", Environment.GetEnvironmentVariable("NEONDB_PASSWORD"))
+        .Replace("neonDbHost", Environment.GetEnvironmentVariable("NEONDB_HOST"));
     builder.Services.AddDbContext<TennisContext>(options =>
         options.UseNpgsql(connectionString));
 }
