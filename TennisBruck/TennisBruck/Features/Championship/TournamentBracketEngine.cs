@@ -68,7 +68,7 @@ public class TournamentBracketEngine
         db.SaveChanges();
     }
 
-    public void AdvanceWinnerInBracket(TennisContext db, Match match, IEmailSender emailSender)
+    public void AdvanceWinnerInBracket(TennisContext db, Match match, IEmailSender emailSender, WebPushNotificationService? pushService = null)
     {
         if (match is not KnockoutMatch km || km.NextGame == null || match.Winner == null)
             return;
@@ -88,7 +88,7 @@ public class TournamentBracketEngine
             nextMatch.Team2 = match.Winner;
 
         db.SaveChanges();
-        NotifyOpponentsIfAssigned(db, nextMatch, emailSender);
+        NotifyOpponentsIfAssigned(db, nextMatch, emailSender, pushService);
     }
 
     public void UndoWinnerAdvancement(TennisContext db, KnockoutMatch km, Team previousWinner)
@@ -112,7 +112,7 @@ public class TournamentBracketEngine
         db.SaveChanges();
     }
 
-    public void NotifyOpponentsIfAssigned(TennisContext db, KnockoutMatch nextMatch, IEmailSender emailSender)
+    public void NotifyOpponentsIfAssigned(TennisContext db, KnockoutMatch nextMatch, IEmailSender emailSender, WebPushNotificationService? pushService = null)
     {
         if (nextMatch.Team1 == null || nextMatch.Team2 == null) return;
 
@@ -144,14 +144,26 @@ public class TournamentBracketEngine
         {
             foreach (var p in players)
             {
-                if (p.IdentityUser?.Email != null &&
-                    (p.NotificationSettings == null || p.NotificationSettings.EmailOnOpponentAssigned))
+                bool wantsNotification = p.NotificationSettings == null || p.NotificationSettings.EmailOnOpponentAssigned;
+                if (!wantsNotification) continue;
+
+                if (p.IdentityUser?.Email != null)
                 {
                     var subject = "🎾 Dein Gegner im K.O.-Raster steht fest!";
                     var body = $"Hallo {p.Firstname},<br><br>" +
                                $"dein nächster Gegner im K.O.-Raster steht fest! Du ({myNames}) spielst gegen <strong>{oppNames}</strong>.<br><br>" +
                                $"Viel Erfolg beim Match!<br>Dein TennisBruck-Team";
                     _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
+                }
+
+                if (pushService != null)
+                {
+                    _ = pushService.SendNotificationAsync(
+                        p.Id,
+                        "🎾 K.O.-Gegner steht fest!",
+                        $"Du spielst im K.O.-Raster gegen {oppNames}. Vereinbart jetzt einen Spieltermin!",
+                        "/Championship"
+                    );
                 }
             }
         }

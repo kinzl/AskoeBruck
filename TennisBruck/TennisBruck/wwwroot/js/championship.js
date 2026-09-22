@@ -128,3 +128,22 @@ function filterAllMatches(groupName, btn) {
         msg.style.display = visibleCount === 0 ? 'block' : 'none';
     }
 }
+
+/**
+ * Toggles the walkover (w.o.) team selection dropdown
+ */
+function toggleCardWalkover(checkbox) {
+    const form = checkbox.closest('form');
+    if (!form) return;
+    const select = form.querySelector('select[name="walkoverTeamId"]');
+    if (select) {
+        if (checkbox.checked) {
+            select.style.display = 'inline-block';
+            select.disabled = false;
+        } else {
+            select.style.display = 'none';
+            select.disabled = true;
+        }
+    }
+}
+

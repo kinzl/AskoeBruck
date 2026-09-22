@@ -142,7 +142,7 @@ public class PyramidService(TennisContext db, IEmailSender emailSender, WebPushN
 
                 if (pushService != null)
                 {
-                    _ = pushService.SendNotificationAsync(defenderPlayer.Id, $"🎾 Forderung in '{compName}'!", $"{challengerNames} hat dich herausgefordert.", "/Pyramid");
+                    await pushService.SendNotificationAsync(defenderPlayer.Id, $"🎾 Forderung in '{compName}'!", $"{challengerNames} hat dich herausgefordert.", "/Pyramid");
                 }
             }
         }

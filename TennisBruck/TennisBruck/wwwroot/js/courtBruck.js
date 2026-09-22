@@ -24,6 +24,11 @@ function openBookingModal(court, startTime, endTime) {
     if (modalPartnerId) modalPartnerId.value = '';
     if (eventNameInput) eventNameInput.value = '';
 
+    const recurringGroup = document.getElementById('modalRecurringGroup');
+    const modalRepeatWeeks = document.getElementById('modalRepeatWeeks');
+    if (recurringGroup) recurringGroup.style.display = 'block';
+    if (modalRepeatWeeks) modalRepeatWeeks.value = '1';
+
     if (btnModalDelete) {
         btnModalDelete.classList.add('hidden-element');
         btnModalDelete.style.display = 'none';
@@ -60,6 +65,11 @@ function openEditModal(reservationId, court, startTime, endTime, partnerId, even
     if (modalPartnerId) modalPartnerId.value = partnerId > 0 ? partnerId : '';
     if (eventNameInput) eventNameInput.value = eventName || '';
 
+    const recurringGroup = document.getElementById('modalRecurringGroup');
+    const modalRepeatWeeks = document.getElementById('modalRepeatWeeks');
+    if (recurringGroup) recurringGroup.style.display = 'none';
+    if (modalRepeatWeeks) modalRepeatWeeks.value = '1';
+
     if (btnModalDelete) {
         btnModalDelete.classList.remove('hidden-element');
         btnModalDelete.style.display = 'inline-block';
@@ -71,6 +81,17 @@ function openEditModal(reservationId, court, startTime, endTime, partnerId, even
         reservationModal.classList.remove('hidden-element');
         reservationModal.classList.add('active');
         reservationModal.style.display = 'flex';
+    }
+}
+
+function toggleRecurringOptions(isChecked) {
+    const recurringOptions = document.getElementById('recurringOptions');
+    const modalRepeatWeeks = document.getElementById('modalRepeatWeeks');
+    if (recurringOptions) {
+        recurringOptions.style.display = isChecked ? 'block' : 'none';
+    }
+    if (modalRepeatWeeks) {
+        modalRepeatWeeks.value = isChecked ? '4' : '1';
     }
 }
 

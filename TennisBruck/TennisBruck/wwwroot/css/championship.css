@@ -2475,6 +2475,50 @@ select:focus {
     }
 }
 
+/* --- Walkover / W.O. Checkbox & Select Styles --- */
+.wo-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #b45309;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    padding: 3px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
 
+.wo-toggle-label:hover {
+    background: #fde68a;
+}
 
+.wo-toggle-label input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: #d97706;
+    cursor: pointer;
+    margin: 0;
+}
 
+.wo-select-sm {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1.5px solid #f59e0b;
+    background: #fffbeb;
+    color: #92400e;
+    outline: none;
+    cursor: pointer;
+    max-width: 190px;
+    transition: all 0.2s ease;
+}
+
+.wo-select-sm:focus {
+    border-color: #d97706;
+    box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
+}

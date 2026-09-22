@@ -219,9 +219,10 @@
                 <h3 class="section-title">Offene Forderungen</h3>
                 @foreach (var ch in Model.ActiveChallenges)
                 {
-                    bool isMyMatch = Model.CurrentPlayer != null &&
-                                         (ch.ChallengerTeam.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id) ||
-                                          ch.DefenderTeam.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id));
+                    bool isChallenger = Model.CurrentPlayer != null && ch.ChallengerTeam.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id);
+                    bool isDefender = Model.CurrentPlayer != null && ch.DefenderTeam.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id);
+                    bool isMyMatch = isChallenger || isDefender;
+                    int? currentUserTeamId = isChallenger ? ch.ChallengerTeamId : isDefender ? ch.DefenderTeamId : null;
 
                     var cardVm = new MatchCardViewModel
                     {
@@ -233,6 +234,7 @@
                         BadgeText = $"{ch.ChallengeDate.ToString("dd.MM.yyyy")}",
                         IsAdmin = User.IsInRole("Admin"),
                         IsMyMatch = isMyMatch,
+                        CurrentUserTeamId = currentUserTeamId,
                         SaveHandler = "SaveMatch",
                         WalkoverHandler = "AdminWalkover",
                         GiveWalkoverHandler = "GiveWalkover",

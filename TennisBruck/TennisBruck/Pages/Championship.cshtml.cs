@@ -15,7 +15,8 @@ public class Championship(
     ChampionshipInfoService championshipInfoService,
     TournamentBracketEngine bracketEngine,
     GroupStageEngine groupStageEngine,
-    ChampionshipService championshipService)
+    ChampionshipService championshipService,
+    WebPushNotificationService? pushService = null)
     : PageModel
 {
     public bool IsRegistered { get; set; }
@@ -665,15 +666,13 @@ public class Championship(
 
     #region Match Management
 
-    public IActionResult OnPostSaveMatch(string score, int matchId)
+    public IActionResult OnPostSaveMatch(string? score, int matchId, int? walkoverTeamId = null, bool isWalkover = false)
     {
         try
         {
             var currentUser = currentPlayerService.GetCurrentUser();
             if (currentUser == null) return Unauthorized();
 
-            int setsWonPlayer1 = 0;
-            int setsWonPlayer2 = 0;
             var match = db.Matches
                 .Include(x => x.Sets)
                 .Include(x => x.Team1).ThenInclude(t => t.TeamPlayers).ThenInclude(tp => tp.Player)
@@ -687,8 +686,17 @@ public class Championship(
             if (match.Team1 == null || match.Team2 == null)
                 return RedirectToPage(new
                     { Message = "Das Match kann nicht gewertet werden, da noch kein Gegner feststeht." });
-            if (string.IsNullOrWhiteSpace(score))
-                return RedirectToPage(new { Message = "Bitte einen Spielstand eingeben" });
+
+            string trimmedScore = score?.Trim() ?? "";
+            bool isRetirement = isWalkover ||
+                                trimmedScore.Contains("w.o", StringComparison.OrdinalIgnoreCase) ||
+                                trimmedScore.Contains("ret", StringComparison.OrdinalIgnoreCase) ||
+                                trimmedScore.Contains("aufgabe", StringComparison.OrdinalIgnoreCase);
+
+            if (string.IsNullOrWhiteSpace(score) && !isRetirement)
+                return RedirectToPage(new { Message = "Bitte einen Spielstand eingeben oder 'w.o.' auswählen" });
+
+            string cleanScore = System.Text.RegularExpressions.Regex.Replace(trimmedScore, @"(?i)\b(w\.?o\.?|ret\.?|aufgabe)\b", "").Trim();
 
             if (match.Sets != null && match.Sets.Any())
             {
@@ -696,36 +704,82 @@ public class Championship(
             }
 
             match.Sets = new List<Set>();
+            int setsWonPlayer1 = 0;
+            int setsWonPlayer2 = 0;
+            int totalGamesP1 = 0;
+            int totalGamesP2 = 0;
 
-            var sets = score.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            for (var i = 0; i < sets.Length; i++)
+            if (!string.IsNullOrWhiteSpace(cleanScore))
             {
-                var games = sets[i].Split(new[] { ':', '-' }, StringSplitOptions.RemoveEmptyEntries);
-                if (games.Length != 2)
-                    return RedirectToPage(new { Message = "Ungültiges Satzformat (z.B. 6:4 4:6 10:12)" });
-
-                int p1 = int.Parse(games[0].Trim());
-                int p2 = int.Parse(games[1].Trim());
-
-                if (p1 < p2)
-                    setsWonPlayer2++;
-                else if (p1 > p2)
-                    setsWonPlayer1++;
-                else
-                    return RedirectToPage(new { Message = "Unentschieden in einem Satz ist nicht erlaubt" });
-
-                match.Sets.Add(new Set
+                var sets = cleanScore.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                for (var i = 0; i < sets.Length; i++)
                 {
-                    SetNumber = i + 1,
-                    Player1GamesWon = p1,
-                    Player2GamesWon = p2,
-                });
+                    var games = sets[i].Split(new[] { ':', '-' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (games.Length != 2 || !int.TryParse(games[0].Trim(), out int p1) || !int.TryParse(games[1].Trim(), out int p2))
+                        return RedirectToPage(new { Message = "Ungültiges Satzformat (z.B. 6:4 4:6 oder 4:3)" });
+
+                    if (p1 < p2)
+                        setsWonPlayer2++;
+                    else if (p1 > p2)
+                        setsWonPlayer1++;
+                    else if (!isRetirement)
+                        return RedirectToPage(new { Message = "Unentschieden in einem Satz ist nur bei Aufgabe/w.o. erlaubt" });
+
+                    totalGamesP1 += p1;
+                    totalGamesP2 += p2;
+
+                    match.Sets.Add(new Set
+                    {
+                        SetNumber = i + 1,
+                        Player1GamesWon = p1,
+                        Player2GamesWon = p2,
+                    });
+                }
             }
 
-            if (setsWonPlayer1 == setsWonPlayer2)
-                return RedirectToPage(new { Message = "Unentschieden ist nicht erlaubt" });
-            var winner = setsWonPlayer1 > setsWonPlayer2 ? match.Team1 : match.Team2;
-            match.Winner = winner;
+            if (isRetirement)
+            {
+                match.IsWalkover = true;
+                if (walkoverTeamId.HasValue && (walkoverTeamId == match.Team1.Id || walkoverTeamId == match.Team2.Id))
+                {
+                    match.WalkoverTeamId = walkoverTeamId.Value;
+                    match.Winner = walkoverTeamId == match.Team1.Id ? match.Team2 : match.Team1;
+                }
+                else
+                {
+                    if (isTeam1 && !isTeam2)
+                    {
+                        match.WalkoverTeamId = match.Team1.Id;
+                        match.Winner = match.Team2;
+                    }
+                    else if (isTeam2 && !isTeam1)
+                    {
+                        match.WalkoverTeamId = match.Team2.Id;
+                        match.Winner = match.Team1;
+                    }
+                    else if (setsWonPlayer1 > setsWonPlayer2 || (setsWonPlayer1 == setsWonPlayer2 && totalGamesP1 >= totalGamesP2))
+                    {
+                        match.WalkoverTeamId = match.Team2.Id;
+                        match.Winner = match.Team1;
+                    }
+                    else
+                    {
+                        match.WalkoverTeamId = match.Team1.Id;
+                        match.Winner = match.Team2;
+                    }
+                }
+            }
+            else
+            {
+                match.IsWalkover = false;
+                match.WalkoverTeamId = null;
+
+                if (setsWonPlayer1 == setsWonPlayer2)
+                    return RedirectToPage(new { Message = "Unentschieden ist nicht erlaubt" });
+
+                var winner = setsWonPlayer1 > setsWonPlayer2 ? match.Team1 : match.Team2;
+                match.Winner = winner;
+            }
 
             db.SaveChanges();
             AdvanceWinnerInBracket(match);
@@ -1177,12 +1231,12 @@ public class Championship(
     /// </summary>
     private void AdvanceWinnerInBracket(Match match)
     {
-        bracketEngine.AdvanceWinnerInBracket(db, match, emailSender);
+        bracketEngine.AdvanceWinnerInBracket(db, match, emailSender, pushService);
     }
 
     private void NotifyOpponentsIfAssigned(KnockoutMatch nextMatch)
     {
-        bracketEngine.NotifyOpponentsIfAssigned(db, nextMatch, emailSender);
+        bracketEngine.NotifyOpponentsIfAssigned(db, nextMatch, emailSender, pushService);
     }
 
     private void UndoWinnerAdvancement(KnockoutMatch km, Team previousWinner)

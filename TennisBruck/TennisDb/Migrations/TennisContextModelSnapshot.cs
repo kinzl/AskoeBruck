@@ -38,7 +38,7 @@ namespace TennisDb.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DataProtectionKeys");
+                    b.ToTable("DataProtectionKeys", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -293,7 +293,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("PlayerId");
 
-                    b.ToTable("AvailabilitySlots");
+                    b.ToTable("AvailabilitySlots", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.ClubEvent", b =>
@@ -343,7 +343,7 @@ namespace TennisDb.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ClubEvents");
+                    b.ToTable("ClubEvents", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.Competition", b =>
@@ -369,7 +369,7 @@ namespace TennisDb.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Competitions");
+                    b.ToTable("Competitions", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.Group", b =>
@@ -394,7 +394,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("CompetitionId");
 
-                    b.ToTable("Groups");
+                    b.ToTable("Groups", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.GroupTeam", b =>
@@ -417,7 +417,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("GroupTeams");
+                    b.ToTable("GroupTeams", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.HallEntity", b =>
@@ -440,7 +440,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("PlayerId");
 
-                    b.ToTable("HallEntities");
+                    b.ToTable("HallEntities", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.HallPlanDay", b =>
@@ -464,7 +464,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("HallPlanEntityId");
 
-                    b.ToTable("HallPlanDay");
+                    b.ToTable("HallPlanDay", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.HallPlanDayPlayer", b =>
@@ -487,7 +487,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("PlayerId");
 
-                    b.ToTable("HallPlanDayPlayers");
+                    b.ToTable("HallPlanDayPlayers", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.HallPlanEntity", b =>
@@ -504,7 +504,7 @@ namespace TennisDb.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("HallPlanEntities");
+                    b.ToTable("HallPlanEntities", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.HallPlanRegistration", b =>
@@ -533,7 +533,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("PlayerId");
 
-                    b.ToTable("HallPlanRegistrations");
+                    b.ToTable("HallPlanRegistrations", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.Match", b =>
@@ -580,7 +580,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("WinnerId");
 
-                    b.ToTable("Matches");
+                    b.ToTable("Matches", (string)null);
 
                     b.HasDiscriminator<string>("Discriminator").HasValue("Match");
 
@@ -639,7 +639,7 @@ namespace TennisDb.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("OetvMatches");
+                    b.ToTable("OetvMatches", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.Player", b =>
@@ -677,7 +677,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("IdentityUserId");
 
-                    b.ToTable("Players");
+                    b.ToTable("Players", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.PlayerNotificationSettings", b =>
@@ -711,7 +711,7 @@ namespace TennisDb.Migrations
                     b.HasIndex("PlayerId")
                         .IsUnique();
 
-                    b.ToTable("PlayerNotificationSettings");
+                    b.ToTable("PlayerNotificationSettings", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.PushSubscriptionEntity", b =>
@@ -744,7 +744,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("PlayerId");
 
-                    b.ToTable("PushSubscriptions");
+                    b.ToTable("PushSubscriptions", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.PyramidChallenge", b =>
@@ -789,7 +789,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("WinnerTeamId");
 
-                    b.ToTable("PyramidChallenges");
+                    b.ToTable("PyramidChallenges", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.PyramidRank", b =>
@@ -815,7 +815,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("PyramidRanks");
+                    b.ToTable("PyramidRanks", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.Reservation", b =>
@@ -850,7 +850,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("PlayerId");
 
-                    b.ToTable("Reservations");
+                    b.ToTable("Reservations", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.Set", b =>
@@ -877,7 +877,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("MatchId");
 
-                    b.ToTable("Sets");
+                    b.ToTable("Sets", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.Team", b =>
@@ -898,7 +898,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("CompetitionId");
 
-                    b.ToTable("Teams");
+                    b.ToTable("Teams", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.TeamPlayer", b =>
@@ -921,7 +921,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("TeamPlayer");
+                    b.ToTable("TeamPlayer", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.TournamentRegistration", b =>
@@ -950,7 +950,7 @@ namespace TennisDb.Migrations
 
                     b.HasIndex("PlayerId");
 
-                    b.ToTable("TournamentRegistrations");
+                    b.ToTable("TournamentRegistrations", (string)null);
                 });
 
             modelBuilder.Entity("TennisDb.KnockoutMatch", b =>

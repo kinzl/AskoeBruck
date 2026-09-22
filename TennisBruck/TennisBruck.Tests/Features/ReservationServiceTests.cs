@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using TennisBruck.Features.Reservations;
 using TennisDb;
 using Xunit;
@@ -120,4 +121,77 @@ public class ReservationServiceTests
         Assert.True(blockInfo[(1, t2)].IsStart);
         Assert.Equal(1, blockInfo[(1, t2)].RowSpan);
     }
+
+    [Fact]
+    public void CreateRecurringReservations_ClampsToMax20Weeks()
+    {
+        using var connection = new Microsoft.Data.Sqlite.SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        var options = new DbContextOptionsBuilder<TennisContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        using var db = new TennisContext(options);
+        db.Database.EnsureCreated();
+
+        var player = new Player { Id = 1, Firstname = "Max", Lastname = "Mustermann" };
+        db.Players.Add(player);
+        db.SaveChanges();
+
+        var service = new ReservationService(db);
+        var futureDate = DateTime.Today.AddDays(7);
+
+        // Request 30 weeks - should be clamped to 20
+        var result = service.CreateRecurringReservations(
+            courtNumber: 1,
+            startDate: futureDate,
+            startTime: new TimeSpan(10, 0, 0),
+            endTime: new TimeSpan(11, 0, 0),
+            currentPlayerId: 1,
+            partnerId: null,
+            eventName: "Training",
+            repeatWeeks: 30);
+
+        Assert.True(result.Success);
+        Assert.Equal(20, result.BookedCount);
+        // Each week has two 30-min slots: 10:00-10:30 and 10:30-11:00 => 20 * 2 = 40 reservations
+        Assert.Equal(40, db.Reservations.Count());
+    }
+
+    [Fact]
+    public void CreateRecurringReservations_CustomWeeks_CreatesExactCount()
+    {
+        using var connection = new Microsoft.Data.Sqlite.SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        var options = new DbContextOptionsBuilder<TennisContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        using var db = new TennisContext(options);
+        db.Database.EnsureCreated();
+
+        var player = new Player { Id = 1, Firstname = "Max", Lastname = "Mustermann" };
+        db.Players.Add(player);
+        db.SaveChanges();
+
+        var service = new ReservationService(db);
+        var futureDate = DateTime.Today.AddDays(7);
+
+        var result = service.CreateRecurringReservations(
+            courtNumber: 2,
+            startDate: futureDate,
+            startTime: new TimeSpan(14, 0, 0),
+            endTime: new TimeSpan(15, 0, 0),
+            currentPlayerId: 1,
+            partnerId: null,
+            eventName: "Serientermin",
+            repeatWeeks: 7);
+
+        Assert.True(result.Success);
+        Assert.Equal(7, result.BookedCount);
+        Assert.Equal(14, db.Reservations.Count());
+    }
 }
+

@@ -1,6 +1,12 @@
+using Microsoft.AspNetCore.Identity;
+
 namespace TennisBruck.Pages;
 
-public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerService, ReservationService reservationService)
+public class CourtBruck(
+    TennisContext db,
+    CurrentPlayerService currentPlayerService,
+    ReservationService reservationService,
+    UserManager<IdentityUser>? userManager = null)
     : PageModel
 {
     public DateTime CurrentDate { get; set; } = CityTime.GetViennaTimeZone();
@@ -8,20 +14,27 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
     public List<Reservation> Reservations { get; set; } = [];
     public List<Player> AllPlayers { get; set; } = [];
     public Player? CurrentPlayer { get; private set; }
+    public bool IsAdmin { get; set; }
     [BindProperty] public int ReservationId { get; set; }
     [BindProperty] public string? Message { get; set; }
     [BindProperty] public bool IsError { get; set; }
 
     public Dictionary<(int CourtNumber, DateTime StartTime), TennisBruck.Features.Reservations.ReservationBlock> BlockInfo { get; set; } = [];
 
-    public IActionResult OnGet(string? date, string? message, bool isError = false)
+    public async Task<IActionResult> OnGetAsync(string? date, string? message, bool isError = false)
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         Message = message;
         IsError = isError;
-        CurrentDate = string.IsNullOrEmpty(date) ? CityTime.GetViennaTimeZone() : DateTime.Parse(date);
+        CurrentDate = ParseDate(date);
 
-        AllPlayers = db.Players.OrderBy(p => p.Lastname).ThenBy(p => p.Firstname).ToList();
+        IsAdmin = User.IsInRole("Admin");
+        if (!IsAdmin && CurrentPlayer?.IdentityUser != null && userManager != null)
+        {
+            IsAdmin = await userManager.IsInRoleAsync(CurrentPlayer.IdentityUser, "Admin");
+        }
+
+        AllPlayers = await db.Players.OrderBy(p => p.Lastname).ThenBy(p => p.Firstname).ToListAsync();
 
         var overview = reservationService.GetCourtOverview(CurrentDate);
         Reservations = overview.Reservations;
@@ -36,8 +49,8 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         return Reservations.FirstOrDefault(r => r.CourtNumber == courtNumber && r.StartTime == startTime);
     }
 
-    public IActionResult OnPostCreateReservation(int courtNumber, string startTimeStr, string? endTimeStr,
-        int? partnerId, string? eventName, string currentDateStr)
+    public async Task<IActionResult> OnPostCreateReservationAsync(int courtNumber, string startTimeStr, string? endTimeStr,
+        int? partnerId, string? eventName, string currentDateStr, int repeatWeeks = 1)
     {
         CurrentPlayer = currentPlayerService.GetCurrentUser();
         if (CurrentPlayer == null)
@@ -45,20 +58,35 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
             return RedirectToPage(new { date = currentDateStr, message = "Bitte melde dich an.", isError = true });
         }
 
-        var date = DateTime.Parse(currentDateStr);
+        bool isAdmin = User.IsInRole("Admin");
+        if (!isAdmin && CurrentPlayer?.IdentityUser != null && userManager != null)
+        {
+            isAdmin = await userManager.IsInRoleAsync(CurrentPlayer.IdentityUser, "Admin");
+        }
+
+        if (!isAdmin)
+        {
+            repeatWeeks = 1;
+        }
+        else
+        {
+            repeatWeeks = Math.Clamp(repeatWeeks, 1, 20);
+        }
+
+        var date = ParseDate(currentDateStr);
         var startTime = DateTime.Parse(startTimeStr).TimeOfDay;
         TimeSpan? endTime = !string.IsNullOrEmpty(endTimeStr) ? DateTime.Parse(endTimeStr).TimeOfDay : null;
 
-        var (success, message) = reservationService.CreateReservation(
-            courtNumber, date, startTime, endTime, CurrentPlayer.Id, partnerId, eventName);
+        var (success, message, _, _) = reservationService.CreateRecurringReservations(
+            courtNumber, date, startTime, endTime, CurrentPlayer.Id, partnerId, eventName, repeatWeeks);
 
         return RedirectToPage(new { date = currentDateStr, message, isError = !success });
     }
 
-    public IActionResult OnPostCreateEvent(int courtNumber, string? eventName, string startTimeStr, string endTimeStr,
-        string currentDateStr)
+    public async Task<IActionResult> OnPostCreateEventAsync(int courtNumber, string? eventName, string startTimeStr, string endTimeStr,
+        string currentDateStr, int repeatWeeks = 1)
     {
-        return OnPostCreateReservation(courtNumber, startTimeStr, endTimeStr, null, eventName, currentDateStr);
+        return await OnPostCreateReservationAsync(courtNumber, startTimeStr, endTimeStr, null, eventName, currentDateStr, repeatWeeks);
     }
 
     public IActionResult OnPostUpdateReservation(int reservationId, int courtNumber, string startTimeStr,
@@ -96,7 +124,7 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         var existingBlock = GetContiguousBlock(targetRes, allDayRes);
         var existingBlockIds = existingBlock.Select(r => r.Id).ToHashSet();
 
-        var date = DateTime.Parse(currentDateStr);
+        var date = ParseDate(currentDateStr);
         var startTime = DateTime.Parse(startTimeStr).TimeOfDay;
         var endTime = DateTime.Parse(endTimeStr).TimeOfDay;
 
@@ -239,5 +267,17 @@ public class CourtBruck(TennisContext db, CurrentPlayerService currentPlayerServ
         }
 
         return block;
+    }
+
+    private static DateTime ParseDate(string? dateStr)
+    {
+        if (string.IsNullOrWhiteSpace(dateStr)) return CityTime.GetViennaTimeZone().Date;
+        if (DateTime.TryParseExact(dateStr, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d))
+            return d.Date;
+        if (DateTime.TryParse(dateStr, new System.Globalization.CultureInfo("de-AT"), System.Globalization.DateTimeStyles.None, out d))
+            return d.Date;
+        if (DateTime.TryParse(dateStr, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out d))
+            return d.Date;
+        return CityTime.GetViennaTimeZone().Date;
     }
 }

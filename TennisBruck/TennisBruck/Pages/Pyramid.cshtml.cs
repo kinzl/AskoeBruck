@@ -370,7 +370,7 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         return RedirectToPage(new { competitionId, message = "Teilnehmer aus der Pyramide entfernt." });
     }
 
-    public async Task<IActionResult> OnPostSaveMatchAsync(int? challengeId, int? matchId, string score)
+    public async Task<IActionResult> OnPostSaveMatchAsync(int? challengeId, int? matchId, string score, int? walkoverTeamId = null, bool isWalkover = false)
     {
         int targetId = challengeId ?? matchId ?? 0;
         CurrentPlayer = currentPlayerService.GetCurrentUser();
@@ -394,43 +394,74 @@ public class PyramidModel(TennisContext db, CurrentPlayerService currentPlayerSe
         if (!User.IsInRole("Admin") && !isChallengerMember && !isDefenderMember)
             return RedirectToPage(new { message = "Zugriff verweigert.", isError = true });
 
-        if (string.IsNullOrWhiteSpace(score))
+        string trimmedScore = score?.Trim() ?? "";
+        bool isRetirement = isWalkover ||
+                            trimmedScore.Contains("w.o", StringComparison.OrdinalIgnoreCase) ||
+                            trimmedScore.Contains("ret", StringComparison.OrdinalIgnoreCase) ||
+                            trimmedScore.Contains("aufgabe", StringComparison.OrdinalIgnoreCase);
+
+        if (string.IsNullOrWhiteSpace(score) && !isRetirement)
             return RedirectToPage(new
-                { competitionId = challenge.CompetitionId, message = "Bitte ein Ergebnis eingeben.", isError = true });
+                { competitionId = challenge.CompetitionId, message = "Bitte ein Ergebnis eingeben oder 'w.o.' auswählen.", isError = true });
+
+        string cleanScore = System.Text.RegularExpressions.Regex.Replace(trimmedScore, @"(?i)\b(w\.?o\.?|ret\.?|aufgabe)\b", "").Trim();
 
         int setsWonChallenger = 0;
         int setsWonDefender = 0;
 
         try
         {
-            var sets = score.Trim().Split(" ");
-            foreach (var set in sets)
+            if (!string.IsNullOrWhiteSpace(cleanScore))
             {
-                var games = set.Split(":");
-                int g1 = int.Parse(games[0]);
-                int g2 = int.Parse(games[1]);
-                if (g1 > g2) setsWonChallenger++;
-                else if (g2 > g1) setsWonDefender++;
+                var sets = cleanScore.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+                foreach (var set in sets)
+                {
+                    var games = set.Split(new[] { ':', '-' }, StringSplitOptions.RemoveEmptyEntries);
+                    int g1 = int.Parse(games[0].Trim());
+                    int g2 = int.Parse(games[1].Trim());
+                    if (g1 > g2) setsWonChallenger++;
+                    else if (g2 > g1) setsWonDefender++;
+                }
             }
         }
         catch
         {
             return RedirectToPage(new
             {
-                competitionId = challenge.CompetitionId, message = "Ungültiges Ergebnisformat (z.B. 6:4 6:2).",
+                competitionId = challenge.CompetitionId, message = "Ungültiges Ergebnisformat (z.B. 6:4 6:2 oder 4:3 w.o.).",
                 isError = true
             });
         }
 
-        if (setsWonChallenger == setsWonDefender)
-            return RedirectToPage(new
+        int winnerTeamId;
+        string finalScore;
+
+        if (isRetirement)
+        {
+            if (walkoverTeamId.HasValue && (walkoverTeamId == challenge.ChallengerTeamId || walkoverTeamId == challenge.DefenderTeamId))
             {
-                competitionId = challenge.CompetitionId, message = "Unentschieden ist nicht erlaubt.", isError = true
-            });
+                winnerTeamId = walkoverTeamId.Value == challenge.ChallengerTeamId ? challenge.DefenderTeamId : challenge.ChallengerTeamId;
+            }
+            else
+            {
+                winnerTeamId = setsWonChallenger >= setsWonDefender ? challenge.ChallengerTeamId : challenge.DefenderTeamId;
+            }
 
-        int winnerTeamId = setsWonChallenger > setsWonDefender ? challenge.ChallengerTeamId : challenge.DefenderTeamId;
+            finalScore = string.IsNullOrWhiteSpace(cleanScore) ? "w.o." : $"{cleanScore} w.o.";
+        }
+        else
+        {
+            if (setsWonChallenger == setsWonDefender)
+                return RedirectToPage(new
+                {
+                    competitionId = challenge.CompetitionId, message = "Unentschieden ist nicht erlaubt.", isError = true
+                });
 
-        return await OnPostSubmitResultAsync(challenge.CompetitionId, targetId, winnerTeamId, score);
+            winnerTeamId = setsWonChallenger > setsWonDefender ? challenge.ChallengerTeamId : challenge.DefenderTeamId;
+            finalScore = cleanScore;
+        }
+
+        return await OnPostSubmitResultAsync(challenge.CompetitionId, targetId, winnerTeamId, finalScore);
     }
 
     public async Task<IActionResult> OnPostAdminWalkoverAsync(int? challengeId, int? matchId, int walkoverTeamId)

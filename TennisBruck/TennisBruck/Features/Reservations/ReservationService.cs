@@ -170,6 +170,102 @@ public class ReservationService(TennisContext db)
         return (true, "Termin wurde erfolgreich reserviert!");
     }
 
+    public (bool Success, string Message, int BookedCount, int SkippedCount) CreateRecurringReservations(
+        int courtNumber,
+        DateTime startDate,
+        TimeSpan startTime,
+        TimeSpan? endTime,
+        int currentPlayerId,
+        int? partnerId,
+        string? eventName,
+        int repeatWeeks = 1)
+    {
+        if (repeatWeeks <= 1)
+        {
+            var singleResult = CreateReservation(courtNumber, startDate, startTime, endTime, currentPlayerId, partnerId, eventName);
+            return (singleResult.Success, singleResult.Message, singleResult.Success ? 1 : 0, singleResult.Success ? 0 : 1);
+        }
+
+        if (repeatWeeks > 20)
+        {
+            repeatWeeks = 20;
+        }
+
+        var player = db.Players.FirstOrDefault(p => p.Id == currentPlayerId);
+        if (player == null) return (false, "Spieler nicht gefunden.", 0, repeatWeeks);
+
+        Player? partner = null;
+        if (partnerId.HasValue && partnerId.Value > 0 && partnerId.Value != currentPlayerId)
+        {
+            partner = db.Players.FirstOrDefault(p => p.Id == partnerId.Value);
+        }
+
+        var conflictDates = new List<string>();
+        int bookedWeeks = 0;
+        var reservationsToAdd = new List<Reservation>();
+
+        for (int i = 0; i < repeatWeeks; i++)
+        {
+            var currentDate = startDate.Date.AddDays(7 * i);
+            var startDateTime = currentDate.Add(startTime);
+            DateTime endDateTime = endTime.HasValue
+                ? currentDate.Add(endTime.Value)
+                : startDateTime.AddHours(2);
+
+            if (startDateTime < CityTime.GetViennaTimeZone())
+            {
+                conflictDates.Add($"{currentDate:dd.MM.} (Vergangenheit)");
+                continue;
+            }
+
+            if (endDateTime <= startDateTime)
+            {
+                return (false, "Die Endzeit muss nach der Startzeit liegen.", 0, repeatWeeks);
+            }
+
+            bool hasConflict = db.Reservations.Any(r =>
+                r.CourtNumber == courtNumber &&
+                r.StartTime >= startDateTime &&
+                r.StartTime < endDateTime);
+
+            if (hasConflict)
+            {
+                conflictDates.Add(currentDate.ToString("dd.MM."));
+                continue;
+            }
+
+            for (var time = startDateTime; time < endDateTime; time = time.AddMinutes(30))
+            {
+                reservationsToAdd.Add(new Reservation
+                {
+                    CourtNumber = courtNumber,
+                    StartTime = time,
+                    EndTime = time.AddMinutes(30),
+                    Player = player,
+                    PartnerId = partner?.Id,
+                    EventName = string.IsNullOrWhiteSpace(eventName) ? null : eventName.Trim()
+                });
+            }
+
+            bookedWeeks++;
+        }
+
+        if (bookedWeeks == 0)
+        {
+            return (false, $"Keiner der {repeatWeeks} Termine konnte gebucht werden, da alle Zeiträume bereits belegt waren.", 0, conflictDates.Count);
+        }
+
+        db.Reservations.AddRange(reservationsToAdd);
+        db.SaveChanges();
+
+        if (conflictDates.Count == 0)
+        {
+            return (true, $"Alle {bookedWeeks} wöchentlichen Termine erfolgreich reserviert!", bookedWeeks, 0);
+        }
+
+        return (true, $"{bookedWeeks} von {repeatWeeks} Terminen gebucht. Belegt an: {string.Join(", ", conflictDates)}.", bookedWeeks, conflictDates.Count);
+    }
+
     public List<Reservation> GetContiguousBlock(Reservation target, List<Reservation> allReservations)
     {
         var sorted = allReservations.OrderBy(r => r.StartTime).ToList();

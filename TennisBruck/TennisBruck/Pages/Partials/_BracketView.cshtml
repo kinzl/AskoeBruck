@@ -152,8 +152,18 @@
                                             string team2Score = "";
                                             if (match.IsWalkover)
                                             {
-                                                team1Score = match.WalkoverTeamId == match.Team1?.Id ? "w.o." : "";
-                                                team2Score = match.WalkoverTeamId == match.Team2?.Id ? "w.o." : "";
+                                                if (match.Sets != null && match.Sets.Any())
+                                                {
+                                                    string p1 = string.Join(" ", match.Sets.OrderBy(s => s.SetNumber).Select(s => s.Player1GamesWon));
+                                                    string p2 = string.Join(" ", match.Sets.OrderBy(s => s.SetNumber).Select(s => s.Player2GamesWon));
+                                                    team1Score = match.WalkoverTeamId == match.Team1?.Id ? $"{p1} w.o." : p1;
+                                                    team2Score = match.WalkoverTeamId == match.Team2?.Id ? $"{p2} w.o." : p2;
+                                                }
+                                                else
+                                                {
+                                                    team1Score = match.WalkoverTeamId == match.Team1?.Id ? "w.o." : "";
+                                                    team2Score = match.WalkoverTeamId == match.Team2?.Id ? "w.o." : "";
+                                                }
                                             }
                                             else if (match.Sets != null && match.Sets.Any())
                                             {

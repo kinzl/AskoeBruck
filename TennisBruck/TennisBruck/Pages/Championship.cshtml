@@ -310,16 +310,27 @@
                         @if (match.Team1 != null && match.Team2 != null)
                         {
                             var groupCategory = match.Group != null ? match.Group.GroupName : ((match as KnockoutMatch)?.PhaseName ?? "K.O Phase");
-                            bool isMyMatch = Model.CurrentPlayer != null &&
-                                             (match.Team1.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id) ||
-                                              match.Team2.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id));
+                            bool isTeam1 = Model.CurrentPlayer != null && match.Team1.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id);
+                            bool isTeam2 = Model.CurrentPlayer != null && match.Team2.TeamPlayers.Any(p => p.PlayerId == Model.CurrentPlayer.Id);
+                            bool isMyMatch = isTeam1 || isTeam2;
+                            int? currentUserTeamId = isTeam1 ? match.Team1.Id : isTeam2 ? match.Team2.Id : null;
 
                             string team1Score = "";
                             string team2Score = "";
                             if (match.IsWalkover)
                             {
-                                team1Score = match.WalkoverTeamId == match.Team1.Id ? "w.o." : "";
-                                team2Score = match.WalkoverTeamId == match.Team2.Id ? "w.o." : "";
+                                if (match.Sets != null && match.Sets.Any())
+                                {
+                                    string p1 = string.Join(" ", match.Sets.OrderBy(s => s.SetNumber).Select(s => s.Player1GamesWon));
+                                    string p2 = string.Join(" ", match.Sets.OrderBy(s => s.SetNumber).Select(s => s.Player2GamesWon));
+                                    team1Score = match.WalkoverTeamId == match.Team1.Id ? $"{p1} w.o." : p1;
+                                    team2Score = match.WalkoverTeamId == match.Team2.Id ? $"{p2} w.o." : p2;
+                                }
+                                else
+                                {
+                                    team1Score = match.WalkoverTeamId == match.Team1.Id ? "w.o." : "";
+                                    team2Score = match.WalkoverTeamId == match.Team2.Id ? "w.o." : "";
+                                }
                             }
                             else if (match.Sets != null && match.Sets.Any())
                             {
@@ -347,6 +358,7 @@
                                 DataGroup = groupCategory,
                                 IsDecided = isDecided,
                                 IsMyMatch = isMyMatch,
+                                CurrentUserTeamId = currentUserTeamId,
                                 IsAdmin = User.IsInRole("Admin"),
                                 CanDelete = canDelete,
                                 DeleteHandler = "DeleteMatch",

@@ -23,6 +23,13 @@ string restClientFilename = "_requests.http";
 DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+var defaultCulture = new System.Globalization.CultureInfo("de-AT");
+defaultCulture.DateTimeFormat.ShortDatePattern = "dd.MM.yyyy";
+defaultCulture.DateTimeFormat.DateSeparator = ".";
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture = defaultCulture;
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = defaultCulture;
+
 builder.Services.AddRazorPages()
     .AddMvcOptions(options => { options.Filters.Add<ZombieUserFilter>(); });
 Console.WriteLine($"Current Environment: {builder.Environment.EnvironmentName}");
@@ -191,6 +198,13 @@ if (!app.Environment.IsDevelopment())
 #endregion
 
 app.UseStaticFiles();
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(defaultCulture),
+    SupportedCultures = [defaultCulture],
+    SupportedUICultures = [defaultCulture]
+});
 
 app.UseRouting();
 

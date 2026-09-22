@@ -187,7 +187,7 @@ public class PartnerBoardService(TennisContext db, IEmailSender emailSender, Web
 
             if (pushService != null && slot.Player != null)
             {
-                _ = pushService.SendNotificationAsync(slot.Player.Id, "🎾 Neuer Mitspieler in der Börse!", $"{joiningPlayer.Firstname} {joiningPlayer.Lastname} spielt am {slot.Date:dd.MM.yyyy} mit.", "/PartnerBoard");
+                await pushService.SendNotificationAsync(slot.Player.Id, "🎾 Neuer Mitspieler in der Börse!", $"{joiningPlayer.Firstname} {joiningPlayer.Lastname} spielt am {slot.Date:dd.MM.yyyy} mit.", "/PartnerBoard");
             }
         }
 
@@ -219,7 +219,7 @@ public class PartnerBoardService(TennisContext db, IEmailSender emailSender, Web
 
                 if (pushService != null)
                 {
-                    _ = pushService.SendNotificationAsync(p.Id, "🎾 Börsen-Spiel fixiert!", $"Dein Spiel am {slot.Date:dd.MM.yyyy} ist komplett besetzt!", "/PartnerBoard");
+                    await pushService.SendNotificationAsync(p.Id, "🎾 Börsen-Spiel fixiert!", $"Dein Spiel am {slot.Date:dd.MM.yyyy} ist komplett besetzt!", "/PartnerBoard");
                 }
             }
         }
@@ -335,6 +335,11 @@ public class PartnerBoardService(TennisContext db, IEmailSender emailSender, Web
 
                     _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
                 }
+
+                if (pushService != null)
+                {
+                    await pushService.SendNotificationAsync(p.Id, "🎾 Update Börsen-Spiel", $"Der Termin am {editDate:dd.MM.yyyy} wurde geändert.", "/PartnerBoard");
+                }
             }
         }
 
@@ -378,6 +383,11 @@ public class PartnerBoardService(TennisContext db, IEmailSender emailSender, Web
                                $"Dein TennisBruck-Team";
                     _ = emailSender.SendEmailAsync(p.IdentityUser.Email, subject, body);
                 }
+
+                if (pushService != null)
+                {
+                    await pushService.SendNotificationAsync(p.Id, "🎾 Börsen-Spiel abgesagt", $"Das Spiel am {slot.Date:dd.MM.yyyy} wurde vom Ersteller abgesagt.", "/PartnerBoard");
+                }
             }
 
             db.AvailabilitySlots.Remove(slot);
@@ -400,6 +410,11 @@ public class PartnerBoardService(TennisContext db, IEmailSender emailSender, Web
                                 "Dein TennisBruck-Team";
 
                 await emailSender.SendEmailAsync(slot.Player.IdentityUser.Email, emailSubject, emailBody);
+            }
+
+            if (pushService != null && slot.Player != null)
+            {
+                await pushService.SendNotificationAsync(slot.Player.Id, "🎾 Ein Mitspieler hat abgesagt", $"{player?.Firstname} {player?.Lastname} hat sich aus deinem Eintrag am {slot.Date:dd.MM.yyyy} ausgetragen.", "/PartnerBoard");
             }
 
             await db.SaveChangesAsync();

@@ -57,6 +57,15 @@ public class WebPushNotificationService
             }
             _vapidDetails = _cachedVapidDetails;
         }
+
+        try
+        {
+            _client.SetVapidDetails(_vapidDetails);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not set VapidDetails on WebPushClient.");
+        }
     }
 
     public string GetVapidPublicKey() => _vapidDetails.PublicKey;
@@ -129,6 +138,13 @@ public class WebPushNotificationService
             badge = "/images/app-icon-192.png"
         });
 
+        var options = new Dictionary<string, object>
+        {
+            { "vapidDetails", _vapidDetails },
+            { "urgency", "high" },
+            { "TTL", 86400 }
+        };
+
         int sentCount = 0;
         var expiredSubscriptions = new List<PushSubscriptionEntity>();
 
@@ -137,7 +153,7 @@ public class WebPushNotificationService
             try
             {
                 var pushSub = new PushSubscription(sub.Endpoint, sub.P256dh, sub.Auth);
-                await _client.SendNotificationAsync(pushSub, payload, _vapidDetails);
+                await _client.SendNotificationAsync(pushSub, payload, options);
                 sentCount++;
             }
             catch (WebPushException ex) when (ex.StatusCode == HttpStatusCode.Gone || ex.StatusCode == HttpStatusCode.NotFound)
@@ -158,6 +174,16 @@ public class WebPushNotificationService
         }
 
         return sentCount;
+    }
+
+    public async Task<int> SendNotificationAsync(IEnumerable<int> playerIds, string title, string message, string? url = null)
+    {
+        int totalSent = 0;
+        foreach (var id in playerIds.Distinct())
+        {
+            totalSent += await SendNotificationAsync(id, title, message, url);
+        }
+        return totalSent;
     }
 
     public async Task<bool> SendTestNotificationAsync(int playerId)

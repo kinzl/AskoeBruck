@@ -18,6 +18,8 @@ public class MatchCardViewModel
 
     public bool IsDecided { get; set; }
     public bool IsMyMatch { get; set; }
+    public int? CurrentUserTeamId { get; set; }
+    public int? OpponentTeamId => CurrentUserTeamId == Team1Id ? Team2Id : CurrentUserTeamId == Team2Id ? Team1Id : null;
     public bool IsAdmin { get; set; }
     public bool CanDelete { get; set; }
 

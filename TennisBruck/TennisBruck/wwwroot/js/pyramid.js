@@ -53,3 +53,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+/**
+ * Toggles the walkover (w.o.) team selection dropdown
+ */
+function toggleCardWalkover(checkbox) {
+    const form = checkbox.closest('form');
+    if (!form) return;
+    const select = form.querySelector('select[name="walkoverTeamId"]');
+    if (select) {
+        if (checkbox.checked) {
+            select.style.display = 'inline-block';
+            select.disabled = false;
+        } else {
+            select.style.display = 'none';
+            select.disabled = true;
+        }
+    }
+}
+
